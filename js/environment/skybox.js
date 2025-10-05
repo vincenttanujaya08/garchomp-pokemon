@@ -100,7 +100,7 @@ function setupSkybox(GL, LIBS) {
         };
         return texture;
     };
-    const cube_texture = load_texture("skybox.png"); // Pastikan path ini benar
+    const cube_texture = load_texture("textures/skybox.png"); // Pastikan path ini benar
 
     // -------------------------------------------------------------------------
     // KEMBALIKAN FUNGSI UNTUK MENGGAMBAR (DRAW FUNCTION)

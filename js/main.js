@@ -11,6 +11,7 @@ function main() {
   let lastMouseY = -1;
   const modelRotationMatrix = mat4.create();
 
+  // Event listener untuk rotasi (tidak ada perubahan)
   canvas.addEventListener("mousedown", function (event) {
     isDragging = true;
     lastMouseX = event.clientX;
@@ -31,6 +32,7 @@ function main() {
     mat4.multiply(modelRotationMatrix, newRotation, modelRotationMatrix);
   });
 
+  // Setup shader untuk Garchomp
   const shaderProgram = initShaderProgram(
     gl,
     vertexShaderSource,
@@ -43,10 +45,7 @@ function main() {
       vertexNormal: gl.getAttribLocation(shaderProgram, "a_normal"),
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(
-        shaderProgram,
-        "u_projectionMatrix"
-      ),
+      projectionMatrix: gl.getUniformLocation(shaderProgram, "u_projectionMatrix"),
       viewMatrix: gl.getUniformLocation(shaderProgram, "u_viewMatrix"),
       modelMatrix: gl.getUniformLocation(shaderProgram, "u_modelMatrix"),
       normalMatrix: gl.getUniformLocation(shaderProgram, "u_normalMatrix"),
@@ -56,30 +55,12 @@ function main() {
     },
   };
 
-  // BARU: Buat objek LIBS untuk kompatibilitas dengan skybox.js
-   const LIBS = {
-      get_I4: () => mat4.create(),
-      rotateX: (mat, rad) => mat4.rotateX(mat, mat, rad),
-      rotateY: (mat, rad) => mat4.rotateY(mat, mat, rad),
-      // Anda bisa menambahkan fungsi lain jika skybox membutuhkannya
-  };
-
-  // BARU: Panggil fungsi setup skybox dari file environment/skybox.js
-  // Pastikan Anda sudah mengganti nama fungsi di skybox.js menjadi setupSkybox
-  // dan fungsi itu me-return fungsi untuk menggambar (draw function)
-  const drawSkybox = setupSkybox(gl, LIBS); // Asumsi setupSkybox me-return fungsi draw
+  // Panggil fungsi setup skybox untuk mendapatkan fungsi draw-nya
+  const drawSkybox = setupSkybox(gl); 
 
   const garchompNode = createGarchomp(gl);
 
   const projectionMatrix = mat4.create();
-  mat4.perspective(
-    projectionMatrix,
-    (45 * Math.PI) / 180,
-    gl.canvas.clientWidth / gl.canvas.clientHeight,
-    0.1,
-    100.0
-  );
-
   const cameraPosition = [0, 1, 12];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
@@ -95,15 +76,16 @@ function main() {
         100.0
       );
     }
+    
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
-    // BARU: Gambar skybox terlebih dahulu
-    // Teruskan matriks yang relevan dari scene utama Anda
+    // 1. Gambar skybox terlebih dahulu
     drawSkybox(projectionMatrix, viewMatrix, modelRotationMatrix);
 
+    // 2. Gambar model Garchomp
     drawScene(
       gl,
       programInfo,
@@ -114,10 +96,21 @@ function main() {
       cameraPosition
     );
 
+    // Ini adalah pemanggilan rekursif untuk melanjutkan animasi
     requestAnimationFrame(render);
   }
+  
+  // Inisialisasi projection matrix sekali di awal
+  mat4.perspective(
+    projectionMatrix,
+    (45 * Math.PI) / 180,
+    gl.canvas.clientWidth / gl.canvas.clientHeight,
+    0.1,
+    100.0
+  );
   requestAnimationFrame(render);
 }
+
 
 function drawScene(
   gl,
