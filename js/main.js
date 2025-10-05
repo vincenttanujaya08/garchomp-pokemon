@@ -56,6 +56,19 @@ function main() {
     },
   };
 
+  // BARU: Buat objek LIBS untuk kompatibilitas dengan skybox.js
+   const LIBS = {
+      get_I4: () => mat4.create(),
+      rotateX: (mat, rad) => mat4.rotateX(mat, mat, rad),
+      rotateY: (mat, rad) => mat4.rotateY(mat, mat, rad),
+      // Anda bisa menambahkan fungsi lain jika skybox membutuhkannya
+  };
+
+  // BARU: Panggil fungsi setup skybox dari file environment/skybox.js
+  // Pastikan Anda sudah mengganti nama fungsi di skybox.js menjadi setupSkybox
+  // dan fungsi itu me-return fungsi untuk menggambar (draw function)
+  const drawSkybox = setupSkybox(gl, LIBS); // Asumsi setupSkybox me-return fungsi draw
+
   const garchompNode = createGarchomp(gl);
 
   const projectionMatrix = mat4.create();
@@ -86,6 +99,10 @@ function main() {
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+
+    // BARU: Gambar skybox terlebih dahulu
+    // Teruskan matriks yang relevan dari scene utama Anda
+    drawSkybox(projectionMatrix, viewMatrix, modelRotationMatrix);
 
     drawScene(
       gl,
