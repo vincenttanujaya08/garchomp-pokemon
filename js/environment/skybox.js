@@ -111,7 +111,11 @@ function setupSkybox(GL, LIBS) {
 
         // Buat view matrix khusus untuk skybox dengan menghapus informasi translasi (posisi)
         // Ini membuat skybox terlihat sangat jauh
-        let skyboxViewMatrix = mat4.clone(viewMatrix);
+        // Salin viewMatrix secara manual untuk kompatibilitas maksimum
+        let skyboxViewMatrix = mat4.create();
+        for (let i = 0; i < 16; i++) {
+            skyboxViewMatrix[i] = viewMatrix[i];
+        }
         skyboxViewMatrix[12] = 0; // x
         skyboxViewMatrix[13] = 0; // y
         skyboxViewMatrix[14] = 0; // z

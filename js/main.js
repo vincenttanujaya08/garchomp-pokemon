@@ -10,8 +10,9 @@ function main() {
   let lastMouseX = -1;
   let lastMouseY = -1;
   const modelRotationMatrix = mat4.create();
+  const skyboxRotationMatrix = mat4.create(); // Matriks baru untuk skybox
 
-  // Event listener untuk rotasi (tidak ada perubahan)
+  // Event listener untuk rotasi Garchomp
   canvas.addEventListener("mousedown", function (event) {
     isDragging = true;
     lastMouseX = event.clientX;
@@ -55,37 +56,39 @@ function main() {
     },
   };
 
-  // Panggil fungsi setup skybox untuk mendapatkan fungsi draw-nya
-  const drawSkybox = setupSkybox(gl); 
-
+  const drawSkybox = setupSkybox(gl);
   const garchompNode = createGarchomp(gl);
 
   const projectionMatrix = mat4.create();
-  const cameraPosition = [0, 1, 12];
+  const cameraPosition = [0, 1, 20];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
   function render() {
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      mat4.perspective(
-        projectionMatrix,
-        (45 * Math.PI) / 180,
-        gl.canvas.clientWidth / gl.canvas.clientHeight,
-        0.1,
-        100.0
-      );
     }
     
+    mat4.perspective(
+      projectionMatrix,
+      (45 * Math.PI) / 180,
+      gl.canvas.clientWidth / gl.canvas.clientHeight,
+      0.1,
+      100.0
+    );
+
+    // Putar skybox secara otomatis menggunakan fungsi rotasi umum
+  mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
-    // 1. Gambar skybox terlebih dahulu
-    drawSkybox(projectionMatrix, viewMatrix, modelRotationMatrix);
+    // 1. Gambar skybox dengan rotasi otomatisnya
+    drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
 
-    // 2. Gambar model Garchomp
+    // 2. Gambar Garchomp dengan rotasi dari mouse
     drawScene(
       gl,
       programInfo,
@@ -96,21 +99,11 @@ function main() {
       cameraPosition
     );
 
-    // Ini adalah pemanggilan rekursif untuk melanjutkan animasi
     requestAnimationFrame(render);
   }
   
-  // Inisialisasi projection matrix sekali di awal
-  mat4.perspective(
-    projectionMatrix,
-    (45 * Math.PI) / 180,
-    gl.canvas.clientWidth / gl.canvas.clientHeight,
-    0.1,
-    100.0
-  );
   requestAnimationFrame(render);
 }
-
 
 function drawScene(
   gl,
@@ -125,8 +118,6 @@ function drawScene(
   mat4.multiply(modelMatrix, parentTransform, node.localTransform);
 
   if (node.mesh) {
-    // --- BLOK SETUP ATRIBUT MANUAL (CARA WEBGL 1) ---
-    // Setup buffer posisi
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.vertexBuffer);
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexPosition,
@@ -138,7 +129,6 @@ function drawScene(
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-    // Setup buffer normal
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.normalBuffer);
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexNormal,
@@ -149,7 +139,6 @@ function drawScene(
       0
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
-    // --------------------------------------------------
 
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelMatrix);
@@ -183,7 +172,6 @@ function drawScene(
     gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPosition);
     gl.uniform3fv(programInfo.uniformLocations.viewPosition, cameraPosition);
 
-    // Bind buffer index dan gambar
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.indexBuffer);
     gl.drawElements(gl.TRIANGLES, node.mesh.indicesCount, gl.UNSIGNED_SHORT, 0);
   }
