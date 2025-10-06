@@ -1,6 +1,4 @@
 /**
- * Menyiapkan semua sumber daya WebGL untuk skybox (shader, buffer, tekstur).
- * Fungsi ini mengembalikan fungsi lain yang digunakan untuk menggambar skybox.
  * @param {WebGLRenderingContext} GL Konteks WebGL.
  * @param {object} LIBS Objek pustaka untuk operasi matriks.
  * @returns {function(mat4, mat4, mat4): void} Sebuah fungsi untuk menggambar skybox.
@@ -56,9 +54,8 @@ function setupSkybox(GL, LIBS) {
     const _Mmatrix = GL.getUniformLocation(SHADER_PROGRAM, "Mmatrix");
     const _sampler = GL.getUniformLocation(SHADER_PROGRAM, "sampler");
 
-    /*======================== GEOMETRI KUBUS ======================== */
+    /*======================== KUBUS ======================== */
     const cube_vertex = [
-        // Data vertex tetap sama...
         -1, -1, -1,   1, 1 / 3,  1, -1, -1,   3 / 4, 1 / 3,  1,  1, -1,   3 / 4, 2 / 3, -1,  1, -1,   1, 2 / 3,
         -1, -1, 1,    1 / 4, 1 / 3,  1, -1, 1,    2 / 4, 1 / 3,  1,  1, 1,    2 / 4, 2 / 3, -1,  1, 1,    1 / 4, 2 / 3,
         -1, -1, -1,   0, 1 / 3, -1,  1, -1,   0, 2 / 3, -1,  1,  1,   1 / 4, 2 / 3, -1, -1,  1,   1 / 4, 1 / 3,
@@ -66,11 +63,8 @@ function setupSkybox(GL, LIBS) {
         -1, -1, -1,   1 / 4, 0, -1, -1,  1,   1 / 4, 1 / 3,  1, -1,  1,   2 / 4, 1 / 3,  1, -1, -1,   2 / 4, 0,
         -1,  1, -1,   1 / 4, 1, -1,  1,  1,   1 / 4, 2 / 3,  1,  1,  1,   2 / 4, 2 / 3,  1,  1, -1,   2 / 4, 1
     ];
-    // Skala tidak diperlukan lagi karena skybox harus besar
-    // const scale = 10; ...
 
     const cube_faces = [
-        // Data faces tetap sama...
         0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11,
         12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23
     ];

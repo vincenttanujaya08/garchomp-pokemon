@@ -431,4 +431,70 @@ const Primitives = {
       indices: new Uint16Array(indices),
     };
   },
+  createExtrudedShape: function(shapePoints, thickness, scaleTop = 1, scaleBottom = 1) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const n = shapePoints.length;
+
+    // Buat daftar titik untuk sisi atas dan bawah
+    const topVertices = [];
+    const bottomVertices = [];
+    for (let i = 0; i < n; i++) {
+        const p = shapePoints[i];
+        topVertices.push([p[0] * scaleTop, 0, p[2] * scaleTop]);
+        bottomVertices.push([p[0] * scaleBottom, -thickness, p[2] * scaleBottom]);
+    }
+
+    // --- SISI ATAS ---
+    const topStartIndex = vertices.length / 3;
+    for (const v of topVertices) {
+        vertices.push(...v);
+        normals.push(0, 1, 0); // Normal menghadap ke atas
+    }
+    for (let i = 1; i < n - 1; i++) {
+        indices.push(topStartIndex, topStartIndex + i, topStartIndex + i + 1);
+    }
+
+    // --- SISI BAWAH ---
+    const bottomStartIndex = vertices.length / 3;
+    for (const v of bottomVertices) {
+        vertices.push(...v);
+        normals.push(0, -1, 0); // Normal menghadap ke bawah
+    }
+    for (let i = 1; i < n - 1; i++) {
+        indices.push(bottomStartIndex, bottomStartIndex + i + 1, bottomStartIndex + i);
+    }
+
+    // --- DINDING SAMPING ---
+    for (let i = 0; i < n; i++) {
+        const next = (i + 1) % n;
+        const p1 = topVertices[i];
+        const p2 = bottomVertices[i];
+        const p3 = topVertices[next];
+        const p4 = bottomVertices[next];
+        
+        const sideStartIndex = vertices.length / 3;
+        vertices.push(...p1, ...p2, ...p3, ...p4);
+
+        const v1 = vec3.create();
+        const v2 = vec3.create();
+        vec3.subtract(v1, p3, p1);
+        vec3.subtract(v2, p2, p1);
+        const normal = vec3.create();
+        vec3.cross(normal, v1, v2);
+        vec3.normalize(normal, normal);
+
+        normals.push(...normal, ...normal, ...normal, ...normal);
+
+        indices.push(sideStartIndex, sideStartIndex + 1, sideStartIndex + 2);
+        indices.push(sideStartIndex + 2, sideStartIndex + 1, sideStartIndex + 3);
+    }
+
+    return {
+        vertices: new Float32Array(vertices),
+        normals: new Float32Array(normals),
+        indices: new Uint16Array(indices),
+    };
+  },
 };
