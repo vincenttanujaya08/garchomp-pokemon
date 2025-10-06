@@ -101,6 +101,16 @@ function main() {
       cameraPosition
     );
 
+    drawScene(
+      gl, 
+      programInfo, 
+      islandNode,
+      projectionMatrix, 
+      viewMatrix, 
+      modelRotationMatrix, 
+      cameraPosition
+    );
+
     requestAnimationFrame(render);
   }
   
