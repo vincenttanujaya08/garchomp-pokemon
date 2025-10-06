@@ -58,6 +58,7 @@ function main() {
 
   const drawSkybox = setupSkybox(gl);
   const garchompNode = createGarchomp(gl);
+  const islandNode = createIsland(gl); 
 
   const projectionMatrix = mat4.create();
   const cameraPosition = [0, 1, 20];
@@ -78,7 +79,7 @@ function main() {
     );
 
     // Putar skybox secara otomatis menggunakan fungsi rotasi umum
-  mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
+    mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
@@ -87,6 +88,7 @@ function main() {
 
     // 1. Gambar skybox dengan rotasi otomatisnya
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
+    
 
     // 2. Gambar Garchomp dengan rotasi dari mouse
     drawScene(
