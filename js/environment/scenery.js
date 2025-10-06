@@ -26,14 +26,17 @@ function createDeadTree(gl) {
     // Cabang 1
     const branch1 = new SceneNode(cylinderMesh, brown);
     mat4.translate(branch1.localTransform, branch1.localTransform, [0, 1.5, 0]);
-    mat4.rotateZ(branch1.localTransform, branch1.localTransform, Math.PI / 5);
+    // PERBAIKAN: Ganti mat4.rotateZ dengan mat4.rotate pada sumbu Z [0, 0, 1]
+    mat4.rotate(branch1.localTransform, branch1.localTransform, Math.PI / 5, [0, 0, 1]);
     mat4.scale(branch1.localTransform, branch1.localTransform, [0.2, 1.5, 0.2]);
 
     // Cabang 2
     const branch2 = new SceneNode(cylinderMesh, brown);
     mat4.translate(branch2.localTransform, branch2.localTransform, [0, 0.8, 0]);
-    mat4.rotateZ(branch2.localTransform, branch2.localTransform, -Math.PI / 4);
-    mat4.rotateY(branch2.localTransform, branch2.localTransform, Math.PI / 3);
+    // PERBAIKAN: Ganti mat4.rotateZ dengan mat4.rotate pada sumbu Z [0, 0, 1]
+    mat4.rotate(branch2.localTransform, branch2.localTransform, -Math.PI / 4, [0, 0, 1]);
+    // PERBAIKAN: Ganti mat4.rotateY dengan mat4.rotate pada sumbu Y [0, 1, 0]
+    mat4.rotate(branch2.localTransform, branch2.localTransform, Math.PI / 3, [0, 1, 0]);
     mat4.scale(branch2.localTransform, branch2.localTransform, [0.15, 1.8, 0.15]);
 
     // Gabungkan semua bagian
