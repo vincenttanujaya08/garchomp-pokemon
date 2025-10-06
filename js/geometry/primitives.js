@@ -1,4 +1,7 @@
 const Primitives = {
+  /**
+   * Ellipsoid - untuk kepala, torso, joints
+   */
   createEllipsoid: function (
     radiusX = 1,
     radiusY = 1,
@@ -53,6 +56,91 @@ const Primitives = {
     };
   },
 
+  /**
+   * Cylinder - untuk lengan, kaki, ekor
+   */
+  createCylinder: function (radius = 1, height = 2, radialSegments = 32) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const halfHeight = height / 2;
+
+    // Sisi silinder
+    for (let i = 0; i <= radialSegments; i++) {
+      const theta = (i * 2 * Math.PI) / radialSegments;
+      const x = radius * Math.cos(theta);
+      const z = radius * Math.sin(theta);
+
+      vertices.push(x, halfHeight, z);
+      normals.push(x / radius, 0, z / radius);
+      vertices.push(x, -halfHeight, z);
+      normals.push(x / radius, 0, z / radius);
+    }
+
+    // Tutup atas
+    for (let i = 0; i <= radialSegments; i++) {
+      const theta = (i * 2 * Math.PI) / radialSegments;
+      vertices.push(
+        radius * Math.cos(theta),
+        halfHeight,
+        radius * Math.sin(theta)
+      );
+      normals.push(0, 1, 0);
+    }
+
+    // Tutup bawah
+    for (let i = 0; i <= radialSegments; i++) {
+      const theta = (i * 2 * Math.PI) / radialSegments;
+      vertices.push(
+        radius * Math.cos(theta),
+        -halfHeight,
+        radius * Math.sin(theta)
+      );
+      normals.push(0, -1, 0);
+    }
+
+    // Pusat tutup
+    const topCenterIndex = vertices.length / 3;
+    vertices.push(0, halfHeight, 0);
+    normals.push(0, 1, 0);
+
+    const bottomCenterIndex = vertices.length / 3;
+    vertices.push(0, -halfHeight, 0);
+    normals.push(0, -1, 0);
+
+    // Indices untuk sisi
+    let sideOffset = 0;
+    for (let i = 0; i < radialSegments; i++) {
+      const a = sideOffset + i * 2;
+      const b = a + 1;
+      const c = a + 2;
+      const d = a + 3;
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+
+    // Indices untuk tutup atas
+    const topOffset = (radialSegments + 1) * 2;
+    for (let i = 0; i < radialSegments; i++) {
+      indices.push(topCenterIndex, topOffset + i, topOffset + i + 1);
+    }
+
+    // Indices untuk tutup bawah
+    const bottomOffset = topOffset + radialSegments + 1;
+    for (let i = 0; i < radialSegments; i++) {
+      indices.push(bottomCenterIndex, bottomOffset + i + 1, bottomOffset + i);
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  /**
+   * Cone - untuk spike, kuku, gigi
+   */
   createCone: function (radius = 1, height = 2, radialSegments = 32) {
     const vertices = [];
     const normals = [];
@@ -119,221 +207,59 @@ const Primitives = {
     };
   },
 
-  createStar: function (innerRadius = 0.5, outerRadius = 1.0) {
-    const vertices = [];
-    const normals = [];
-    const indices = [];
-    const points = 5;
-
-    // Definisikan 10 titik untuk bintang (5 ujung luar, 5 lekukan dalam)
-    for (let i = 0; i < points * 2; i++) {
-      const radius = i % 2 === 0 ? outerRadius : innerRadius;
-      const angle = (i * Math.PI) / points;
-      const x = radius * Math.cos(angle - Math.PI / 2);
-      const y = radius * Math.sin(angle - Math.PI / 2);
-      vertices.push(x, y, 0);
-      normals.push(0, 0, -1); // Normal menghadap ke depan (sumbu -Z)
-    }
-
-    // Tambahkan titik pusat untuk membuat segitiga
-    vertices.push(0, 0, 0);
-    normals.push(0, 0, -1);
-    const centerIndex = vertices.length / 3 - 1;
-
-    // Buat indices yang menghubungkan semua titik ke pusat
-    for (let i = 0; i < points * 2; i++) {
-      indices.push(centerIndex, i, (i + 1) % (points * 2));
-    }
-
-    return {
-      vertices: new Float32Array(vertices),
-      normals: new Float32Array(normals),
-      indices: new Uint16Array(indices),
-    };
-  },
-
-  createEllipticParaboloid: function (
-    width = 1,
-    depth = 1,
-    height = 1,
-    segments = 32
+  /**
+   * Hyperboloid - untuk blade lengan dan tanduk (SIGNATURE GARCHOMP!)
+   */
+  createHyperboloid: function (
+    radiusTop = 1,
+    radiusBottom = 1,
+    waistRadius = 0.5,
+    height = 2,
+    radialSegments = 32,
+    heightSegments = 16
   ) {
-    const vertices = [];
-    const normals = [];
-    const indices = [];
-
-    for (let i = 0; i <= segments; i++) {
-      const u = i / segments;
-      for (let j = 0; j <= segments; j++) {
-        const v = (j * 2 * Math.PI) / segments;
-
-        const x = width * u * Math.cos(v);
-        const y = height * u * u; // Menggunakan Y sebagai sumbu tinggi
-        const z = depth * u * Math.sin(v);
-        vertices.push(x, y, z);
-
-        const nx = 2 * height * x;
-        const ny = -(width * depth);
-        const nz = 2 * height * z;
-        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
-
-        if (len > 0) {
-          normals.push(nx / len, ny / len, nz / len);
-        } else {
-          normals.push(0, -1, 0);
-        }
-      }
-    }
-
-    for (let i = 0; i < segments; i++) {
-      for (let j = 0; j < segments; j++) {
-        const first = i * (segments + 1) + j;
-        const second = first + segments + 1;
-
-        indices.push(first, second, first + 1);
-        indices.push(second, second + 1, first + 1);
-      }
-    }
-
-    return {
-      vertices: new Float32Array(vertices),
-      normals: new Float32Array(normals),
-      indices: new Uint16Array(indices),
-    };
-  },
-  createChevron: function (
-    width = 2.0,
-    height = 2.0,
-    vCut = 0.1,
-    thickness = 0.1
-  ) {
-    const vertices = [];
-    const normals = [];
-    const indices = [];
-    const zPos = thickness / 2.0;
-
-    // 1. Tentukan 4 titik outline 2D berdasarkan parameter
-    const halfW = width / 2.0;
-    const halfH = height / 2.0;
-    const outlinePoints = [
-      { x: -halfW * 1.6, y: halfH }, // 0: Puncak kiri atas
-      { x: 0, y: vCut * halfH }, // 1: Lekukan tengah
-      { x: halfW * 1.6, y: halfH }, // 2: Puncak kanan atas
-      { x: 0, y: -halfH }, // 3: Puncak bawah
-    ];
-
-    // 2. Buat vertices dan normal untuk muka DEPAN dan BELAKANG
-    const frontNormal = [0, 0, 1];
-    outlinePoints.forEach((p) => {
-      vertices.push(p.x, p.y, zPos);
-      normals.push(...frontNormal);
-    });
-    const backOffset = 4;
-    const backNormal = [0, 0, -1];
-    outlinePoints.forEach((p) => {
-      vertices.push(p.x, p.y, -zPos);
-      normals.push(...backNormal);
-    });
-
-    // 3. Indices untuk muka DEPAN (2 segitiga)
-    indices.push(0, 3, 1);
-    indices.push(2, 1, 3);
-
-    // 4. Indices untuk muka BELAKANG (urutan dibalik)
-    indices.push(backOffset + 0, backOffset + 1, backOffset + 3);
-    indices.push(backOffset + 2, backOffset + 3, backOffset + 1);
-
-    // 5. Buat sisi-sisi samping untuk memberikan KETEBALAN
-    for (let i = 0; i < 4; i++) {
-      const p1_idx = i;
-      const p2_idx = (i + 1) % 4;
-      const p1 = outlinePoints[p1_idx];
-      const p2 = outlinePoints[p2_idx];
-      const vIndex = vertices.length / 3;
-
-      vertices.push(p1.x, p1.y, zPos, p2.x, p2.y, zPos);
-      vertices.push(p1.x, p1.y, -zPos, p2.x, p2.y, -zPos);
-
-      // Hitung normal samping secara matematis (tegak lurus dari vektor tepian)
-      const edgeVec = { x: p2.x - p1.x, y: p2.y - p1.y };
-      let sideNormal = [edgeVec.y, -edgeVec.x, 0];
-      const len = Math.hypot(sideNormal[0], sideNormal[1]);
-      if (len > 0.0001) {
-        sideNormal[0] /= len;
-        sideNormal[1] /= len;
-      }
-      for (let j = 0; j < 4; j++) normals.push(...sideNormal);
-
-      indices.push(vIndex, vIndex + 2, vIndex + 1);
-      indices.push(vIndex + 1, vIndex + 2, vIndex + 3);
-    }
-
-    return {
-      vertices: new Float32Array(vertices),
-      normals: new Float32Array(normals),
-      indices: new Uint16Array(indices),
-    };
-  },
-
-  createCylinder: function (radius = 1, height = 2, radialSegments = 32) {
     const vertices = [];
     const normals = [];
     const indices = [];
     const halfHeight = height / 2;
 
-    const sideVertices = [];
-    const topCapVertices = [0, halfHeight, 0];
-    const bottomCapVertices = [0, -halfHeight, 0];
+    for (let i = 0; i <= heightSegments; i++) {
+      const v = i / heightSegments;
+      const y = -halfHeight + v * height;
 
-    // Buat vertices untuk sisi, tutup atas, dan tutup bawah
-    for (let i = 0; i <= radialSegments; i++) {
-      const theta = (i * 2 * Math.PI) / radialSegments;
-      const x = radius * Math.cos(theta);
-      const z = radius * Math.sin(theta);
+      // Fungsi hyperboloid: r(y) menggunakan hyperbolic curve
+      const t = y / halfHeight; // -1 to 1
+      const radius =
+        waistRadius *
+        Math.sqrt(1 + t * t * ((radiusTop / waistRadius) ** 2 - 1));
 
-      // Sisi
-      vertices.push(x, halfHeight, z);
-      normals.push(x / radius, 0, z / radius);
-      vertices.push(x, -halfHeight, z);
-      normals.push(x / radius, 0, z / radius);
+      for (let j = 0; j <= radialSegments; j++) {
+        const theta = (j * 2 * Math.PI) / radialSegments;
+        const x = radius * Math.cos(theta);
+        const z = radius * Math.sin(theta);
 
-      // Tutup Atas
-      vertices.push(x, halfHeight, z);
-      normals.push(0, 1, 0);
+        vertices.push(x, y, z);
 
-      // Tutup Bawah
-      vertices.push(x, -halfHeight, z);
-      normals.push(0, -1, 0);
+        // Normal dihitung dari derivative hyperboloid
+        const dr_dy =
+          (t * (radiusTop ** 2 - waistRadius ** 2)) / (halfHeight * radius);
+        const nx = Math.cos(theta);
+        const ny = -dr_dy;
+        const nz = Math.sin(theta);
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+        normals.push(nx / len, ny / len, nz / len);
+      }
     }
 
-    // Titik pusat tutup
-    const topCenterIndex = vertices.length / 3;
-    vertices.push(0, halfHeight, 0);
-    normals.push(0, 1, 0);
+    for (let i = 0; i < heightSegments; i++) {
+      for (let j = 0; j < radialSegments; j++) {
+        const a = i * (radialSegments + 1) + j;
+        const b = a + radialSegments + 1;
 
-    const bottomCenterIndex = vertices.length / 3;
-    vertices.push(0, -halfHeight, 0);
-    normals.push(0, -1, 0);
-
-    // Buat indices
-    let sideOffset = 0;
-    let topOffset = radialSegments * 2 + 2;
-    let bottomOffset = topOffset + radialSegments + 1;
-
-    for (let i = 0; i < radialSegments; i++) {
-      // Sisi
-      const a = sideOffset + i * 2;
-      const b = a + 1;
-      const c = a + 2;
-      const d = a + 3;
-      indices.push(a, b, c);
-      indices.push(b, d, c);
-
-      // Tutup Atas
-      indices.push(topCenterIndex, topOffset + i, topOffset + i + 1);
-
-      // Tutup Bawah
-      indices.push(bottomCenterIndex, bottomOffset + i + 1, bottomOffset + i);
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
     }
 
     return {
@@ -343,86 +269,298 @@ const Primitives = {
     };
   },
 
-  createTriangularPrism: function (baseWidth, height, depth) {
-    const halfBaseW = baseWidth / 2;
-    const halfH = height / 2;
-    const halfD = depth / 2;
+  /**
+   * Capsule - untuk lengan/kaki yang smooth (cylinder + hemisphere caps)
+   */
+  createCapsule: function (radius = 1, cylinderHeight = 2, segments = 32) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const halfHeight = cylinderHeight / 2;
 
-    // Definisikan 6 titik sudut unik dari prisma segitiga
-    const p = [
-      // Muka depan (sumbu Z positif)
-      [-halfBaseW, -halfH, halfD], // 0: Kiri Bawah
-      [halfBaseW, -halfH, halfD], // 1: Kanan Bawah
-      [0.0, halfH, halfD], // 2: Atas Tengah
+    // Bagian cylinder tengah
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i * 2 * Math.PI) / segments;
+      const x = radius * Math.cos(theta);
+      const z = radius * Math.sin(theta);
 
-      // Muka belakang (sumbu Z negatif)
-      [-halfBaseW, -halfH, -halfD], // 3: Kiri Bawah
-      [halfBaseW, -halfH, -halfD], // 4: Kanan Bawah
-      [0.0, halfH, -halfD], // 5: Atas Tengah
-    ];
+      vertices.push(x, halfHeight, z);
+      normals.push(x / radius, 0, z / radius);
+      vertices.push(x, -halfHeight, z);
+      normals.push(x / radius, 0, z / radius);
+    }
 
+    // Hemisphere atas
+    const topHemisphereStart = vertices.length / 3;
+    for (let lat = 0; lat <= segments / 2; lat++) {
+      const theta = (lat * Math.PI) / segments;
+      const sinTheta = Math.sin(theta);
+      const cosTheta = Math.cos(theta);
+
+      for (let lon = 0; lon <= segments; lon++) {
+        const phi = (lon * 2 * Math.PI) / segments;
+        const x = radius * Math.cos(phi) * sinTheta;
+        const y = halfHeight + radius * cosTheta;
+        const z = radius * Math.sin(phi) * sinTheta;
+
+        vertices.push(x, y, z);
+        const nx = x / radius;
+        const ny = cosTheta;
+        const nz = z / radius;
+        normals.push(nx, ny, nz);
+      }
+    }
+
+    // Hemisphere bawah
+    const bottomHemisphereStart = vertices.length / 3;
+    for (let lat = segments / 2; lat <= segments; lat++) {
+      const theta = (lat * Math.PI) / segments;
+      const sinTheta = Math.sin(theta);
+      const cosTheta = Math.cos(theta);
+
+      for (let lon = 0; lon <= segments; lon++) {
+        const phi = (lon * 2 * Math.PI) / segments;
+        const x = radius * Math.cos(phi) * sinTheta;
+        const y = -halfHeight + radius * cosTheta;
+        const z = radius * Math.sin(phi) * sinTheta;
+
+        vertices.push(x, y, z);
+        const nx = x / radius;
+        const ny = cosTheta;
+        const nz = z / radius;
+        normals.push(nx, ny, nz);
+      }
+    }
+
+    // Indices untuk cylinder
+    for (let i = 0; i < segments; i++) {
+      const a = i * 2;
+      const b = a + 1;
+      const c = a + 2;
+      const d = a + 3;
+      indices.push(a, b, c);
+      indices.push(b, d, c);
+    }
+
+    // Indices untuk top hemisphere
+    for (let lat = 0; lat < segments / 2; lat++) {
+      for (let lon = 0; lon < segments; lon++) {
+        const a = topHemisphereStart + lat * (segments + 1) + lon;
+        const b = a + segments + 1;
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
+    }
+
+    // Indices untuk bottom hemisphere
+    for (let lat = 0; lat < segments / 2; lat++) {
+      for (let lon = 0; lon < segments; lon++) {
+        const a = bottomHemisphereStart + lat * (segments + 1) + lon;
+        const b = a + segments + 1;
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  /**
+   * Wedge/Prism - untuk ekor spike
+   */
+  createWedge: function (width = 1, height = 1, depth = 1) {
     const vertices = [];
     const normals = [];
     const indices = [];
 
-    // Muka depan segitiga
-    vertices.push(...p[0], ...p[1], ...p[2]);
-    normals.push(0, 0, 1, 0, 0, 1, 0, 0, 1); // Normal menghadap ke depan
+    const w = width / 2;
+    const h = height / 2;
+    const d = depth / 2;
+
+    // 6 vertices untuk wedge
+    const verts = [
+      [-w, -h, d], // 0: front left bottom
+      [w, -h, d], // 1: front right bottom
+      [0, h, d], // 2: front top
+      [-w, -h, -d], // 3: back left bottom
+      [w, -h, -d], // 4: back right bottom
+      [0, h, -d], // 5: back top
+    ];
+
+    // Front triangle
+    vertices.push(...verts[0], ...verts[1], ...verts[2]);
+    normals.push(0, 0, 1, 0, 0, 1, 0, 0, 1);
     indices.push(0, 1, 2);
 
-    // Muka belakang segitiga
-    vertices.push(...p[3], ...p[5], ...p[4]); // Urutan dibalik agar normal menghadap ke belakang
+    // Back triangle
+    vertices.push(...verts[3], ...verts[5], ...verts[4]);
     normals.push(0, 0, -1, 0, 0, -1, 0, 0, -1);
-    indices.push(3, 4, 5); // Sesuaikan indeks karena ini set vertex baru
+    indices.push(3, 4, 5);
 
-    // Sisi Bawah (persegi panjang)
-    vertices.push(...p[0], ...p[3], ...p[4], ...p[1]);
+    // Bottom rectangle
+    vertices.push(...verts[0], ...verts[3], ...verts[4], ...verts[1]);
     normals.push(0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0);
     indices.push(6, 7, 8, 6, 8, 9);
 
-    // Sisi Kiri Miring (persegi panjang)
-    // Hitung normal sisi miring: cross product dari dua vektor di sisi
-    const v0 = [p[0][0], p[0][1], p[0][2]];
-    const v2 = [p[2][0], p[2][1], p[2][2]];
-    const v3 = [p[3][0], p[3][1], p[3][2]];
-
-    const vec1_left = [v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]]; // Vektor dari p0 ke p2
-    const vec2_left = [v3[0] - v0[0], v3[1] - v0[1], v3[2] - v0[2]]; // Vektor dari p0 ke p3
-    const normalLeft = [
-      vec1_left[1] * vec2_left[2] - vec1_left[2] * vec2_left[1],
-      vec1_left[2] * vec2_left[0] - vec1_left[0] * vec2_left[2],
-      vec1_left[0] * vec2_left[1] - vec1_left[1] * vec2_left[0],
-    ];
-    const lenLeft = Math.hypot(...normalLeft);
-    if (lenLeft > 0)
-      normalLeft.forEach((val, i) => (normalLeft[i] = val / lenLeft));
-
-    vertices.push(...p[0], ...p[3], ...p[5], ...p[2]);
-    normals.push(...normalLeft, ...normalLeft, ...normalLeft, ...normalLeft);
+    // Left slope
+    const leftNorm = this._calculateNormal(verts[0], verts[2], verts[3]);
+    vertices.push(...verts[0], ...verts[3], ...verts[5], ...verts[2]);
+    normals.push(...leftNorm, ...leftNorm, ...leftNorm, ...leftNorm);
     indices.push(10, 11, 12, 10, 12, 13);
 
-    // Sisi Kanan Miring (persegi panjang)
-    const v1 = [p[1][0], p[1][1], p[1][2]];
-    const v4 = [p[4][0], p[4][1], p[4][2]];
+    // Right slope
+    const rightNorm = this._calculateNormal(verts[1], verts[4], verts[2]);
+    vertices.push(...verts[1], ...verts[2], ...verts[5], ...verts[4]);
+    normals.push(...rightNorm, ...rightNorm, ...rightNorm, ...rightNorm);
+    indices.push(14, 15, 16, 14, 16, 17);
 
-    const vec1_right = [v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]]; // Vektor dari p1 ke p2
-    const vec2_right = [v4[0] - v1[0], v4[1] - v1[1], v4[2] - v1[2]]; // Vektor dari p1 ke p4
-    const normalRight = [
-      vec1_right[1] * vec2_right[2] - vec1_right[2] * vec2_right[1],
-      vec1_right[2] * vec2_right[0] - vec1_right[0] * vec2_right[2],
-      vec1_right[0] * vec2_right[1] - vec1_right[1] * vec2_right[0],
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  /**
+   * Torus - untuk joints yang smooth (opsional, nice to have)
+   */
+  createTorus: function (
+    majorRadius = 1,
+    minorRadius = 0.3,
+    majorSegments = 32,
+    minorSegments = 16
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    for (let i = 0; i <= majorSegments; i++) {
+      const u = (i * 2 * Math.PI) / majorSegments;
+      const cosU = Math.cos(u);
+      const sinU = Math.sin(u);
+
+      for (let j = 0; j <= minorSegments; j++) {
+        const v = (j * 2 * Math.PI) / minorSegments;
+        const cosV = Math.cos(v);
+        const sinV = Math.sin(v);
+
+        const x = (majorRadius + minorRadius * cosV) * cosU;
+        const y = minorRadius * sinV;
+        const z = (majorRadius + minorRadius * cosV) * sinU;
+
+        vertices.push(x, y, z);
+
+        const centerX = majorRadius * cosU;
+        const centerZ = majorRadius * sinU;
+        const nx = x - centerX;
+        const ny = y;
+        const nz = z - centerZ;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+        normals.push(nx / len, ny / len, nz / len);
+      }
+    }
+
+    for (let i = 0; i < majorSegments; i++) {
+      for (let j = 0; j < minorSegments; j++) {
+        const a = i * (minorSegments + 1) + j;
+        const b = a + minorSegments + 1;
+
+        indices.push(a, b, a + 1);
+        indices.push(b, b + 1, a + 1);
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  /**
+   * Helper: Calculate normal dari 3 titik
+   */
+  _calculateNormal: function (p1, p2, p3) {
+    const v1 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+    const v2 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
+
+    const normal = [
+      v1[1] * v2[2] - v1[2] * v2[1],
+      v1[2] * v2[0] - v1[0] * v2[2],
+      v1[0] * v2[1] - v1[1] * v2[0],
     ];
-    const lenRight = Math.hypot(...normalRight);
-    if (lenRight > 0)
-      normalRight.forEach((val, i) => (normalRight[i] = val / lenRight));
 
-    vertices.push(...p[1], ...p[4], ...p[5], ...p[2]);
+    const len = Math.sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2);
+    return len > 0
+      ? [normal[0] / len, normal[1] / len, normal[2] / len]
+      : [0, 1, 0];
+  },
+
+  /**
+   * Triangular Prism - prisma segitiga
+   * @param {number} baseWidth - lebar base segitiga
+   * @param {number} height - tinggi segitiga (dari base ke apex)
+   * @param {number} depth - tebal prisma (extrude depth)
+   */
+  createTriangularPrism: function (baseWidth = 1, height = 1, depth = 1) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    const halfW = baseWidth / 2;
+    const halfD = depth / 2;
+
+    // 6 vertices prisma segitiga
+    const p = [
+      // Front face (Z+)
+      [-halfW, 0, halfD], // 0: base left
+      [halfW, 0, halfD], // 1: base right
+      [0, height, halfD], // 2: apex (puncak)
+
+      // Back face (Z-)
+      [-halfW, 0, -halfD], // 3: base left
+      [halfW, 0, -halfD], // 4: base right
+      [0, height, -halfD], // 5: apex (puncak)
+    ];
+
+    // Front triangle face
+    vertices.push(...p[0], ...p[1], ...p[2]);
+    const frontNormal = [0, 0, 1];
+    normals.push(...frontNormal, ...frontNormal, ...frontNormal);
+    indices.push(0, 1, 2);
+
+    // Back triangle face
+    vertices.push(...p[3], ...p[5], ...p[4]);
+    const backNormal = [0, 0, -1];
+    normals.push(...backNormal, ...backNormal, ...backNormal);
+    indices.push(3, 4, 5);
+
+    // Bottom rectangle (base)
+    vertices.push(...p[0], ...p[3], ...p[4], ...p[1]);
+    const bottomNormal = [0, -1, 0];
     normals.push(
-      ...normalRight,
-      ...normalRight,
-      ...normalRight,
-      ...normalRight
+      ...bottomNormal,
+      ...bottomNormal,
+      ...bottomNormal,
+      ...bottomNormal
     );
+    indices.push(6, 7, 8, 6, 8, 9);
+
+    // Left slope
+    const leftNorm = this._calculateNormal(p[0], p[2], p[3]);
+    vertices.push(...p[0], ...p[3], ...p[5], ...p[2]);
+    normals.push(...leftNorm, ...leftNorm, ...leftNorm, ...leftNorm);
+    indices.push(10, 11, 12, 10, 12, 13);
+
+    // Right slope
+    const rightNorm = this._calculateNormal(p[1], p[4], p[2]);
+    vertices.push(...p[1], ...p[2], ...p[5], ...p[4]);
+    normals.push(...rightNorm, ...rightNorm, ...rightNorm, ...rightNorm);
     indices.push(14, 15, 16, 14, 16, 17);
 
     return {
