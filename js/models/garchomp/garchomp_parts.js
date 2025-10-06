@@ -304,10 +304,10 @@ function createGarchompHead(gl) {
   );
   headRoot.addChild(eyePupilRight);
 
-  // === PENGHUBUNG MULUT KE CONE (Gusi/Rahang) ===
+  //   === PENGHUBUNG MULUT KE CONE (Gusi/Rahang) ===
   const jawConnectorMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(1, 0.3, 0.7, 16, 16)
+    Primitives.createEllipsoid(0.8, 0.3, 0.5, 16, 16)
   );
   const jawConnector = new SceneNode(jawConnectorMesh, cfg.colors.black);
   mat4.translate(
@@ -330,7 +330,7 @@ function createGarchompHead(gl) {
   mat4.translate(
     toothLeft1.localTransform,
     toothLeft1.localTransform,
-    [-0.3, -0.5, -0.35] // Posisi di kiri jaw
+    [-0.3, -0.9, 0] // Posisi di kiri jaw
   );
   mat4.rotate(
     toothLeft1.localTransform,
@@ -345,7 +345,7 @@ function createGarchompHead(gl) {
   mat4.translate(
     toothLeft2.localTransform,
     toothLeft2.localTransform,
-    [-0.45, -0.55, -0.25]
+    [-0.55, -0.9, 0.15]
   );
   mat4.rotate(
     toothLeft2.localTransform,
@@ -360,7 +360,7 @@ function createGarchompHead(gl) {
   mat4.translate(
     toothRight1.localTransform,
     toothRight1.localTransform,
-    [0.4, -0.5, -0.35]
+    [0.3, -0.9, 0]
   );
   mat4.rotate(
     toothRight1.localTransform,
@@ -375,7 +375,7 @@ function createGarchompHead(gl) {
   mat4.translate(
     toothRight2.localTransform,
     toothRight2.localTransform,
-    [0.55, -0.55, -0.25]
+    [0.55, -0.9, 0.15]
   );
   mat4.rotate(
     toothRight2.localTransform,
@@ -388,9 +388,9 @@ function createGarchompHead(gl) {
   /// === MULUT - Cylinder seperti neck (tidak dirotasi) ===
   const mouthBaseMesh = new Mesh(
     gl,
-    Primitives.createCylinder(0.8, 0.8, 40) // Sama seperti neck
+    Primitives.createCylinder(0.8, 0.4, 40) // Sama seperti neck
   );
-  const mouthBase = new SceneNode(mouthBaseMesh, cfg.colors.red);
+  const mouthBase = new SceneNode(mouthBaseMesh, cfg.colors.darkBlue);
   mat4.translate(
     mouthBase.localTransform,
     mouthBase.localTransform,
@@ -429,31 +429,16 @@ function createGarchompNeck(gl) {
   mat4.scale(neckNode.localTransform, neckNode.localTransform, [1.4, 1.8, 0.6]);
   neckRoot.addChild(neckNode);
 
-  // Cylinder transisi merah
-  const transitionMesh = new Mesh(gl, Primitives.createCylinder(0.8, 0.5, 20));
-  const transition = new SceneNode(transitionMesh, cfg.colors.red);
-  mat4.translate(
-    transition.localTransform,
-    transition.localTransform,
-    [0, -1.0, 0.5]
-  );
-  mat4.scale(
-    transition.localTransform,
-    transition.localTransform,
-    [1.0, 0.3, 0.8]
-  );
-  neckRoot.addChild(transition);
-
   // === PENGHUBUNG ANTARA NECK 1 DAN NECK 2 ===
   const neckConnectorMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(1.1, 0.5, 0.5, 32, 32)
+    Primitives.createEllipsoid(1.1, 0.4, 0.4, 32, 32)
   );
-  const neckConnector = new SceneNode(neckConnectorMesh, cfg.colors.darkBlue);
+  const neckConnector = new SceneNode(neckConnectorMesh, cfg.colors.black);
   mat4.translate(
     neckConnector.localTransform,
     neckConnector.localTransform,
-    [0, -1.3, 1.85] // Posisi di antara neck1 dan neck2
+    [0, -1.3, 1.95] // Posisi di antara neck1 dan neck2
   );
   mat4.rotate(
     neckConnector.localTransform,
@@ -479,19 +464,19 @@ function createGarchompNeck(gl) {
   mat4.scale(
     neckNode2.localTransform,
     neckNode2.localTransform,
-    [1.4, 2.8, 0.6]
+    [1.4, 2.2, 0.6]
   );
   neckRoot.addChild(neckNode2);
 
   const hbConnectorMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(0.75, 0.7, 0.7, 32, 32)
+    Primitives.createEllipsoid(0.6, 0.9, 0.7, 32, 32)
   );
-  const hbConnector = new SceneNode(hbConnectorMesh, cfg.colors.red);
+  const hbConnector = new SceneNode(hbConnectorMesh, cfg.colors.black);
   mat4.translate(
     hbConnector.localTransform,
     hbConnector.localTransform,
-    [0, -1.3, 0.6] // Posisi di antara neck1 dan neck2
+    [0, -1.3, 0.7]
   );
   mat4.rotate(
     hbConnector.localTransform,
@@ -516,7 +501,7 @@ function createGarchompNeck(gl) {
   mat4.translate(
     hyperboloid.localTransform,
     hyperboloid.localTransform,
-    [0, -2.3, 1] // Ubah dari [5, -2.3, 0.5] ke posisi yang benar
+    [0, -2.0, 1] // Ubah dari [5, -2.3, 0.5] ke posisi yang benar
   );
   mat4.rotate(
     hyperboloid.localTransform,
