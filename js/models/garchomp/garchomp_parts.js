@@ -432,18 +432,18 @@ function createGarchompNeck(gl) {
   // === PENGHUBUNG ANTARA NECK 1 DAN NECK 2 ===
   const neckConnectorMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(1.1, 0.4, 0.4, 32, 32)
+    Primitives.createEllipsoid(1.05, 0.1, 0.3, 32, 32)
   );
   const neckConnector = new SceneNode(neckConnectorMesh, cfg.colors.black);
   mat4.translate(
     neckConnector.localTransform,
     neckConnector.localTransform,
-    [0, -1.3, 1.95] // Posisi di antara neck1 dan neck2
+    [0, 0.05, 0.9] // Posisi di antara neck1 dan neck2
   );
   mat4.rotate(
     neckConnector.localTransform,
     neckConnector.localTransform,
-    Math.PI / 8,
+    Math.PI / 6,
     [1, 0, 0]
   );
   neckRoot.addChild(neckConnector);
@@ -453,7 +453,7 @@ function createGarchompNeck(gl) {
   mat4.translate(
     neckNode2.localTransform,
     neckNode2.localTransform,
-    [0, -1.9, 2.1]
+    [0, -1.85, 2.0]
   );
   mat4.rotate(
     neckNode2.localTransform,
@@ -513,4 +513,83 @@ function createGarchompNeck(gl) {
   neckRoot.addChild(hyperboloid);
 
   return neckRoot;
+}
+
+function createGarchompBody(gl) {
+  const cfg = GarchompAnatomy;
+  const bodyRoot = new SceneNode();
+
+  // TORSO - Hyperboloid untuk bentuk dada yang natural
+  const torsoMesh = new Mesh(
+    gl,
+    Primitives.createHyperboloid(
+      1.2, // radiusTop (lebar bahu)
+      0.9, // radiusBottom (lebar pinggul)
+      0.7, // waistRadius (pinggang tersempit)
+      2.5, // height (tinggi torso)
+      32 // segments
+    )
+  );
+  const torso = new SceneNode(torsoMesh, cfg.colors.red);
+  mat4.translate(
+    torso.localTransform,
+    torso.localTransform,
+    [0, -4.6, 1.8] // Posisi di bawah leher
+  );
+  bodyRoot.addChild(torso);
+
+  // CYLINDER BELAKANG - Menutupi bagian belakang torso
+  const backCylinderMesh = new Mesh(
+    gl,
+    Primitives.createCylinder(0.8, 1.8, 16) // Radius sesuai torso, height sama
+  );
+  const backCylinder = new SceneNode(backCylinderMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    backCylinder.localTransform,
+    backCylinder.localTransform,
+    [0, -4.7, 2.6] // Posisi sama Y, tapi Z lebih ke belakang
+  );
+  mat4.scale(
+    backCylinder.localTransform,
+    backCylinder.localTransform,
+    [1.4, 2.2, 0.6]
+  );
+  mat4.rotate(
+    backCylinder.localTransform,
+    backCylinder.localTransform,
+    -Math.PI / 10,
+    [1, 0, 0]
+  );
+
+  bodyRoot.addChild(backCylinder);
+
+  const finMesh = new Mesh(
+    gl,
+    Curves.createSharkFin(1.5, 4, 3) // BaseWidth, Height, Depth
+  );
+
+  const backFin = new SceneNode(finMesh, cfg.colors.darkBlue);
+
+  mat4.translate(
+    backFin.localTransform,
+    backFin.localTransform,
+    [0, -3.4, 3.2]
+  );
+
+  mat4.rotate(
+    backFin.localTransform,
+    backFin.localTransform,
+    Math.PI / 2, // Sedikit rotasi ke belakang
+    [0, 1, 1]
+  );
+  //   mat4.rotate(
+  //     backFin.localTransform,
+  //     backFin.localTransform,
+  //     -Math.PI / 13, // Sedikit rotasi ke belakang
+  //     [1, 0, 0]
+  //   );
+
+  bodyRoot.addChild(backFin);
+
+  return bodyRoot;
 }

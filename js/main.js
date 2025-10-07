@@ -67,7 +67,7 @@ function main() {
     100.0
   );
 
-  const cameraPosition = [0, 1, 12];
+  const cameraPosition = [0, 10, 25];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 

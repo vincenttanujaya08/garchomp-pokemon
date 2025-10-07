@@ -2,13 +2,12 @@ function createGarchomp(gl) {
   const root = new SceneNode();
   const neck = createGarchompNeck(gl);
   const head = createGarchompHead(gl);
+  const body = createGarchompBody(gl);
 
-  // Hierarchy: root -> neck -> head
-  root.addChild(neck);
-  root.addChild(head);
-
-  // Posisi kepala di atas leher
-  mat4.translate(head.localTransform, head.localTransform, [0, 0, 0]);
+  // Hierarchy: root -> body -> neck -> head
+  root.addChild(body);
+  body.addChild(neck);
+  neck.addChild(head);
 
   return root;
 }
