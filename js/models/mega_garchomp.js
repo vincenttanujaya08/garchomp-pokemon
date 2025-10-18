@@ -153,7 +153,7 @@ function createMegaGarchompTorso(gl) {
 
   // --- MESHES ---
 
-  // 1. Torso Parts (Reverted to original, taller proportions)
+  // 1. Torso Parts (Sesuai pengaturan Anda sebelumnya)
   const upperBodyMesh = new Mesh(
     gl,
     Primitives.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
@@ -163,27 +163,16 @@ function createMegaGarchompTorso(gl) {
     Primitives.createEllipsoid(0.84, 1.0, 0.73, 32, 32)
   );
 
-  // 2. Shoulder Cones (Triangular Extrusions)
-  const leftShoulderShape = [
-    [0, 0, 0],
-    [-1.5, 0, 0],
-    [0, 1, 0],
-  ];
-  const rightShoulderShape = [
-    [0, 0, 0],
-    [0, 1, 0],
-    [1.5, 0, 0],
-  ];
-  const leftShoulderMesh = new Mesh(
-    gl,
-    Primitives.createExtrudedShape(leftShoulderShape, 0.6)
-  );
-  const rightShoulderMesh = new Mesh(
-    gl,
-    Primitives.createExtrudedShape(rightShoulderShape, 0.6)
-  );
+  // 2. Bahu Elliptic Paraboloid (BARU)
+  const shoulderMesh = new Mesh(gl, Primitives.createEllipticParaboloid(
+    0.8, // Lebar
+    0.7, // Kedalaman
+    1.5, // Ketinggian (panjang duri)
+    16   // Segmen
+  ));
 
-  // 3. Hyperboloid Connector
+
+  // 3. Hyperboloid Connector (Sesuai pengaturan Anda sebelumnya)
   const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(
       0.6, // radiusX at waist
       0.5, // radiusZ at waist
@@ -197,9 +186,9 @@ function createMegaGarchompTorso(gl) {
   const torsoRoot = new SceneNode(null); // Root node for the entire torso
 
   const upperBodyNode = new SceneNode(upperBodyMesh, darkBlue);
-  const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue);
-  const leftShoulderNode = new SceneNode(leftShoulderMesh, yellow);
-  const rightShoulderNode = new SceneNode(rightShoulderMesh, yellow);
+  const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue); // Warna dikembalikan
+  const leftShoulderNode = new SceneNode(shoulderMesh, darkBlue); // Menggunakan mesh bahu baru
+  const rightShoulderNode = new SceneNode(shoulderMesh, darkBlue); // Menggunakan mesh bahu baru
   const connectorNode = new SceneNode(connectorMesh, darkBlue);
 
 
@@ -213,7 +202,7 @@ function createMegaGarchompTorso(gl) {
 
   // --- TRANSFORMATIONS ---
 
-  // Position the main body parts
+  // Posisikan bagian tubuh utama (Sesuai pengaturan Anda sebelumnya)
   mat4.translate(upperBodyNode.localTransform, upperBodyNode.localTransform, [
     0, 0.5, 0,
   ]);
@@ -221,39 +210,27 @@ function createMegaGarchompTorso(gl) {
     0, -1.6, 0,
   ]);
   
-  // Position the connector
+  // Posisikan konektor (Sesuai pengaturan Anda sebelumnya)
   mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [
       0, -0.6, 0
   ]);
   mat4.scale(connectorNode.localTransform, connectorNode.localTransform,[0.63, 0.3, 0.65] );
 
 
-  // Position and orient the shoulder cones
-  mat4.translate(
-    leftShoulderNode.localTransform,
-    leftShoulderNode.localTransform,
-    [-0.7, 1.0, -0.3]
-  );
-  mat4.rotate(
-    leftShoulderNode.localTransform,
-    leftShoulderNode.localTransform,
-    -Math.PI / 12,
-    [0, 1, 0]
-  ); 
-  mat4.scale(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [0.8, 0.8, 0.8]);
+  // Posisikan dan orientasikan bahu baru (BARU)
+  // Bahu Kiri
+  mat4.translate(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [-1.4, 1.36, 0]);
+  mat4.rotate(leftShoulderNode.localTransform, leftShoulderNode.localTransform, Math.PI / 2.2, [0, 0, -1]); // Arahkan ke samping
+  mat4.rotate(leftShoulderNode.localTransform, leftShoulderNode.localTransform, Math.PI / 8, [0, 1, -3]); // Miringkan sedikit ke belakang
+  mat4.scale(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [0.78, 0.8, 0.75]);
 
-  mat4.translate(
-    rightShoulderNode.localTransform,
-    rightShoulderNode.localTransform,
-    [0.7, 1.0, -0.3]
-  );
-  mat4.rotate(
-    rightShoulderNode.localTransform,
-    rightShoulderNode.localTransform,
-    Math.PI / 12,
-    [0, 1, 0]
-  );
-  mat4.scale(rightShoulderNode.localTransform, rightShoulderNode.localTransform, [0.8, 0.8, 0.8]);
+
+  // Bahu Kanan
+  mat4.translate(rightShoulderNode.localTransform, rightShoulderNode.localTransform, [1.4, 1.36, 0]);
+  mat4.rotate(rightShoulderNode.localTransform, rightShoulderNode.localTransform, -Math.PI / 2.2, [0, 0, -1]); // Arahkan ke samping (arah berlawanan)
+  mat4.rotate(rightShoulderNode.localTransform, rightShoulderNode.localTransform, -Math.PI / 8, [0, 1, -3]); // Miringkan sedikit ke belakang (arah berlawanan)
+  mat4.scale(rightShoulderNode.localTransform, rightShoulderNode.localTransform, [0.78, 0.8, 0.75]);
+
 
   return torsoRoot;
 }
