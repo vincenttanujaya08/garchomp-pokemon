@@ -685,5 +685,74 @@ createHyperboloidOneSheet: function (
     indices: new Uint16Array(indices),
   };
 },
+// FUNGSI BARU DITAMBAHKAN DI SINI
+createExtrudedShape: function (shapePoints, thickness) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const n = shapePoints.length;
+    const halfThickness = thickness / 2;
+
+    // --- Muka Atas (Y positif) ---
+    let offset = 0;
+    for (const p of shapePoints) {
+        // Poin didefinisikan di bidang XZ, diekstrusi sepanjang Y
+        vertices.push(p[0], halfThickness, p[2]); 
+        normals.push(0, 1, 0);
+    }
+    // Buat segitiga dari titik-titik muka atas
+    for (let i = 1; i < n - 1; i++) {
+        indices.push(offset, offset + i, offset + i + 1);
+    }
+
+    // --- Muka Bawah (Y negatif) ---
+    offset = n;
+    for (const p of shapePoints) {
+        vertices.push(p[0], -halfThickness, p[2]);
+        normals.push(0, -1, 0);
+    }
+    // Buat segitiga dengan urutan terbalik agar normalnya benar
+    for (let i = 1; i < n - 1; i++) {
+        indices.push(offset, offset + i + 1, offset + i);
+    }
+
+    // --- Dinding Samping ---
+    for (let i = 0; i < n; i++) {
+        const next = (i + 1) % n;
+        const p1 = shapePoints[i];
+        const p2 = shapePoints[next];
+
+        const v1 = [p1[0], halfThickness, p1[2]];
+        const v2 = [p1[0], -halfThickness, p1[2]];
+        const v3 = [p2[0], halfThickness, p2[2]];
+        const v4 = [p2[0], -halfThickness, p2[2]];
+        
+        const currentOffset = 2 * n + i * 4;
+        vertices.push(...v1, ...v2, ...v3, ...v4);
+
+        // Hitung normal untuk dinding samping
+        const edge = [p2[0] - p1[0], 0, p2[2] - p1[2]];
+        const normal = [-edge[2], 0, edge[0]]; // Vektor tegak lurus di bidang XZ
+        const len = Math.hypot(normal[0], normal[2]);
+        if (len > 0) {
+            normal[0] /= len;
+            normal[2] /= len;
+        }
+
+        normals.push(...normal, ...normal, ...normal, ...normal);
+
+        // Buat dua segitiga untuk dinding persegi panjang
+        indices.push(currentOffset, currentOffset + 1, currentOffset + 2);
+        indices.push(currentOffset + 2, currentOffset + 1, currentOffset + 3);
+    }
+
+    return {
+        vertices: new Float32Array(vertices),
+        normals: new Float32Array(normals),
+        indices: new Uint16Array(indices),
+    };
+},
+
 };
+
 
