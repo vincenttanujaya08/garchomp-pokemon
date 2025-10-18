@@ -607,20 +607,83 @@ const Primitives = {
         v1[0] * v2[1] - v1[1] * v2[0],
       ];
       const len = Math.hypot(...normal);
-      if (len > 0) normal.forEach((val, idx) => (normal[idx] = val / len));
+    if (len > 0) normal.forEach((val, idx) => (normal[idx] = val / len));
 
-      offset = vertices.length / 3;
-      vertices.push(...p1, ...p2, ...p3, ...p4);
-      normals.push(...normal, ...normal, ...normal, ...normal);
+    offset = vertices.length / 3;
+    vertices.push(...p1, ...p2, ...p3, ...p4);
+    normals.push(...normal, ...normal, ...normal, ...normal);
 
-      indices.push(offset, offset + 1, offset + 2);
-      indices.push(offset + 2, offset + 1, offset + 3);
+    indices.push(offset, offset + 1, offset + 2);
+    indices.push(offset + 2, offset + 1, offset + 3);
+  }
+
+  return {
+    vertices: new Float32Array(vertices),
+    normals: new Float32Array(normals),
+    indices: new Uint16Array(indices),
+  };
+},
+
+createHyperboloidOneSheet: function (
+  radiusX = 1,
+  radiusZ = 1,
+  pinchY = 1,
+  height = 2,
+  latitudeBands = 30,
+  longitudeBands = 30
+) {
+  const vertices = [];
+  const normals = [];
+  const indices = [];
+
+  for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+    const v = -1 + (latNumber / latitudeBands) * 2; // v ranges from -1 to 1
+    const y = (v * height) / 2;
+
+    // Calculate the radius at this height 'y' based on the hyperboloid equation
+    // x^2/a^2 + z^2/b^2 = 1 + y^2/c^2
+    const radiusScale = Math.sqrt(1 + (y * y) / (pinchY * pinchY));
+
+    for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+      const u = (longNumber / longitudeBands) * 2 * Math.PI;
+      const cosU = Math.cos(u);
+      const sinU = Math.sin(u);
+
+      const x = radiusX * radiusScale * cosU;
+      const z = radiusZ * radiusScale * sinU;
+      vertices.push(x, y, z);
+
+      // Normal vector is derived from the gradient of the implicit equation
+      // F(x,y,z) = x^2/a^2 + z^2/b^2 - y^2/c^2 - 1 = 0
+      // grad(F) = (2x/a^2, -2y/c^2, 2z/b^2)
+      const nx = x / (radiusX * radiusX);
+      const ny = -y / (pinchY * pinchY);
+      const nz = z / (radiusZ * radiusZ);
+
+      const len = Math.hypot(nx, ny, nz);
+      if (len > 0) {
+          normals.push(nx / len, ny / len, nz / len);
+      } else {
+          normals.push(0, 1, 0); // Fallback
+      }
     }
+  }
 
-    return {
-      vertices: new Float32Array(vertices),
-      normals: new Float32Array(normals),
-      indices: new Uint16Array(indices),
-    };
-  },
+  for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+    for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+      const first = latNumber * (longitudeBands + 1) + longNumber;
+      const second = first + longitudeBands + 1;
+
+      indices.push(first, second, first + 1);
+      indices.push(second, second + 1, first + 1);
+    }
+  }
+
+  return {
+    vertices: new Float32Array(vertices),
+    normals: new Float32Array(normals),
+    indices: new Uint16Array(indices),
+  };
+},
 };
+

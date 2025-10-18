@@ -146,20 +146,21 @@ function createMegaGarchompHead(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompTorso(gl) {
   // --- COLORS ---
-  const darkBlue = [0.11, 0.16, 0.34, 1.0];
+  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
   const yellow = [1.0, 0.84, 0.0, 1.0];
 
   // --- MESHES ---
 
-  // 1. Torso Parts
+  // 1. Torso Parts (Reverted to original, taller proportions)
   const upperBodyMesh = new Mesh(
     gl,
     Primitives.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
   );
   const lowerBodyMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(0.8, 1, 0.7, 32, 32)
+    Primitives.createEllipsoid(0.84, 1.0, 0.73, 32, 32)
   );
 
   // 2. Shoulder Cones (Triangular Extrusions)
@@ -182,65 +183,33 @@ function createMegaGarchompTorso(gl) {
     Primitives.createExtrudedShape(rightShoulderShape, 0.6)
   );
 
-  // 3. Connectors (Swept Surfaces)
-  const connectorProfile = [
-    [0.1, -0.2],
-    [0.1, 0.2],
-    [-0.1, 0.2],
-    [-0.1, -0.2],
-  ];
-  const createConnectorMesh = (path) =>
-    new Mesh(gl, Curves.createSweptSurface(connectorProfile, path, true));
+  // 3. Hyperboloid Connector
+  const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(
+      0.6, // radiusX at waist
+      0.5, // radiusZ at waist
+      0.8, // pinchY (controls curvature)
+      1.8, // height
+      32, 32
+  ));
 
-  const frontPath = [
-    [0, 0.2, 0.65],
-    [0, 0, 0.8],
-    [0, -0.3, 0.75],
-    [0, -0.6, 0.7],
-  ];
-  const backPath = [
-    [0, 0.2, -0.65],
-    [0, 0, -0.8],
-    [0, -0.3, -0.75],
-    [0, -0.6, -0.7],
-  ];
-  const leftSidePath = [
-    [-0.6, 0.2, 0],
-    [-0.7, 0, 0],
-    [-0.6, -0.6, 0],
-  ];
-  const rightSidePath = [
-    [0.6, 0.2, 0],
-    [0.7, 0, 0],
-    [0.6, -0.6, 0],
-  ];
-
-  const frontConnectorMesh = createConnectorMesh(frontPath);
-  const backConnectorMesh = createConnectorMesh(backPath);
-  const leftConnectorMesh = createConnectorMesh(leftSidePath);
-  const rightConnectorMesh = createConnectorMesh(rightSidePath);
 
   // --- SCENE NODES ---
   const torsoRoot = new SceneNode(null); // Root node for the entire torso
 
   const upperBodyNode = new SceneNode(upperBodyMesh, darkBlue);
-  const lowerBodyNode = new SceneNode(lowerBodyMesh, red);
+  const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue);
   const leftShoulderNode = new SceneNode(leftShoulderMesh, yellow);
   const rightShoulderNode = new SceneNode(rightShoulderMesh, yellow);
-  const frontConnectorNode = new SceneNode(frontConnectorMesh, darkBlue);
-  const backConnectorNode = new SceneNode(backConnectorMesh, darkBlue);
-  const leftConnectorNode = new SceneNode(leftConnectorMesh, darkBlue);
-  const rightConnectorNode = new SceneNode(rightConnectorMesh, darkBlue);
+  const connectorNode = new SceneNode(connectorMesh, darkBlue);
+
 
   // --- HIERARCHY ---
   torsoRoot.addChild(upperBodyNode);
   torsoRoot.addChild(lowerBodyNode);
   torsoRoot.addChild(leftShoulderNode);
   torsoRoot.addChild(rightShoulderNode);
-  torsoRoot.addChild(frontConnectorNode);
-  torsoRoot.addChild(backConnectorNode);
-  torsoRoot.addChild(leftConnectorNode);
-  torsoRoot.addChild(rightConnectorNode);
+  torsoRoot.addChild(connectorNode);
+
 
   // --- TRANSFORMATIONS ---
 
@@ -249,8 +218,15 @@ function createMegaGarchompTorso(gl) {
     0, 0.5, 0,
   ]);
   mat4.translate(lowerBodyNode.localTransform, lowerBodyNode.localTransform, [
-    0, -1.5, 0,
+    0, -1.6, 0,
   ]);
+  
+  // Position the connector
+  mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [
+      0, -0.6, 0
+  ]);
+  mat4.scale(connectorNode.localTransform, connectorNode.localTransform,[0.63, 0.3, 0.65] );
+
 
   // Position and orient the shoulder cones
   mat4.translate(
@@ -263,7 +239,7 @@ function createMegaGarchompTorso(gl) {
     leftShoulderNode.localTransform,
     -Math.PI / 12,
     [0, 1, 0]
-  ); // Slight rotation
+  ); 
   mat4.scale(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [0.8, 0.8, 0.8]);
 
   mat4.translate(
@@ -276,7 +252,7 @@ function createMegaGarchompTorso(gl) {
     rightShoulderNode.localTransform,
     Math.PI / 12,
     [0, 1, 0]
-  ); // Slight rotation
+  );
   mat4.scale(rightShoulderNode.localTransform, rightShoulderNode.localTransform, [0.8, 0.8, 0.8]);
 
   return torsoRoot;
@@ -296,3 +272,4 @@ function createMegaGarchomp(gl) {
 
   return torso;
 }
+
