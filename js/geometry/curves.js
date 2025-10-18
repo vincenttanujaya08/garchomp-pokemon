@@ -79,7 +79,9 @@ const Curves = {
         vertices.push(...pos);
 
         // Normalnya adalah vektor dari pusat jalur ke titik pada profil
-        const normal = vec3.normalize(vec3.subtract(pos, currentPoint));
+        const normal = vec3.normalize(
+          vec3.subtract(pos, currentPoint)
+        );
         normals.push(...normal);
       }
     }

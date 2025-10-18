@@ -46,7 +46,10 @@ function main() {
       vertexNormal: gl.getAttribLocation(shaderProgram, "a_normal"),
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shaderProgram, "u_projectionMatrix"),
+      projectionMatrix: gl.getUniformLocation(
+        shaderProgram,
+        "u_projectionMatrix"
+      ),
       viewMatrix: gl.getUniformLocation(shaderProgram, "u_viewMatrix"),
       modelMatrix: gl.getUniformLocation(shaderProgram, "u_modelMatrix"),
       normalMatrix: gl.getUniformLocation(shaderProgram, "u_normalMatrix"),
@@ -59,10 +62,10 @@ function main() {
   const drawSkybox = setupSkybox(gl);
   // const garchompNode = createGarchomp(gl);
   const garchompNode = createMegaGarchomp(gl);
-  // const islandNode = createIsland(gl); 
+  // const islandNode = createIsland(gl);
 
   const projectionMatrix = mat4.create();
-  const cameraPosition = [0, 1, 20];
+  const cameraPosition = [0, 1, 5];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
@@ -70,7 +73,7 @@ function main() {
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     }
-    
+
     mat4.perspective(
       projectionMatrix,
       (45 * Math.PI) / 180,
@@ -89,7 +92,6 @@ function main() {
 
     // 1. Gambar skybox dengan rotasi otomatisnya
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
-    
 
     // 2. Gambar Garchomp dengan rotasi dari mouse
     drawScene(
@@ -103,18 +105,18 @@ function main() {
     );
 
     // drawScene(
-    //   gl, 
-    //   programInfo, 
+    //   gl,
+    //   programInfo,
     //   islandNode,
-    //   projectionMatrix, 
-    //   viewMatrix, 
-    //   modelRotationMatrix, 
+    //   projectionMatrix,
+    //   viewMatrix,
+    //   modelRotationMatrix,
     //   cameraPosition
     // );
 
     requestAnimationFrame(render);
   }
-  
+
   requestAnimationFrame(render);
 }
 

@@ -432,12 +432,45 @@ const Primitives = {
     };
   },
   // GANTI SELURUH FUNGSI createExtrudedShape DENGAN VERSI BARU INI
-  createExtrudedShape: function(shapePoints, thickness, scaleTop = 1, scaleBottom = 1) {
+  createExtrudedShape: function (
+    shapePoints,
+    thickness,
+    scaleTop = 1,
+    scaleBottom = 1
+  ) {
     // Helper matematika vektor untuk kompatibilitas
     const vec3_helpers = {
-      subtract: (out, a, b) => { out[0] = a[0] - b[0]; out[1] = a[1] - b[1]; out[2] = a[2] - b[2]; return out; },
-      cross: (out, a, b) => { const ax = a[0], ay = a[1], az = a[2], bx = b[0], by = b[1], bz = b[2]; out[0] = ay * bz - az * by; out[1] = az * bx - ax * bz; out[2] = ax * by - ay * bx; return out; },
-      normalize: (out, a) => { const x = a[0], y = a[1], z = a[2]; let len = x * x + y * y + z * z; if (len > 0) { len = 1 / Math.sqrt(len); } out[0] = a[0] * len; out[1] = a[1] * len; out[2] = a[2] * len; return out; }
+      subtract: (out, a, b) => {
+        out[0] = a[0] - b[0];
+        out[1] = a[1] - b[1];
+        out[2] = a[2] - b[2];
+        return out;
+      },
+      cross: (out, a, b) => {
+        const ax = a[0],
+          ay = a[1],
+          az = a[2],
+          bx = b[0],
+          by = b[1],
+          bz = b[2];
+        out[0] = ay * bz - az * by;
+        out[1] = az * bx - ax * bz;
+        out[2] = ax * by - ay * bx;
+        return out;
+      },
+      normalize: (out, a) => {
+        const x = a[0],
+          y = a[1],
+          z = a[2];
+        let len = x * x + y * y + z * z;
+        if (len > 0) {
+          len = 1 / Math.sqrt(len);
+        }
+        out[0] = a[0] * len;
+        out[1] = a[1] * len;
+        out[2] = a[2] * len;
+        return out;
+      },
     };
 
     const vertices = [];
@@ -448,58 +481,74 @@ const Primitives = {
     // --- 1. BUAT SISI ATAS ---
     let offset = vertices.length / 3;
     for (const p of shapePoints) {
-        vertices.push(p[0] * scaleTop, 0, p[2] * scaleTop);
-        normals.push(0, 1, 0);
+      vertices.push(p[0] * scaleTop, 0, p[2] * scaleTop);
+      normals.push(0, 1, 0);
     }
     // Buat indices untuk sisi atas
     for (let i = 1; i < n - 1; i++) {
-        indices.push(offset, offset + i, offset + i + 1);
+      indices.push(offset, offset + i, offset + i + 1);
     }
 
     // --- 2. BUAT SISI BAWAH ---
     offset = vertices.length / 3;
     for (const p of shapePoints) {
-        vertices.push(p[0] * scaleBottom, -thickness, p[2] * scaleBottom);
-        normals.push(0, -1, 0);
+      vertices.push(p[0] * scaleBottom, -thickness, p[2] * scaleBottom);
+      normals.push(0, -1, 0);
     }
     // Buat indices untuk sisi bawah (urutan dibalik)
     for (let i = 1; i < n - 1; i++) {
-        indices.push(offset, offset + i + 1, offset + i);
+      indices.push(offset, offset + i + 1, offset + i);
     }
 
     // --- 3. BUAT DINDING SAMPING ---
     for (let i = 0; i < n; i++) {
-        const next = (i + 1) % n;
-        
-        const pTop1 = [shapePoints[i][0] * scaleTop, 0, shapePoints[i][2] * scaleTop];
-        const pTop2 = [shapePoints[next][0] * scaleTop, 0, shapePoints[next][2] * scaleTop];
-        const pBottom1 = [shapePoints[i][0] * scaleBottom, -thickness, shapePoints[i][2] * scaleBottom];
-        const pBottom2 = [shapePoints[next][0] * scaleBottom, -thickness, shapePoints[next][2] * scaleBottom];
+      const next = (i + 1) % n;
 
-        // Hitung normal untuk dinding ini
-        const v1 = vec3.create();
-        const v2 = vec3.create();
-        vec3_helpers.subtract(v1, pTop2, pTop1);
-        vec3_helpers.subtract(v2, pBottom1, pTop1);
-        const normal = vec3.create();
-        vec3_helpers.cross(normal, v1, v2);
-        vec3_helpers.normalize(normal, normal);
-        
-        offset = vertices.length / 3;
-        vertices.push(...pTop1, ...pBottom1, ...pTop2, ...pBottom2);
-        normals.push(...normal, ...normal, ...normal, ...normal);
-        
-        indices.push(offset, offset + 1, offset + 2);
-        indices.push(offset + 2, offset + 1, offset + 3);
+      const pTop1 = [
+        shapePoints[i][0] * scaleTop,
+        0,
+        shapePoints[i][2] * scaleTop,
+      ];
+      const pTop2 = [
+        shapePoints[next][0] * scaleTop,
+        0,
+        shapePoints[next][2] * scaleTop,
+      ];
+      const pBottom1 = [
+        shapePoints[i][0] * scaleBottom,
+        -thickness,
+        shapePoints[i][2] * scaleBottom,
+      ];
+      const pBottom2 = [
+        shapePoints[next][0] * scaleBottom,
+        -thickness,
+        shapePoints[next][2] * scaleBottom,
+      ];
+
+      // Hitung normal untuk dinding ini
+      const v1 = vec3.create();
+      const v2 = vec3.create();
+      vec3_helpers.subtract(v1, pTop2, pTop1);
+      vec3_helpers.subtract(v2, pBottom1, pTop1);
+      const normal = vec3.create();
+      vec3_helpers.cross(normal, v1, v2);
+      vec3_helpers.normalize(normal, normal);
+
+      offset = vertices.length / 3;
+      vertices.push(...pTop1, ...pBottom1, ...pTop2, ...pBottom2);
+      normals.push(...normal, ...normal, ...normal, ...normal);
+
+      indices.push(offset, offset + 1, offset + 2);
+      indices.push(offset + 2, offset + 1, offset + 3);
     }
 
     return {
-        vertices: new Float32Array(vertices),
-        normals: new Float32Array(normals),
-        indices: new Uint16Array(indices),
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
     };
   },
-  createHexagonalPrism: function(radius, height) {
+  createHexagonalPrism: function (radius, height) {
     const vertices = [];
     const normals = [];
     const indices = [];
@@ -510,18 +559,18 @@ const Primitives = {
 
     // Buat 6 titik untuk alas atas dan bawah
     for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * 2 * Math.PI;
-        const x = radius * Math.cos(angle);
-        const z = radius * Math.sin(angle);
-        topPoints.push([x, halfHeight, z]);
-        bottomPoints.push([x, -halfHeight, z]);
+      const angle = (i / 6) * 2 * Math.PI;
+      const x = radius * Math.cos(angle);
+      const z = radius * Math.sin(angle);
+      topPoints.push([x, halfHeight, z]);
+      bottomPoints.push([x, -halfHeight, z]);
     }
 
     // --- SISI ATAS (SEGI ENAM) ---
     let offset = vertices.length / 3;
     for (const p of topPoints) {
-        vertices.push(...p);
-        normals.push(0, 1, 0);
+      vertices.push(...p);
+      normals.push(0, 1, 0);
     }
     // Buat 4 segitiga untuk membentuk segi enam
     indices.push(offset, offset + 1, offset + 2);
@@ -532,8 +581,8 @@ const Primitives = {
     // --- SISI BAWAH (SEGI ENAM) ---
     offset = vertices.length / 3;
     for (const p of bottomPoints) {
-        vertices.push(...p);
-        normals.push(0, -1, 0);
+      vertices.push(...p);
+      normals.push(0, -1, 0);
     }
     // Urutan dibalik agar normal benar
     indices.push(offset, offset + 2, offset + 1);
@@ -543,35 +592,35 @@ const Primitives = {
 
     // --- DINDING SAMPING (6 PERSEGI PANJANG) ---
     for (let i = 0; i < 6; i++) {
-        const next = (i + 1) % 6;
-        const p1 = topPoints[i];
-        const p2 = bottomPoints[i];
-        const p3 = topPoints[next];
-        const p4 = bottomPoints[next];
+      const next = (i + 1) % 6;
+      const p1 = topPoints[i];
+      const p2 = bottomPoints[i];
+      const p3 = topPoints[next];
+      const p4 = bottomPoints[next];
 
-        // Hitung normal
-        const v1 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
-        const v2 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
-        const normal = [
-            v1[1] * v2[2] - v1[2] * v2[1],
-            v1[2] * v2[0] - v1[0] * v2[2],
-            v1[0] * v2[1] - v1[1] * v2[0],
-        ];
-        const len = Math.hypot(...normal);
-        if (len > 0) normal.forEach((val, idx) => normal[idx] = val / len);
-        
-        offset = vertices.length / 3;
-        vertices.push(...p1, ...p2, ...p3, ...p4);
-        normals.push(...normal, ...normal, ...normal, ...normal);
+      // Hitung normal
+      const v1 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
+      const v2 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+      const normal = [
+        v1[1] * v2[2] - v1[2] * v2[1],
+        v1[2] * v2[0] - v1[0] * v2[2],
+        v1[0] * v2[1] - v1[1] * v2[0],
+      ];
+      const len = Math.hypot(...normal);
+      if (len > 0) normal.forEach((val, idx) => (normal[idx] = val / len));
 
-        indices.push(offset, offset + 1, offset + 2);
-        indices.push(offset + 2, offset + 1, offset + 3);
+      offset = vertices.length / 3;
+      vertices.push(...p1, ...p2, ...p3, ...p4);
+      normals.push(...normal, ...normal, ...normal, ...normal);
+
+      indices.push(offset, offset + 1, offset + 2);
+      indices.push(offset + 2, offset + 1, offset + 3);
     }
 
     return {
-        vertices: new Float32Array(vertices),
-        normals: new Float32Array(normals),
-        indices: new Uint16Array(indices),
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
     };
   },
 };
