@@ -499,4 +499,79 @@ const Primitives = {
         indices: new Uint16Array(indices),
     };
   },
+  createHexagonalPrism: function(radius, height) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const halfHeight = height / 2;
+
+    const topPoints = [];
+    const bottomPoints = [];
+
+    // Buat 6 titik untuk alas atas dan bawah
+    for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * 2 * Math.PI;
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+        topPoints.push([x, halfHeight, z]);
+        bottomPoints.push([x, -halfHeight, z]);
+    }
+
+    // --- SISI ATAS (SEGI ENAM) ---
+    let offset = vertices.length / 3;
+    for (const p of topPoints) {
+        vertices.push(...p);
+        normals.push(0, 1, 0);
+    }
+    // Buat 4 segitiga untuk membentuk segi enam
+    indices.push(offset, offset + 1, offset + 2);
+    indices.push(offset, offset + 2, offset + 3);
+    indices.push(offset, offset + 3, offset + 4);
+    indices.push(offset, offset + 4, offset + 5);
+
+    // --- SISI BAWAH (SEGI ENAM) ---
+    offset = vertices.length / 3;
+    for (const p of bottomPoints) {
+        vertices.push(...p);
+        normals.push(0, -1, 0);
+    }
+    // Urutan dibalik agar normal benar
+    indices.push(offset, offset + 2, offset + 1);
+    indices.push(offset, offset + 3, offset + 2);
+    indices.push(offset, offset + 4, offset + 3);
+    indices.push(offset, offset + 5, offset + 4);
+
+    // --- DINDING SAMPING (6 PERSEGI PANJANG) ---
+    for (let i = 0; i < 6; i++) {
+        const next = (i + 1) % 6;
+        const p1 = topPoints[i];
+        const p2 = bottomPoints[i];
+        const p3 = topPoints[next];
+        const p4 = bottomPoints[next];
+
+        // Hitung normal
+        const v1 = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]];
+        const v2 = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+        const normal = [
+            v1[1] * v2[2] - v1[2] * v2[1],
+            v1[2] * v2[0] - v1[0] * v2[2],
+            v1[0] * v2[1] - v1[1] * v2[0],
+        ];
+        const len = Math.hypot(...normal);
+        if (len > 0) normal.forEach((val, idx) => normal[idx] = val / len);
+        
+        offset = vertices.length / 3;
+        vertices.push(...p1, ...p2, ...p3, ...p4);
+        normals.push(...normal, ...normal, ...normal, ...normal);
+
+        indices.push(offset, offset + 1, offset + 2);
+        indices.push(offset + 2, offset + 1, offset + 3);
+    }
+
+    return {
+        vertices: new Float32Array(vertices),
+        normals: new Float32Array(normals),
+        indices: new Uint16Array(indices),
+    };
+  },
 };

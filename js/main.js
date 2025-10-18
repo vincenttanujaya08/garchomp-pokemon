@@ -57,8 +57,9 @@ function main() {
   };
 
   const drawSkybox = setupSkybox(gl);
-  const garchompNode = createGarchomp(gl);
-  const islandNode = createIsland(gl); 
+  // const garchompNode = createGarchomp(gl);
+  const garchompNode = createMegaGarchomp(gl);
+  // const islandNode = createIsland(gl); 
 
   const projectionMatrix = mat4.create();
   const cameraPosition = [0, 1, 20];
@@ -101,15 +102,15 @@ function main() {
       cameraPosition
     );
 
-    drawScene(
-      gl, 
-      programInfo, 
-      islandNode,
-      projectionMatrix, 
-      viewMatrix, 
-      modelRotationMatrix, 
-      cameraPosition
-    );
+    // drawScene(
+    //   gl, 
+    //   programInfo, 
+    //   islandNode,
+    //   projectionMatrix, 
+    //   viewMatrix, 
+    //   modelRotationMatrix, 
+    //   cameraPosition
+    // );
 
     requestAnimationFrame(render);
   }
