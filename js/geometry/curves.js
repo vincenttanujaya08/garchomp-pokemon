@@ -411,4 +411,308 @@ const Curves = {
       indices: new Uint16Array(indices),
     };
   },
+
+  // Sail dengan atas & bawah melengkung (pakai Coons patch dari 3 Bezier).
+  // A=(0,0)  (kiri-bawah), B=(0,height) (kiri-atas), C=(width,0) (ujung kanan).
+  // topBulge    : kelengkungan sisi atas (B→C), >0 = cembung ke luar
+  // bottomBulge : kelengkungan sisi bawah (A→C), >0 = melengkung ke arah dalam (naik)
+  // leftBulge   : sedikit membulatkan sisi kiri (A→B), >0 = menonjol ke +X
+  // segU        : subdivisi arah ke kanan (menuju C)
+  // segV        : subdivisi arah tinggi (dari bottom→top)
+  createSailCoons: function (
+    width = 3,
+    height = 2,
+    topBulge = 0.35,
+    bottomBulge = 0.25,
+    leftBulge = 0.15,
+    segU = 64,
+    segV = 16
+  ) {
+    const W = Math.max(1e-6, width);
+    const H = Math.max(1e-6, height);
+    const U = Math.max(2, segU | 0);
+    const V = Math.max(2, segV | 0);
+
+    // Sudut/pojok
+    const A = [0, 0]; // kiri-bawah
+    const B = [0, H]; // kiri-atas
+    const C = [W, 0]; // ujung kanan (kedua sisi bertemu)
+
+    // Helper: Bezier kuadratik 2D
+    function bez2(P0, P1, P2, t) {
+      const it = 1 - t;
+      return [
+        it * it * P0[0] + 2 * it * t * P1[0] + t * t * P2[0],
+        it * it * P0[1] + 2 * it * t * P1[1] + t * t * P2[1],
+      ];
+    }
+    function norm2(x, y) {
+      const l = Math.hypot(x, y) || 1;
+      return [x / l, y / l];
+    }
+
+    // === Kurva batas Bezier ===
+    // TOP: B -> C dengan kontrol di tengah + normal
+    {
+      const vx = C[0] - B[0],
+        vy = C[1] - B[1]; // (W, -H)
+      const n = norm2(+H, +W); // normal cembung ke luar
+      var P1_top = [
+        0.5 * (B[0] + C[0]) + topBulge * Math.hypot(vx, vy) * n[0],
+        0.5 * (B[1] + C[1]) + topBulge * Math.hypot(vx, vy) * n[1],
+      ];
+    }
+
+    // BOTTOM: A -> C; kontrol di tengah + normal ke atas
+    {
+      const n = [0, 1]; // normal dari garis AC (garis datar) ke atas
+      var P1_bot = [
+        0.5 * (A[0] + C[0]) + bottomBulge * W * n[0],
+        0.5 * (A[1] + C[1]) + bottomBulge * W * n[1],
+      ];
+    }
+
+    // LEFT: A -> B; kontrol ke kanan sedikit untuk membulatkan sudut kiri-bawah
+    {
+      const n = [1, 0]; // normal dari garis AB ke kanan
+      var P1_left = [
+        0.5 * (A[0] + B[0]) + leftBulge * H * n[0],
+        0.5 * (A[1] + B[1]) + leftBulge * H * n[1],
+      ];
+    }
+
+    // Coons patch P(u,v), u∈[0,1] kiri→kanan, v∈[0,1] bawah→atas.
+    function coons(u, v) {
+      // kurva u (bawah & atas)
+      const Cu0 = bez2(A, P1_bot, C, u); // bottom
+      const Cu1 = bez2(B, P1_top, C, u); // top
+      // kurva v (kiri & kanan); kanan degenerat di C
+      const Cv0 = bez2(A, P1_left, B, v); // left
+      const Cv1 = C; // right (tetap di C)
+
+      // bilinear sudut
+      const BLx =
+        (1 - u) * (1 - v) * A[0] +
+        (1 - u) * v * B[0] +
+        u * (1 - v) * C[0] +
+        u * v * C[0];
+      const BLy =
+        (1 - u) * (1 - v) * A[1] +
+        (1 - u) * v * B[1] +
+        u * (1 - v) * C[1] +
+        u * v * C[1];
+
+      // Coons
+      const x =
+        (1 - v) * Cu0[0] + v * Cu1[0] + (1 - u) * Cv0[0] + u * Cv1[0] - BLx;
+      const y =
+        (1 - v) * Cu0[1] + v * Cu1[1] + (1 - u) * Cv0[1] + u * Cv1[1] - BLy;
+      return [x, y, 0];
+    }
+
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    // grid (U+1) x (V+1)
+    for (let j = 0; j <= V; j++) {
+      const v = j / V;
+      for (let i = 0; i <= U; i++) {
+        const u = i / U;
+        const p = coons(u, v);
+        vertices.push(p[0], p[1], p[2]);
+        normals.push(0, 0, 1); // bidang XY, menghadap +Z
+      }
+    }
+
+    // triangulasi grid, CCW dari +Z
+    const stride = U + 1;
+    for (let j = 0; j < V; j++) {
+      for (let i = 0; i < U; i++) {
+        const a = j * stride + i;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  // Sail Coons 3D: ekstrusi dari patch 2D + dinding samping
+  // width, height, topBulge, bottomBulge, leftBulge, segU, segV : sama seperti createSailCoons
+  // thickness : tebal total (mendapatkan z=±thickness/2)
+  createSailCoons3D: function (
+    width = 3,
+    height = 2,
+    topBulge = 0.35,
+    bottomBulge = 0.25,
+    leftBulge = 0.15,
+    segU = 64,
+    segV = 16,
+    thickness = 0.12
+  ) {
+    const W = Math.max(1e-6, width);
+    const H = Math.max(1e-6, height);
+    const U = Math.max(2, segU | 0);
+    const V = Math.max(2, segV | 0);
+    const T = Math.max(1e-6, thickness) * 0.5;
+
+    // Sudut
+    const A = [0, 0],
+      B = [0, H],
+      C = [W, 0];
+
+    // Helpers
+    function bez2(P0, P1, P2, t) {
+      const it = 1 - t;
+      return [
+        it * it * P0[0] + 2 * it * t * P1[0] + t * t * P2[0],
+        it * it * P0[1] + 2 * it * t * P1[1] + t * t * P2[1],
+      ];
+    }
+    function norm2(x, y) {
+      const l = Math.hypot(x, y) || 1;
+      return [x / l, y / l];
+    }
+
+    // Kontrol kurva batas
+    (function computeControls() {
+      const vx = C[0] - B[0],
+        vy = C[1] - B[1];
+      const nTop = norm2(+H, +W); // normal chord BC
+      var P1_top = [
+        0.5 * (B[0] + C[0]) + topBulge * Math.hypot(vx, vy) * nTop[0],
+        0.5 * (B[1] + C[1]) + topBulge * Math.hypot(vx, vy) * nTop[1],
+      ];
+      var P1_bot = [0.5 * (A[0] + C[0]), 0.5 * (A[1] + C[1]) + bottomBulge * W];
+      var P1_left = [leftBulge * H, 0.5 * (A[1] + B[1])];
+
+      // simpan ke closure
+      Curves.__sail3D__ = { P1_top, P1_bot, P1_left };
+    })();
+
+    const { P1_top, P1_bot, P1_left } = Curves.__sail3D__;
+
+    function coons(u, v) {
+      const Cu0 = bez2(A, P1_bot, C, u); // bottom (A->C)
+      const Cu1 = bez2(B, P1_top, C, u); // top    (B->C)
+      const Cv0 = bez2(A, P1_left, B, v); // left  (A->B)
+      // right degenerat di C
+      const BLx =
+        (1 - u) * (1 - v) * A[0] +
+        (1 - u) * v * B[0] +
+        u * (1 - v) * C[0] +
+        u * v * C[0];
+      const BLy =
+        (1 - u) * (1 - v) * A[1] +
+        (1 - u) * v * B[1] +
+        u * (1 - v) * C[1] +
+        u * v * C[1];
+      const x =
+        (1 - v) * Cu0[0] + v * Cu1[0] + (1 - u) * Cv0[0] + u * C[0] - BLx;
+      const y =
+        (1 - v) * Cu0[1] + v * Cu1[1] + (1 - u) * Cv0[1] + u * C[1] - BLy;
+      return [x, y];
+    }
+
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    // ---------- 1) Permukaan depan (z=+T) ----------
+    const stride = U + 1;
+    for (let j = 0; j <= V; j++) {
+      const v = j / V;
+      for (let i = 0; i <= U; i++) {
+        const u = i / U;
+        const [x, y] = coons(u, v);
+        vertices.push(x, y, +T);
+        normals.push(0, 0, 1);
+      }
+    }
+    // Indeks depan (CCW dari +Z)
+    for (let j = 0; j < V; j++) {
+      for (let i = 0; i < U; i++) {
+        const a = j * stride + i;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+
+    // ---------- 2) Permukaan belakang (z=-T) ----------
+    const backOffset = vertices.length / 3;
+    for (let j = 0; j <= V; j++) {
+      const v = j / V;
+      for (let i = 0; i <= U; i++) {
+        const u = i / U;
+        const [x, y] = coons(u, v);
+        vertices.push(x, y, -T);
+        normals.push(0, 0, -1);
+      }
+    }
+    // Indeks belakang (winding dibalik agar menghadap -Z)
+    for (let j = 0; j < V; j++) {
+      for (let i = 0; i < U; i++) {
+        const a = backOffset + j * stride + i;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        indices.push(a, b, c, b, d, c); // reversed
+      }
+    }
+
+    // Helper: buat strip dinding dari polyline 2D (xy), menghubungkan z=+T ke z=-T
+    function addSideStrip(points, outward2D) {
+      const startIdx = vertices.length / 3;
+      for (let k = 0; k < points.length; k++) {
+        const [x, y] = points[k];
+        // front
+        vertices.push(x, y, +T);
+        normals.push(outward2D[0], outward2D[1], 0);
+        // back
+        vertices.push(x, y, -T);
+        normals.push(outward2D[0], outward2D[1], 0);
+      }
+      // indeks quad strip
+      for (let k = 0; k < points.length - 1; k++) {
+        const a = startIdx + 2 * k;
+        const b = a + 1;
+        const c = a + 2;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+
+    // Kurva batas untuk dinding
+    // Left: A->B   (V+1 sampel)
+    const leftPts = [];
+    for (let j = 0; j <= V; j++) leftPts.push(bez2(A, P1_left, B, j / V));
+    addSideStrip(leftPts, [-1, 0]); // outward kira-kira ke -X
+
+    // Top:  B->C   (U+1 sampel)
+    const topPts = [];
+    for (let i = 0; i <= U; i++) topPts.push(bez2(B, P1_top, C, i / U));
+    // outward kira-kira ke atas-kiri (normal chord BC)
+    const nTop = norm2(+H, +W);
+    addSideStrip(topPts, nTop);
+
+    // Bottom: A->C (U+1 sampel)
+    const botPts = [];
+    for (let i = 0; i <= U; i++) botPts.push(bez2(A, P1_bot, C, i / U));
+    addSideStrip(botPts, [0, -1]); // outward ke -Y (kira-kira)
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 };

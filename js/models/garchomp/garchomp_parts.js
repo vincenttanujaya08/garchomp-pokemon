@@ -774,6 +774,176 @@ function createMegaGarchompTorso(gl) {
     [0, -3.5, 1.5] // Adjust Y untuk di bawah neck
   );
 
+  const pathSegments = 25; // Tingkatkan detail kurva
+
+  // --- EKOR UTAMA ---
+  const p0 = [0, 0, -0.6];
+  const p1 = [0, -0.3, -2.0];
+  const p2 = [0, 0.5, -4.0];
+  const p3 = [0, 0.7, -5.0];
+
+  const tailPath = [];
+  const scaleFactors = [];
+  for (let i = 0; i <= pathSegments; i++) {
+    const t = i / pathSegments;
+    tailPath.push(Curves.getBezierPoint(t, p0, p1, p2, p3));
+    scaleFactors.push(1.0 - t); // Meruncing hingga 0
+  }
+
+  const tailProfile = [
+    [0.0, 0.7],
+    [0.5, 0.5],
+    [0.7, 0.0],
+    [0.5, -0.5],
+    [0.0, -0.7],
+    [-0.5, -0.5],
+    [-0.7, 0.0],
+    [-0.5, 0.5],
+  ];
+
+  const tailMesh = new Mesh(
+    gl,
+    Curves.createTaperedSweptSurface(tailProfile, tailPath, scaleFactors, true)
+  );
+
+  // --- SIRIP SAMPING (BARU) ---
+  const finProfile = [
+    [0, 0.3],
+    [0.15, 0],
+    [0, -0.3],
+    [-0.1, 0],
+  ]; // Profil pipih
+
+  // Sirip Kiri
+  const leftFin_p0 = [0, 0, 0];
+  const leftFin_p1 = [0.5, 0.1, -0.5];
+  const leftFin_p2 = [1.0, 0.0, -1.0];
+  const leftFin_p3 = [1.5, -0.2, -1.5];
+  const leftFinPath = [];
+  const leftFinScales = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    leftFinPath.push(
+      Curves.getBezierPoint(t, leftFin_p0, leftFin_p1, leftFin_p2, leftFin_p3)
+    );
+    leftFinScales.push(1.0 - t);
+  }
+  const leftFinMesh = new Mesh(
+    gl,
+    Curves.createTaperedSweptSurface(
+      finProfile,
+      leftFinPath,
+      leftFinScales,
+      true
+    )
+  );
+
+  // Sirip Kanan
+  const rightFin_p0 = [0, 0, 0];
+  const rightFin_p1 = [-0.5, 0.1, -0.5];
+  const rightFin_p2 = [-1.0, 0.0, -1.0];
+  const rightFin_p3 = [-1.5, -0.2, -1.5];
+  const rightFinPath = [];
+  const rightFinScales = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    rightFinPath.push(
+      Curves.getBezierPoint(
+        t,
+        rightFin_p0,
+        rightFin_p1,
+        rightFin_p2,
+        rightFin_p3
+      )
+    );
+    rightFinScales.push(1.0 - t);
+  }
+  const rightFinMesh = new Mesh(
+    gl,
+    Curves.createTaperedSweptSurface(
+      finProfile,
+      rightFinPath,
+      rightFinScales,
+      true
+    )
+  );
+
+  // --- NODE & HIERARKI ---
+  const tailRoot = new SceneNode(null); // Node root untuk seluruh bagian ekor
+  const mainTailNode = new SceneNode(tailMesh, cfg.colors.darkBlue);
+  const leftFinNode = new SceneNode(leftFinMesh, cfg.colors.darkBlue);
+  const rightFinNode = new SceneNode(rightFinMesh, cfg.colors.darkBlue);
+
+  // Gabungkan semua ke root ekor
+  tailRoot.addChild(mainTailNode);
+  tailRoot.addChild(leftFinNode);
+  tailRoot.addChild(rightFinNode);
+
+  // Posisikan sirip-sirip (Anda bisa atur ini nanti)
+  // Diberi posisi awal agar terlihat
+  mat4.translate(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    [0, 0.43, -3.8]
+  );
+  mat4.rotate(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    -Math.PI / 2,
+    [-1, -1, 0]
+  );
+  mat4.scale(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    [1, 1, 0.5]
+  );
+
+  mat4.translate(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    [0, 0.43, -3.8]
+  );
+  mat4.rotate(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    Math.PI / 1.3,
+    [1, 1, 1]
+  );
+  mat4.scale(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    [1, 1, 0.1]
+  );
+  lowerBodyNode.addChild(tailRoot);
+
+  const sail3DGeom = Curves.createSailCoons3D(
+    4,
+    2,
+    0.15,
+    0.32,
+    0.2,
+    64,
+    20,
+    0.3
+  );
+  const sail3DMesh = new Mesh(gl, sail3DGeom);
+  const sail3DNode = new SceneNode(sail3DMesh, cfg.colors.darkBlue);
+
+  // orientasi/penempatan
+  mat4.rotate(
+    sail3DNode.localTransform,
+    sail3DNode.localTransform,
+    1.5,
+    [0, 1, 0]
+  );
+  mat4.translate(
+    sail3DNode.localTransform,
+    sail3DNode.localTransform,
+    [-0.2, -0.7, -0.15]
+  );
+
+  upperBodyNode.addChild(sail3DNode);
+
   return torsoRoot;
 }
 
@@ -872,42 +1042,121 @@ function createGarchompArm(gl) {
   );
   armRoot.addChild(leftFore);
 
-  // ============== CAKAR DI UJUNG FOREARM (kiri & kanan) ==============
-  // Cone default sumbu +Z; kita putar +π/2 di X supaya mengarah ke −Y (ujung forearm).
+  // // ============== CAKAR DI UJUNG FOREARM (kiri & kanan) ==============
+  // // Cone default sumbu +Z; kita putar +π/2 di X supaya mengarah ke −Y (ujung forearm).
   const clawMesh = new Mesh(gl, Primitives.createCone(0.3, 0.8, 24));
-  const wristOffset = -(1.6 + 0.1); // ujung bawah forearm (semi-tinggi 1.6) + sedikit keluar
+  let wristOffsets = -(1.6 + 0.1); // ujung bawah forearm (semi-tinggi 1.6) + sedikit keluar
 
-  // Kiri
-  const leftClaw = new SceneNode(clawMesh, cfg.colors.white);
-  // Posisi di ujung forearm kiri (arah −Y lokal), lalu orientasikan ke −Y
-  mat4.translate(leftClaw.localTransform, leftClaw.localTransform, [
-    0,
-    wristOffset,
-    0,
-  ]);
-  mat4.rotate(
-    leftClaw.localTransform,
-    leftClaw.localTransform,
-    Math.PI,
-    [1, 0, 0]
-  );
-  leftFore.addChild(leftClaw);
+  // // Kiri
+  // const leftClaw = new SceneNode(clawMesh, cfg.colors.white);
+  // // Posisi di ujung forearm kiri (arah −Y lokal), lalu orientasikan ke −Y
+  // mat4.translate(leftClaw.localTransform, leftClaw.localTransform, [
+  //   0,
+  //   wristOffset,
+  //   0,
+  // ]);
+  // mat4.rotate(
+  //   leftClaw.localTransform,
+  //   leftClaw.localTransform,
+  //   Math.PI,
+  //   [1, 0, 0]
+  // );
+  // leftFore.addChild(leftClaw);
 
   // Kanan
-  const rightClaw = new SceneNode(clawMesh, cfg.colors.white);
-  mat4.translate(rightClaw.localTransform, rightClaw.localTransform, [
+  // const rightClaw = new SceneNode(clawMesh, cfg.colors.white);
+  // mat4.translate(rightClaw.localTransform, rightClaw.localTransform, [
+  //   0,
+  //   wristOffsets,
+  //   0,
+  // ]);
+  // mat4.rotate(
+  //   rightClaw.localTransform,
+  //   rightClaw.localTransform,
+  //   Math.PI,
+  //   [1, 0, 0]
+  // );
+  // rightFore.addChild(rightClaw);
+
+  // ============== MINI SAIL (ganti claw cone) ==============
+  // Pakai sail 3D tipis sebagai "cakar". cakar
+  const finW = 0.6,
+    finH = 0.7,
+    topBulge = 0.12,
+    bottomBulge = 0.18,
+    leftBulge = 0.1;
+  const finSegU = 24,
+    finSegV = 10,
+    finT = 0.2; // ketebalan tipis
+  const finGeom = Curves.createSailCoons3D(
+    finW,
+    finH,
+    topBulge,
+    bottomBulge,
+    leftBulge,
+    finSegU,
+    finSegV,
+    finT
+  );
+  const finMesh = new Mesh(gl, finGeom);
+
+  // posisi di ujung forearm (arah -Y lokal), sama seperti wristOffset lama
+  const wristOffset = -(1.6 + 0.08);
+
+  // --- KIRI (anak leftFore) ---
+  const leftFin = new SceneNode(finMesh, cfg.colors.white);
+  mat4.translate(leftFin.localTransform, leftFin.localTransform, [
+    -0.3,
+    wristOffset + 0.6,
     0,
-    wristOffset,
+  ]);
+  // Orientasi: default tip sail mengarah +X; kita putar agar tip mengarah -Y
+  mat4.rotate(
+    leftFin.localTransform,
+    leftFin.localTransform,
+    Math.PI / 2,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    leftFin.localTransform,
+    leftFin.localTransform,
+    -Math.PI,
+    [0, 1, 0]
+  );
+  mat4.rotate(
+    leftFin.localTransform,
+    leftFin.localTransform,
+    Math.PI / 4,
+    [0, 0, -1]
+  );
+
+  mat4.scale(leftFin.localTransform, leftFin.localTransform, [0.9, 2.5, 0.9]);
+  leftFore.addChild(leftFin);
+
+  // --- KANAN (anak rightFore) ---
+  const rightFin = new SceneNode(finMesh, cfg.colors.white);
+  mat4.translate(rightFin.localTransform, rightFin.localTransform, [
+    0.2,
+    wristOffset + 0.7,
     0,
   ]);
   mat4.rotate(
-    rightClaw.localTransform,
-    rightClaw.localTransform,
-    Math.PI,
-    [1, 0, 0]
+    rightFin.localTransform,
+    rightFin.localTransform,
+    -Math.PI / 2,
+    [0, 0, 1]
   );
-  rightFore.addChild(rightClaw);
+  mat4.rotate(
+    rightFin.localTransform,
+    rightFin.localTransform,
+    Math.PI / 4,
+    [0, 0, -1]
+  );
 
+  mat4.scale(rightFin.localTransform, rightFin.localTransform, [0.9, 2.5, 0.9]);
+  rightFore.addChild(rightFin);
+
+  //hadap bawah forearm
   // ============== SAIL (layar) sebagai anak forearm ==============
   // Pastikan Curves.createSail sudah ada di modul Curves.
   const sailGeom = Curves.createSail(2, 3, 0.4, 64); // width, height, bulge, segments
@@ -935,19 +1184,20 @@ function createGarchompArm(gl) {
   ); // kipas ke luar
   rightFore.addChild(rightSail);
 
-  // const leftSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
-  // mat4.translate(
-  //   leftSail.localTransform,
-  //   leftSail.localTransform,
-  //   [-0.1, 1.0, 0] // mirror X: 0.1 -> -0.1 ; Y & Z sama
-  // );
-  // mat4.rotate(
-  //   leftSail.localTransform,
-  //   leftSail.localTransform,
-  //   -1.5 * Math.PI, // mirror rotasi Z: -π/2 -> +π/2
-  //   [0, 0, 1]
-  // );
-  // rightFore.addChild(leftSail);
+  const leftSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftSail.localTransform,
+    leftSail.localTransform,
+    [0.1, 1.2, 0] // mirror X: 0.1 -> -0.1 ; Y & Z sama
+  );
+  mat4.rotate(
+    leftSail.localTransform,
+    leftSail.localTransform,
+    Math.PI,
+    [0, 0, 1]
+  );
+  mat4.scale(leftSail.localTransform, leftSail.localTransform, [1.3, 1, 1]);
+  leftFore.addChild(leftSail);
 
   return armRoot;
 }
@@ -1251,84 +1501,6 @@ function createGarchompLeg(gl) {
     [1, 0, 0]
   );
   rightFoot.addChild(rightClaw3);
-
-  //asdasdsad
-
-  // const tailBodyMesh = new Mesh(
-  //   gl,
-  //   Curves.createKatanaCrescent(
-  //     4.0, // length (lebih pendek, karena ada cone di ujung)
-  //     0.9, // width
-  //     0.4, // curve
-  //     0.8, // thickness
-  //     64
-  //   )
-  // );
-
-  // const tailBody = new SceneNode(tailBodyMesh, cfg.colors.darkBlue);
-  // mat4.translate(
-  //   tailBody.localTransform,
-  //   tailBody.localTransform,
-  //   [0, -1.8, -2.8]
-  // );
-  // mat4.rotate(
-  //   tailBody.localTransform,
-  //   tailBody.localTransform,
-  //   -Math.PI,
-  //   [1, 0, 1]
-  // );
-  // legRoot.addChild(tailBody);
-
-  // // === CONE TENGAH (Center spike) ===
-  // const centerSpikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1.2, 32));
-  // const centerSpike = new SceneNode(centerSpikeMesh, cfg.colors.darkBlue);
-
-  // mat4.translate(
-  //   centerSpike.localTransform,
-  //   centerSpike.localTransform,
-  //   [-2.6, -0, 0] // Di ujung tengah tail body
-  // );
-  // mat4.rotate(
-  //   centerSpike.localTransform,
-  //   centerSpike.localTransform,
-  //   Math.PI / 2, // Point forward (menghadap Z+)
-  //   [0, 0, 1]
-  // );
-  // tailBody.addChild(centerSpike);
-
-  // //cone kiri
-  // const leftTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
-  // const leftTipCone = new SceneNode(leftTipConeMesh, cfg.colors.darkBlue);
-
-  // mat4.translate(
-  //   leftTipCone.localTransform,
-  //   leftTipCone.localTransform,
-  //   [-1.8, 0.05, 0.7] // Di ujung blade kiri
-  // );
-  // mat4.rotate(
-  //   leftTipCone.localTransform,
-  //   leftTipCone.localTransform,
-  //   Math.PI / 2,
-  //   [1, 0, 0]
-  // );
-  // tailBody.addChild(leftTipCone);
-
-  // // Cone kanan (MIRROR dari kiri)
-  // const rightTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
-  // const rightTipCone = new SceneNode(rightTipConeMesh, cfg.colors.darkBlue);
-
-  // mat4.translate(
-  //   rightTipCone.localTransform,
-  //   rightTipCone.localTransform,
-  //   [-1.8, 0.05, -0.7] // Mirror Z: dari 0.7 jadi -0.7
-  // );
-  // mat4.rotate(
-  //   rightTipCone.localTransform,
-  //   rightTipCone.localTransform,
-  //   -Math.PI / 2,
-  //   [1, 0, 0]
-  // );
-  // tailBody.addChild(rightTipCone);
 
   return legRoot;
 }
