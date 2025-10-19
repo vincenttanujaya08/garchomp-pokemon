@@ -90,4 +90,137 @@ const Curves = {
       indices: new Uint16Array(indices),
     };
   },
+  createKatanaCrescent: function (
+    length = 3,
+    width = 0.4,
+    curve = 0.3,
+    thickness = 0.15,
+    segments = 64
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    const halfWidth = width / 2;
+    const halfThickness = thickness / 2;
+
+    // === MAIN BLADE BODY (Rectangular cross-section) ===
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const x = (t - 0.5) * length;
+      const y = curve * (1 - 4 * (t - 0.5) * (t - 0.5));
+
+      // 4 corners of rectangle (in circle order for easier connection)
+      // Top, Right, Bottom, Left
+      const rectCorners = [
+        [y + halfWidth, halfThickness], // 0: top
+        [y, halfThickness], // 1: right front (transition)
+        [y - halfWidth, halfThickness], // 2: bottom front
+        [y - halfWidth, 0], // 3: bottom middle (transition)
+        [y - halfWidth, -halfThickness], // 4: bottom back
+        [y, -halfThickness], // 5: left back (transition)
+        [y + halfWidth, -halfThickness], // 6: top back
+        [y + halfWidth, 0], // 7: top middle (transition)
+      ];
+
+      // Create circular cross-section with 8 points
+      const crossSectionSegs = 16;
+      for (let j = 0; j <= crossSectionSegs; j++) {
+        const theta = (j / crossSectionSegs) * Math.PI * 2;
+
+        // Ellipse formula for cross-section
+        const localY = halfWidth * Math.cos(theta);
+        const localZ = halfThickness * Math.sin(theta);
+
+        vertices.push(x, y + localY, localZ);
+
+        // Normal pointing outward from center
+        const len = Math.sqrt(localY * localY + localZ * localZ);
+        if (len > 0) {
+          normals.push(0, localY / len, localZ / len);
+        } else {
+          normals.push(0, 1, 0);
+        }
+      }
+    }
+
+    // Indices for blade body
+    const crossSegs = 16;
+    for (let i = 0; i < segments; i++) {
+      for (let j = 0; j < crossSegs; j++) {
+        const curr = i * (crossSegs + 1) + j;
+        const next = curr + crossSegs + 1;
+
+        indices.push(curr, next, curr + 1);
+        indices.push(curr + 1, next, next + 1);
+      }
+    }
+
+    // === ELLIPSOIDAL CAPS WITH TRANSITION ===
+    const capSegs = 16;
+
+    // Left cap (start)
+    const x1 = -length / 2;
+    const y1 = curve;
+    addEllipsoidalCap(x1, y1, halfWidth, halfThickness, -1, capSegs, crossSegs);
+
+    // Right cap (end)
+    const x2 = length / 2;
+    const y2 = curve;
+    addEllipsoidalCap(x2, y2, halfWidth, halfThickness, 1, capSegs, crossSegs);
+
+    function addEllipsoidalCap(
+      cx,
+      cy,
+      radY,
+      radZ,
+      direction,
+      radialSegs,
+      circSegs
+    ) {
+      const capStart = vertices.length / 3;
+
+      // Create hemisphere with ellipsoidal cross-section
+      // phi: 0 (at blade edge) to PI/2 (at tip)
+      for (let i = 0; i <= radialSegs; i++) {
+        const phi = ((i / radialSegs) * Math.PI) / 2;
+
+        // X extends outward from blade plane
+        const rx = direction * radY * Math.sin(phi);
+        const radiusAtPhi = Math.cos(phi); // Radius shrinks as we go to tip
+
+        for (let j = 0; j <= circSegs; j++) {
+          const theta = (j / circSegs) * Math.PI * 2;
+
+          // Elliptical cross-section
+          const ry = radiusAtPhi * radY * Math.cos(theta);
+          const rz = radiusAtPhi * radZ * Math.sin(theta);
+
+          const px = cx + rx;
+          const py = cy + ry;
+          const pz = rz;
+
+          vertices.push(px, py, pz);
+
+          // Normal calculation for ellipsoid
+          const nx = (direction * Math.sin(phi)) / radY;
+          const ny = (radiusAtPhi * Math.cos(theta)) / radY;
+          const nz = (radiusAtPhi * Math.sin(theta)) / radZ;
+          const nlen = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+          if (nlen > 0) {
+            normals.push(nx / nlen, ny / nlen, nz / nlen);
+          } else {
+            normals.push(direction, 0, 0);
+          }
+        }
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 };

@@ -67,7 +67,7 @@ function main() {
     100.0
   );
 
-  const cameraPosition = [0, 10, 25];
+  const cameraPosition = [0, 0, 40];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
@@ -147,7 +147,7 @@ function drawScene(
 
     gl.useProgram(programInfo.program);
 
-    const lightPosition = [5, 10, 7];
+    const lightPosition = [5, 10, 30];
 
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,

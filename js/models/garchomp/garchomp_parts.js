@@ -512,19 +512,67 @@ function createGarchompNeck(gl) {
 
   neckRoot.addChild(hyperboloid);
 
+  mat4.translate(neckRoot.localTransform, neckRoot.localTransform, [0, 5, 2.0]);
+  mat4.rotate(
+    neckRoot.localTransform,
+    neckRoot.localTransform,
+    Math.PI, // 180 derajat
+    [0, 1, 0] // Rotasi pada sumbu Y
+  );
+
   return neckRoot;
 }
+//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf
+
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+//asdadassadas
+//asdadadasfasasfadfasf
+
+//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf//asdadassadas
+//asdadadasfasasfadfasf
+
 function createMegaGarchompTorso(gl) {
-  // --- COLORS ---
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
-  const lightBlue = [0.6, 0.6, 1.0, 1.0];
-  const red = [0.8, 0.15, 0.1, 1.0];
-  const yellow = [1.0, 0.84, 0.0, 1.0];
-  const white = [0.9, 0.9, 0.9, 1.0]; // Warna putih untuk duri
+  const cfg = GarchompAnatomy;
+  const torsoRoot = new SceneNode(null);
 
-  // --- MESHES ---
-
-  // 1. Torso Parts
   const upperBodyMesh = new Mesh(
     gl,
     Primitives.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
@@ -533,71 +581,42 @@ function createMegaGarchompTorso(gl) {
     gl,
     Primitives.createEllipsoid(0.84, 0.9, 0.73, 32, 32)
   );
-
-  // 2. Bahu Elliptic Paraboloid
   const shoulderMesh = new Mesh(
     gl,
     Primitives.createEllipticParaboloid(0.8, 0.7, 1.5, 16)
   );
-
-  // 3. Hyperboloid Connector
   const connectorMesh = new Mesh(
     gl,
     Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
   );
-
-  // 4. Pelat Dada Merah
   const chestPlateMesh = new Mesh(
     gl,
     Primitives.createEllipsoid(1, 1, 1, 32, 32)
   );
-
-  // 5. Pelat Pinggang Merah
   const waistPlateMesh = new Mesh(
     gl,
     Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
   );
-
-  // 6. Pelat Perut Kuning
   const stomachPlateMesh1 = new Mesh(
     gl,
-    Primitives.createEllipsoid(1, 1, 1, 2.9, 100)
+    Primitives.createEllipsoid(1, 1, 1, 2.9, 10)
   );
   const stomachPlateMesh2 = new Mesh(
     gl,
     Primitives.createEllipsoid(1, 1, 1, 32, 32)
   );
 
-  // 7. Duri Putih (BARU)
-  const spikeMesh = new Mesh(
-    gl,
-    Primitives.createTriangularPrism(0.4, 0.6, 0.1)
-  );
+  const upperBodyNode = new SceneNode(upperBodyMesh, cfg.colors.darkBlue);
+  const lowerBodyNode = new SceneNode(lowerBodyMesh, cfg.colors.darkBlue);
+  const leftShoulderNode = new SceneNode(shoulderMesh, cfg.colors.darkBlue);
+  const rightShoulderNode = new SceneNode(shoulderMesh, cfg.colors.darkBlue);
+  const connectorNode = new SceneNode(connectorMesh, cfg.colors.darkBlue);
+  const chestPlateNode = new SceneNode(chestPlateMesh, cfg.colors.red);
+  const waistPlateNode = new SceneNode(waistPlateMesh, cfg.colors.red);
+  const stomachPlateNode1 = new SceneNode(stomachPlateMesh1, cfg.colors.yellow);
+  const stomachPlateNode2 = new SceneNode(stomachPlateMesh2, cfg.colors.yellow);
 
-  // --- SCENE NODES ---
-  const torsoRoot = new SceneNode(null);
-
-  const upperBodyNode = new SceneNode(upperBodyMesh, darkBlue);
-  const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue);
-  const leftShoulderNode = new SceneNode(shoulderMesh, darkBlue);
-  const rightShoulderNode = new SceneNode(shoulderMesh, darkBlue);
-  const connectorNode = new SceneNode(connectorMesh, darkBlue);
-  const chestPlateNode = new SceneNode(chestPlateMesh, red);
-  const waistPlateNode = new SceneNode(waistPlateMesh, red);
-  const stomachPlateNode1 = new SceneNode(stomachPlateMesh1, yellow);
-  const stomachPlateNode2 = new SceneNode(stomachPlateMesh2, red);
-  const ChestSpikeNode1 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode2 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode3 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode4 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode5 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode6 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode7 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode8 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode9 = new SceneNode(spikeMesh, white);
-  const ChestSpikeNode10 = new SceneNode(spikeMesh, white);
-
-  // --- HIERARCHY ---
+  // // --- HIERARCHY (SPIKE DIHILANGKAN) ---
   torsoRoot.addChild(upperBodyNode);
   torsoRoot.addChild(lowerBodyNode);
   torsoRoot.addChild(leftShoulderNode);
@@ -605,51 +624,59 @@ function createMegaGarchompTorso(gl) {
   torsoRoot.addChild(connectorNode);
   torsoRoot.addChild(chestPlateNode);
   torsoRoot.addChild(waistPlateNode);
-  torsoRoot.addChild(stomachPlateNode1);
+  // torsoRoot.addChild(stomachPlateNode1);
   torsoRoot.addChild(stomachPlateNode2);
-  torsoRoot.addChild(ChestSpikeNode1);
-  torsoRoot.addChild(ChestSpikeNode2);
-  torsoRoot.addChild(ChestSpikeNode3);
-  torsoRoot.addChild(ChestSpikeNode4);
-  torsoRoot.addChild(ChestSpikeNode5);
-  torsoRoot.addChild(ChestSpikeNode6);
-  torsoRoot.addChild(ChestSpikeNode7);
-  torsoRoot.addChild(ChestSpikeNode8);
-  torsoRoot.addChild(ChestSpikeNode9);
-  torsoRoot.addChild(ChestSpikeNode10);
 
-  // --- TRANSFORMATIONS ---
-
-  // Posisikan bagian tubuh utama
   mat4.translate(
-    upperBodyNode.localTransform,
-    upperBodyNode.localTransform,
-    [0, 0.5, 0]
-  );
-  mat4.translate(
-    lowerBodyNode.localTransform,
-    lowerBodyNode.localTransform,
-    [0, -1.5, 0]
+    torsoRoot.localTransform,
+    torsoRoot.localTransform,
+    [0, -3, 5] // Geser mundur di sumbu Z
   );
 
-  // Posisikan konektor
-  mat4.translate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [0, -0.6, 0]
-  );
-  mat4.scale(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [0.64, 0.3, 0.65]
-  );
+  // --- SCALE LEBIH BESAR (2x) ---
+  const scale = 1.5;
 
-  // Posisikan dan orientasikan bahu
+  // Upper body
+  mat4.translate(upperBodyNode.localTransform, upperBodyNode.localTransform, [
+    0,
+    0.5 * scale,
+    0,
+  ]);
+  mat4.scale(upperBodyNode.localTransform, upperBodyNode.localTransform, [
+    scale,
+    scale,
+    scale,
+  ]);
+
+  // Lower body
+  mat4.translate(lowerBodyNode.localTransform, lowerBodyNode.localTransform, [
+    0,
+    -1.5 * scale,
+    0,
+  ]);
+  mat4.scale(lowerBodyNode.localTransform, lowerBodyNode.localTransform, [
+    scale,
+    scale,
+    scale,
+  ]);
+
+  // Connector
+  mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [
+    0,
+    -0.6 * scale,
+    0,
+  ]);
+  mat4.scale(connectorNode.localTransform, connectorNode.localTransform, [
+    0.64 * scale,
+    0.3 * scale,
+    0.65 * scale,
+  ]);
+
   // Bahu Kiri
   mat4.translate(
     leftShoulderNode.localTransform,
     leftShoulderNode.localTransform,
-    [-1.4, 1.36, 0]
+    [-1.4 * scale, 1.36 * scale, 0]
   );
   mat4.rotate(
     leftShoulderNode.localTransform,
@@ -663,17 +690,17 @@ function createMegaGarchompTorso(gl) {
     Math.PI / 8,
     [0, 1, -3]
   );
-  mat4.scale(
-    leftShoulderNode.localTransform,
-    leftShoulderNode.localTransform,
-    [0.78, 0.8, 0.75]
-  );
+  mat4.scale(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [
+    0.78 * scale,
+    0.8 * scale,
+    0.75 * scale,
+  ]);
 
   // Bahu Kanan
   mat4.translate(
     rightShoulderNode.localTransform,
     rightShoulderNode.localTransform,
-    [1.4, 1.36, 0]
+    [1.4 * scale, 1.36 * scale, 0]
   );
   mat4.rotate(
     rightShoulderNode.localTransform,
@@ -690,264 +717,445 @@ function createMegaGarchompTorso(gl) {
   mat4.scale(
     rightShoulderNode.localTransform,
     rightShoulderNode.localTransform,
-    [0.78, 0.8, 0.75]
+    [0.78 * scale, 0.8 * scale, 0.75 * scale]
   );
 
-  // Posisikan pelat merah
-  mat4.translate(
-    chestPlateNode.localTransform,
-    chestPlateNode.localTransform,
-    [0, 0.5, 0.15]
-  );
-  mat4.scale(
-    chestPlateNode.localTransform,
-    chestPlateNode.localTransform,
-    [0.64, 1.2, 0.75]
-  );
-  mat4.translate(
-    waistPlateNode.localTransform,
-    waistPlateNode.localTransform,
-    [0, -0.6, 0.05]
-  );
-  mat4.scale(
-    waistPlateNode.localTransform,
-    waistPlateNode.localTransform,
-    [0.6, 1.2, 0.65]
-  );
+  // Chest plate
+  mat4.translate(chestPlateNode.localTransform, chestPlateNode.localTransform, [
+    0,
+    0.5 * scale,
+    0.15 * scale,
+  ]);
+  mat4.scale(chestPlateNode.localTransform, chestPlateNode.localTransform, [
+    0.64 * scale,
+    1.2 * scale,
+    0.75 * scale,
+  ]);
 
-  // Posisikan pelat kuning
+  // Waist plate
+  mat4.translate(waistPlateNode.localTransform, waistPlateNode.localTransform, [
+    0,
+    -0.6 * scale,
+    0.05 * scale,
+  ]);
+  mat4.scale(waistPlateNode.localTransform, waistPlateNode.localTransform, [
+    0.6 * scale,
+    1.2 * scale,
+    0.65 * scale,
+  ]);
+
+  // Stomach plates
   mat4.translate(
     stomachPlateNode1.localTransform,
     stomachPlateNode1.localTransform,
-    [0, -1.26, 0.29]
+    [0, -1.26 * scale, 0.29 * scale]
   );
   mat4.scale(
     stomachPlateNode1.localTransform,
     stomachPlateNode1.localTransform,
-    [0.5, 0.65, 0.5]
+    [0.5 * scale, 0.65 * scale, 0.5 * scale]
   );
 
   mat4.translate(
     stomachPlateNode2.localTransform,
     stomachPlateNode2.localTransform,
-    [0, -1.26, 0.12]
+    [0, -1.26 * scale, 0.12 * scale]
   );
   mat4.scale(
     stomachPlateNode2.localTransform,
     stomachPlateNode2.localTransform,
-    [0.62, 0.68, 0.5]
+    [0.62 * scale, 0.68 * scale, 0.5 * scale]
   );
 
+  // --- POSISI DI BAWAH NECK ---
   mat4.translate(
-    ChestSpikeNode1.localTransform,
-    ChestSpikeNode1.localTransform,
-    [0.65, 1.1, 0.45]
-  );
-  mat4.scale(
-    ChestSpikeNode1.localTransform,
-    ChestSpikeNode1.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode1.localTransform,
-    ChestSpikeNode1.localTransform,
-    -Math.PI / 2.6,
-    [0, 0, 1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode2.localTransform,
-    ChestSpikeNode2.localTransform,
-    [-0.65, 1.1, 0.45]
-  );
-  mat4.scale(
-    ChestSpikeNode2.localTransform,
-    ChestSpikeNode2.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode2.localTransform,
-    ChestSpikeNode2.localTransform,
-    -Math.PI / 2.6,
-    [0, 0, -1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode3.localTransform,
-    ChestSpikeNode3.localTransform,
-    [0.7, 0.55, 0.47]
-  );
-  mat4.scale(
-    ChestSpikeNode3.localTransform,
-    ChestSpikeNode3.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode3.localTransform,
-    ChestSpikeNode3.localTransform,
-    -Math.PI / 2.2,
-    [0, 0, 1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode4.localTransform,
-    ChestSpikeNode4.localTransform,
-    [-0.7, 0.55, 0.47]
-  );
-  mat4.scale(
-    ChestSpikeNode4.localTransform,
-    ChestSpikeNode4.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode4.localTransform,
-    ChestSpikeNode4.localTransform,
-    -Math.PI / 2.2,
-    [0, 0, -1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode5.localTransform,
-    ChestSpikeNode5.localTransform,
-    [0.6, 0.03, 0.45]
-  );
-  mat4.scale(
-    ChestSpikeNode5.localTransform,
-    ChestSpikeNode5.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode5.localTransform,
-    ChestSpikeNode5.localTransform,
-    -Math.PI / 2,
-    [0, 0, 1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode6.localTransform,
-    ChestSpikeNode6.localTransform,
-    [-0.6, 0.03, 0.45]
-  );
-  mat4.scale(
-    ChestSpikeNode6.localTransform,
-    ChestSpikeNode6.localTransform,
-    [0.6, 1.5, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode6.localTransform,
-    ChestSpikeNode6.localTransform,
-    -Math.PI / 2,
-    [0, 0, -1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode7.localTransform,
-    ChestSpikeNode7.localTransform,
-    [0.45, -0.45, 0.3]
-  );
-  mat4.scale(
-    ChestSpikeNode7.localTransform,
-    ChestSpikeNode7.localTransform,
-    [0.4, 0.9, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode7.localTransform,
-    ChestSpikeNode7.localTransform,
-    -Math.PI / 1.7,
-    [0, 0, 1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode8.localTransform,
-    ChestSpikeNode8.localTransform,
-    [-0.45, -0.45, 0.3]
-  );
-  mat4.scale(
-    ChestSpikeNode8.localTransform,
-    ChestSpikeNode8.localTransform,
-    [0.4, 0.9, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode8.localTransform,
-    ChestSpikeNode8.localTransform,
-    -Math.PI / 1.7,
-    [0, 0, -1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode9.localTransform,
-    ChestSpikeNode9.localTransform,
-    [0.4, -0.63, 0.23]
-  );
-  mat4.scale(
-    ChestSpikeNode9.localTransform,
-    ChestSpikeNode9.localTransform,
-    [0.4, 0.4, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode9.localTransform,
-    ChestSpikeNode9.localTransform,
-    -Math.PI / 2,
-    [0, 0, 1]
-  );
-
-  mat4.translate(
-    ChestSpikeNode10.localTransform,
-    ChestSpikeNode10.localTransform,
-    [-0.4, -0.63, 0.23]
-  );
-  mat4.scale(
-    ChestSpikeNode10.localTransform,
-    ChestSpikeNode10.localTransform,
-    [0.4, 0.4, 0.2]
-  );
-  mat4.rotate(
-    ChestSpikeNode10.localTransform,
-    ChestSpikeNode10.localTransform,
-    -Math.PI / 2,
-    [0, 0, -1]
+    torsoRoot.localTransform,
+    torsoRoot.localTransform,
+    [0, -3.5, 1.5] // Adjust Y untuk di bawah neck
   );
 
   return torsoRoot;
 }
 
-// function createGarchompBody(gl) {
-//   const cfg = GarchompAnatomy;
-//   const bodyRoot = new SceneNode();
+function createGarchompArm(gl) {}
 
-//   // TORSO - Hyperboloid untuk bentuk dada yang natural
-//   const torsoMesh = new Mesh(
-//     gl,
-//     Primitives.createHyperboloid(
-//       1.2, // radiusTop (lebar bahu)
-//       0.9, // radiusBottom (lebar pinggul)
-//       0.7, // waistRadius (pinggang tersempit)
-//       2.5, // height (tinggi torso)
-//       32 // segments
-//     )
-//   );
+function createGarchompLeg(gl) {
+  const cfg = GarchompAnatomy;
+  const legRoot = new SceneNode();
 
-//   const finMesh = new Mesh(
-//     gl,
-//     Curves.createSharkFin(1.5, 4, 3) // BaseWidth, Height, Depth
-//   );
+  // PAHA - Ellipsoid yang agak panjang
+  const thighMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.8, 2, 1.0, 32, 32)
+  );
 
-//   const backFin = new SceneNode(finMesh, cfg.colors.darkBlue);
+  // BETIS - Lebih kecil dan ramping
+  const calfMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.6, 1.5, 0.6, 32, 32)
+  );
 
-//   mat4.translate(
-//     backFin.localTransform,
-//     backFin.localTransform,
-//     [0, -3.4, 3.2]
-//   );
+  // SPIKE - Cone putih (LEBIH BESAR)
+  const spikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
 
-//   mat4.rotate(
-//     backFin.localTransform,
-//     backFin.localTransform,
-//     Math.PI / 2, // Sedikit rotasi ke belakang
-//     [0, 1, 1]
-//   );
+  // Di createGarchompLeg, tambahkan:
 
-//   bodyRoot.addChild(backFin);
+  // TELAPAK KAKI - Solid Paraboloid (agak penyet)
+  const footMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.6, 1.2, 0.4, 32, 32)
+  );
 
-//   return bodyRoot;
-// }
+  // CAKAR - Cone putih
+  const clawMesh = new Mesh(gl, Primitives.createCone(0.1, 0.25, 16));
+
+  // === KAKI KIRI ===
+
+  // Paha kiri
+  const leftThigh = new SceneNode(thighMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftThigh.localTransform,
+    leftThigh.localTransform,
+    [-1.5, -2.5, -0.2]
+  );
+  mat4.rotate(
+    leftThigh.localTransform,
+    leftThigh.localTransform,
+    -Math.PI / 7,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    leftThigh.localTransform,
+    leftThigh.localTransform,
+    -Math.PI / 10,
+    [1, 0, 0]
+  );
+  legRoot.addChild(leftThigh);
+
+  // Spike atas paha kiri
+  const leftSpikeTop = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    leftSpikeTop.localTransform,
+    leftSpikeTop.localTransform,
+    [-0.2, 0.5, 0.8]
+  );
+  mat4.rotate(
+    leftSpikeTop.localTransform,
+    leftSpikeTop.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+
+  leftThigh.addChild(leftSpikeTop);
+
+  // Spike bawah paha kiri
+  const leftSpikeBottom = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    leftSpikeBottom.localTransform,
+    leftSpikeBottom.localTransform,
+    [-0.3, -0.5, 0.7]
+  );
+  mat4.rotate(
+    leftSpikeBottom.localTransform,
+    leftSpikeBottom.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+
+  leftThigh.addChild(leftSpikeBottom);
+
+  // Betis kiri
+  const leftCalf = new SceneNode(calfMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftCalf.localTransform,
+    leftCalf.localTransform,
+    [-2.2, -4.5, -0.1]
+  );
+  mat4.rotate(
+    leftCalf.localTransform,
+    leftCalf.localTransform,
+    -Math.PI / 12,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    leftCalf.localTransform,
+    leftCalf.localTransform,
+    Math.PI / 6,
+    [1, 0, 0]
+  );
+  legRoot.addChild(leftCalf);
+
+  // Telapak kaki kiri
+  const leftFoot = new SceneNode(footMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftFoot.localTransform,
+    leftFoot.localTransform,
+    [-2.5, -5.7, 0.3]
+  );
+  mat4.rotate(
+    leftFoot.localTransform,
+    leftFoot.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
+  // Rotasi agar alas di bawah
+  legRoot.addChild(leftFoot);
+
+  // Cakar kiri 1 (depan tengah)
+  const leftClaw1 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    leftClaw1.localTransform,
+    leftClaw1.localTransform,
+    [-0.3, -1.1, 0]
+  );
+  mat4.rotate(
+    leftClaw1.localTransform,
+    leftClaw1.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  leftFoot.addChild(leftClaw1);
+
+  // Cakar kiri 2 (kiri)
+  const leftClaw2 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    leftClaw2.localTransform,
+    leftClaw2.localTransform,
+    [-0, -1.3, -0]
+  );
+  mat4.rotate(
+    leftClaw2.localTransform,
+    leftClaw2.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  leftFoot.addChild(leftClaw2);
+
+  // Cakar kiri 3 (kanan)
+  const leftClaw3 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    leftClaw3.localTransform,
+    leftClaw3.localTransform,
+    [0.3, -1.1, 0]
+  );
+  mat4.rotate(
+    leftClaw3.localTransform,
+    leftClaw3.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  leftFoot.addChild(leftClaw3);
+
+  // === KAKI KANAN ===
+
+  // Paha kanan
+  const rightThigh = new SceneNode(thighMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightThigh.localTransform,
+    rightThigh.localTransform,
+    [1.5, -2.5, -0.2]
+  );
+  mat4.rotate(
+    rightThigh.localTransform,
+    rightThigh.localTransform,
+    Math.PI / 7,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    rightThigh.localTransform,
+    rightThigh.localTransform,
+    -Math.PI / 10,
+    [1, 0, 0]
+  );
+  legRoot.addChild(rightThigh);
+
+  // Spike atas paha kanan
+  const rightSpikeTop = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    rightSpikeTop.localTransform,
+    rightSpikeTop.localTransform,
+    [0.2, 0.5, 0.8]
+  );
+  mat4.rotate(
+    rightSpikeTop.localTransform,
+    rightSpikeTop.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  rightThigh.addChild(rightSpikeTop);
+
+  // Spike bawah paha kanan
+  const rightSpikeBottom = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    rightSpikeBottom.localTransform,
+    rightSpikeBottom.localTransform,
+    [0.25, -0.5, 0.8]
+  );
+  mat4.rotate(
+    rightSpikeBottom.localTransform,
+    rightSpikeBottom.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  rightThigh.addChild(rightSpikeBottom);
+
+  // Betis kanan
+  const rightCalf = new SceneNode(calfMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightCalf.localTransform,
+    rightCalf.localTransform,
+    [2.2, -4.5, -0.1]
+  );
+  mat4.rotate(
+    rightCalf.localTransform,
+    rightCalf.localTransform,
+    Math.PI / 12,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    rightCalf.localTransform,
+    rightCalf.localTransform,
+    Math.PI / 6,
+    [1, 0, 0]
+  );
+  legRoot.addChild(rightCalf);
+  const rightFoot = new SceneNode(footMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightFoot.localTransform,
+    rightFoot.localTransform,
+    [2.5, -5.7, 0.3]
+  );
+  mat4.rotate(
+    rightFoot.localTransform,
+    rightFoot.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
+  // Rotasi agar alas di bawah
+  legRoot.addChild(rightFoot);
+
+  // Cakar kanan 1 (depan tengah) - MIRROR X dari kiri
+  const rightClaw1 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    rightClaw1.localTransform,
+    rightClaw1.localTransform,
+    [-0.3, -1.1, 0] // X negatif (mirror dari kiri yang -0.3)
+  );
+  mat4.rotate(
+    rightClaw1.localTransform,
+    rightClaw1.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  rightFoot.addChild(rightClaw1);
+
+  // Cakar kanan 2 (tengah)
+  const rightClaw2 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    rightClaw2.localTransform,
+    rightClaw2.localTransform,
+    [0, -1.3, 0] // Center (sama dengan kiri)
+  );
+  mat4.rotate(
+    rightClaw2.localTransform,
+    rightClaw2.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  rightFoot.addChild(rightClaw2);
+
+  // Cakar kanan 3 (kanan)
+  const rightClaw3 = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(
+    rightClaw3.localTransform,
+    rightClaw3.localTransform,
+    [0.3, -1.1, 0] // X positif (mirror dari kiri yang 0.3)
+  );
+  mat4.rotate(
+    rightClaw3.localTransform,
+    rightClaw3.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  rightFoot.addChild(rightClaw3);
+
+  //asdasdsad
+
+  const tailBodyMesh = new Mesh(
+    gl,
+    Curves.createKatanaCrescent(
+      4.0, // length (lebih pendek, karena ada cone di ujung)
+      0.9, // width
+      0.4, // curve
+      0.8, // thickness
+      64
+    )
+  );
+
+  const tailBody = new SceneNode(tailBodyMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    tailBody.localTransform,
+    tailBody.localTransform,
+    [0, -1.8, -2.8]
+  );
+  mat4.rotate(
+    tailBody.localTransform,
+    tailBody.localTransform,
+    -Math.PI,
+    [1, 0, 1]
+  );
+  legRoot.addChild(tailBody);
+
+  // === CONE TENGAH (Center spike) ===
+  const centerSpikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1.2, 32));
+  const centerSpike = new SceneNode(centerSpikeMesh, cfg.colors.darkBlue);
+
+  mat4.translate(
+    centerSpike.localTransform,
+    centerSpike.localTransform,
+    [-2.6, -0, 0] // Di ujung tengah tail body
+  );
+  mat4.rotate(
+    centerSpike.localTransform,
+    centerSpike.localTransform,
+    Math.PI / 2, // Point forward (menghadap Z+)
+    [0, 0, 1]
+  );
+  tailBody.addChild(centerSpike);
+
+  //cone kiri
+  const leftTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
+  const leftTipCone = new SceneNode(leftTipConeMesh, cfg.colors.darkBlue);
+
+  mat4.translate(
+    leftTipCone.localTransform,
+    leftTipCone.localTransform,
+    [-1.8, 0.05, 0.7] // Di ujung blade kiri
+  );
+  mat4.rotate(
+    leftTipCone.localTransform,
+    leftTipCone.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  tailBody.addChild(leftTipCone);
+
+  // Cone kanan (MIRROR dari kiri)
+  const rightTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
+  const rightTipCone = new SceneNode(rightTipConeMesh, cfg.colors.darkBlue);
+
+  mat4.translate(
+    rightTipCone.localTransform,
+    rightTipCone.localTransform,
+    [-1.8, 0.05, -0.7] // Mirror Z: dari 0.7 jadi -0.7
+  );
+  mat4.rotate(
+    rightTipCone.localTransform,
+    rightTipCone.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
+  tailBody.addChild(rightTipCone);
+
+  return legRoot;
+}

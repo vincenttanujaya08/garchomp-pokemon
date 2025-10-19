@@ -569,4 +569,192 @@ const Primitives = {
       indices: new Uint16Array(indices),
     };
   },
+  createEllipticParaboloid: function (
+    width = 1,
+    depth = 1,
+    height = 1,
+    segments = 32
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    for (let i = 0; i <= segments; i++) {
+      const u = i / segments;
+      for (let j = 0; j <= segments; j++) {
+        const v = (j * 2 * Math.PI) / segments;
+
+        const x = width * u * Math.cos(v);
+        const y = height * u * u; // Menggunakan Y sebagai sumbu tinggi
+        const z = depth * u * Math.sin(v);
+        vertices.push(x, y, z);
+
+        const nx = 2 * height * x;
+        const ny = -(width * depth);
+        const nz = 2 * height * z;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+        if (len > 0) {
+          normals.push(nx / len, ny / len, nz / len);
+        } else {
+          normals.push(0, -1, 0);
+        }
+      }
+    }
+
+    for (let i = 0; i < segments; i++) {
+      for (let j = 0; j < segments; j++) {
+        const first = i * (segments + 1) + j;
+        const second = first + segments + 1;
+
+        indices.push(first, second, first + 1);
+        indices.push(second, second + 1, first + 1);
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+  createSolidEllipticParaboloid: function (
+    width = 1,
+    depth = 1,
+    height = 1,
+    segments = 32
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    // === PERMUKAAN PARABOLOID (sama seperti sebelumnya) ===
+    for (let i = 0; i <= segments; i++) {
+      const u = i / segments;
+      for (let j = 0; j <= segments; j++) {
+        const v = (j * 2 * Math.PI) / segments;
+
+        const x = width * u * Math.cos(v);
+        const y = height * u * u;
+        const z = depth * u * Math.sin(v);
+        vertices.push(x, y, z);
+
+        const nx = 2 * height * x;
+        const ny = -(width * depth);
+        const nz = 2 * height * z;
+        const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+        if (len > 0) {
+          normals.push(nx / len, ny / len, nz / len);
+        } else {
+          normals.push(0, -1, 0);
+        }
+      }
+    }
+
+    // Indices untuk permukaan paraboloid
+    for (let i = 0; i < segments; i++) {
+      for (let j = 0; j < segments; j++) {
+        const first = i * (segments + 1) + j;
+        const second = first + segments + 1;
+
+        indices.push(first, second, first + 1);
+        indices.push(second, second + 1, first + 1);
+      }
+    }
+
+    // === TUTUP ALAS (BASE CAP) - Membuat solid ===
+    const baseStartIndex = vertices.length / 3;
+
+    // Center point alas (Y = 0)
+    vertices.push(0, 0, 0);
+    normals.push(0, -1, 0); // Normal ke bawah
+    const centerIndex = baseStartIndex;
+
+    // Ring vertices di alas (u = 1, Y = height)
+    for (let j = 0; j <= segments; j++) {
+      const v = (j * 2 * Math.PI) / segments;
+      const x = width * Math.cos(v);
+      const z = depth * Math.sin(v);
+      vertices.push(x, height, z); // Y = height (di alas paraboloid)
+      normals.push(0, -1, 0);
+    }
+
+    // Triangles dari center ke ring
+    for (let j = 0; j < segments; j++) {
+      indices.push(
+        centerIndex,
+        baseStartIndex + 1 + j + 1,
+        baseStartIndex + 1 + j
+      );
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
+
+  createHyperboloidOneSheet: function (
+    radiusX = 1,
+    radiusZ = 1,
+    pinchY = 1,
+    height = 2,
+    latitudeBands = 30,
+    longitudeBands = 30
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+      const v = -1 + (latNumber / latitudeBands) * 2; // v ranges from -1 to 1
+      const y = (v * height) / 2;
+
+      // Calculate the radius at this height 'y' based on the hyperboloid equation
+      // x^2/a^2 + z^2/b^2 = 1 + y^2/c^2
+      const radiusScale = Math.sqrt(1 + (y * y) / (pinchY * pinchY));
+
+      for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+        const u = (longNumber / longitudeBands) * 2 * Math.PI;
+        const cosU = Math.cos(u);
+        const sinU = Math.sin(u);
+
+        const x = radiusX * radiusScale * cosU;
+        const z = radiusZ * radiusScale * sinU;
+        vertices.push(x, y, z);
+
+        // Normal vector is derived from the gradient of the implicit equation
+        // F(x,y,z) = x^2/a^2 + z^2/b^2 - y^2/c^2 - 1 = 0
+        // grad(F) = (2x/a^2, -2y/c^2, 2z/b^2)
+        const nx = x / (radiusX * radiusX);
+        const ny = -y / (pinchY * pinchY);
+        const nz = z / (radiusZ * radiusZ);
+
+        const len = Math.hypot(nx, ny, nz);
+        if (len > 0) {
+          normals.push(nx / len, ny / len, nz / len);
+        } else {
+          normals.push(0, 1, 0); // Fallback
+        }
+      }
+    }
+
+    for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+      for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+        const first = latNumber * (longitudeBands + 1) + longNumber;
+        const second = first + longitudeBands + 1;
+
+        indices.push(first, second, first + 1);
+        indices.push(second, second + 1, first + 1);
+      }
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 };
