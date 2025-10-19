@@ -285,4 +285,30 @@ const Curves = {
       indices: new Uint16Array(indices),
     };
   },
+  getBezierPoint: function (t, p0, p1, p2, p3) {
+    const u = 1 - t;
+    const tt = t * t;
+    const uu = u * u;
+    const uuu = uu * u;
+    const ttt = tt * t;
+
+    let p = [0, 0, 0];
+    // x
+    p[0] = uuu * p0[0];
+    p[0] += 3 * uu * t * p1[0];
+    p[0] += 3 * u * tt * p2[0];
+    p[0] += ttt * p3[0];
+    // y
+    p[1] = uuu * p0[1];
+    p[1] += 3 * uu * t * p1[1];
+    p[1] += 3 * u * tt * p2[1];
+    p[1] += ttt * p3[1];
+    // z
+    p[2] = uuu * p0[2];
+    p[2] += 3 * uu * t * p1[2];
+    p[2] += 3 * u * tt * p2[2];
+    p[2] += ttt * p3[2];
+
+    return p;
+  },
 };
