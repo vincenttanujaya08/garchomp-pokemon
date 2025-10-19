@@ -530,38 +530,6 @@ function createGarchompBody(gl) {
       32 // segments
     )
   );
-  const torso = new SceneNode(torsoMesh, cfg.colors.red);
-  mat4.translate(
-    torso.localTransform,
-    torso.localTransform,
-    [0, -4.6, 1.8] // Posisi di bawah leher
-  );
-  bodyRoot.addChild(torso);
-
-  // CYLINDER BELAKANG - Menutupi bagian belakang torso
-  const backCylinderMesh = new Mesh(
-    gl,
-    Primitives.createCylinder(0.8, 1.8, 16) // Radius sesuai torso, height sama
-  );
-  const backCylinder = new SceneNode(backCylinderMesh, cfg.colors.darkBlue);
-  mat4.translate(
-    backCylinder.localTransform,
-    backCylinder.localTransform,
-    [0, -4.7, 2.6] // Posisi sama Y, tapi Z lebih ke belakang
-  );
-  mat4.scale(
-    backCylinder.localTransform,
-    backCylinder.localTransform,
-    [1.4, 2.2, 0.6]
-  );
-  mat4.rotate(
-    backCylinder.localTransform,
-    backCylinder.localTransform,
-    -Math.PI / 10,
-    [1, 0, 0]
-  );
-
-  bodyRoot.addChild(backCylinder);
 
   const finMesh = new Mesh(
     gl,
@@ -582,12 +550,6 @@ function createGarchompBody(gl) {
     Math.PI / 2, // Sedikit rotasi ke belakang
     [0, 1, 1]
   );
-  //   mat4.rotate(
-  //     backFin.localTransform,
-  //     backFin.localTransform,
-  //     -Math.PI / 13, // Sedikit rotasi ke belakang
-  //     [1, 0, 0]
-  //   );
 
   bodyRoot.addChild(backFin);
 
