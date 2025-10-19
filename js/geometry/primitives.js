@@ -685,74 +685,63 @@ createHyperboloidOneSheet: function (
     indices: new Uint16Array(indices),
   };
 },
-// FUNGSI BARU DITAMBAHKAN DI SINI
-createExtrudedShape: function (shapePoints, thickness) {
-    const vertices = [];
-    const normals = [];
-    const indices = [];
-    const n = shapePoints.length;
-    const halfThickness = thickness / 2;
 
-    // --- Muka Atas (Y positif) ---
-    let offset = 0;
-    for (const p of shapePoints) {
-        // Poin didefinisikan di bidang XZ, diekstrusi sepanjang Y
-        vertices.push(p[0], halfThickness, p[2]); 
-        normals.push(0, 1, 0);
-    }
-    // Buat segitiga dari titik-titik muka atas
-    for (let i = 1; i < n - 1; i++) {
-        indices.push(offset, offset + i, offset + i + 1);
-    }
+// FUNGSI BARU UNTUK TELAPAK KAKI
+createTrapezoidalPrism: function(bottomWidth, topWidth, height, depth) {
+    const halfBottomW = bottomWidth / 2;
+    const halfTopW = topWidth / 2;
+    const halfH = height / 2;
+    const halfD = depth / 2;
 
-    // --- Muka Bawah (Y negatif) ---
-    offset = n;
-    for (const p of shapePoints) {
-        vertices.push(p[0], -halfThickness, p[2]);
-        normals.push(0, -1, 0);
-    }
-    // Buat segitiga dengan urutan terbalik agar normalnya benar
-    for (let i = 1; i < n - 1; i++) {
-        indices.push(offset, offset + i + 1, offset + i);
-    }
+    // Definisikan 8 titik sudut dari prisma trapesium
+    const p = [
+        // Muka depan (z positif)
+        [-halfBottomW, -halfH, halfD], // 0: Kiri bawah
+        [halfBottomW, -halfH, halfD],  // 1: Kanan bawah
+        [halfTopW, halfH, halfD],      // 2: Kanan atas
+        [-halfTopW, halfH, halfD],     // 3: Kiri atas
+        // Muka belakang (z negatif)
+        [-halfBottomW, -halfH, -halfD], // 4: Kiri bawah
+        [halfBottomW, -halfH, -halfD],  // 5: Kanan bawah
+        [halfTopW, halfH, -halfD],      // 6: Kanan atas
+        [-halfTopW, halfH, -halfD]      // 7: Kiri atas
+    ];
 
-    // --- Dinding Samping ---
-    for (let i = 0; i < n; i++) {
-        const next = (i + 1) % n;
-        const p1 = shapePoints[i];
-        const p2 = shapePoints[next];
+    const vertices = new Float32Array([
+        ...p[0], ...p[1], ...p[2], ...p[3], // Depan
+        ...p[5], ...p[4], ...p[7], ...p[6], // Belakang
+        ...p[3], ...p[2], ...p[6], ...p[7], // Atas
+        ...p[4], ...p[5], ...p[1], ...p[0], // Bawah
+        ...p[4], ...p[0], ...p[3], ...p[7], // Kiri
+        ...p[1], ...p[5], ...p[6], ...p[2]  // Kanan
+    ]);
 
-        const v1 = [p1[0], halfThickness, p1[2]];
-        const v2 = [p1[0], -halfThickness, p1[2]];
-        const v3 = [p2[0], halfThickness, p2[2]];
-        const v4 = [p2[0], -halfThickness, p2[2]];
-        
-        const currentOffset = 2 * n + i * 4;
-        vertices.push(...v1, ...v2, ...v3, ...v4);
+    const normals = new Float32Array([
+        // Depan
+        0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1,
+        // Belakang
+        0, 0, -1,  0, 0, -1,  0, 0, -1,  0, 0, -1,
+        // Atas
+        0, 1, 0,   0, 1, 0,   0, 1, 0,   0, 1, 0,
+        // Bawah
+        0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,
+        // Kiri
+        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
+        // Kanan
+        1, 0, 0,   1, 0, 0,   1, 0, 0,   1, 0, 0
+    ]);
 
-        // Hitung normal untuk dinding samping
-        const edge = [p2[0] - p1[0], 0, p2[2] - p1[2]];
-        const normal = [-edge[2], 0, edge[0]]; // Vektor tegak lurus di bidang XZ
-        const len = Math.hypot(normal[0], normal[2]);
-        if (len > 0) {
-            normal[0] /= len;
-            normal[2] /= len;
-        }
+    const indices = new Uint16Array([
+        0, 1, 2,   0, 2, 3,    // Depan
+        4, 5, 6,   4, 6, 7,    // Belakang
+        8, 9, 10,  8, 10, 11,   // Atas
+        12, 13, 14, 12, 14, 15,  // Bawah
+        16, 17, 18, 16, 18, 19,  // Kiri
+        20, 21, 22, 20, 22, 23   // Kanan
+    ]);
 
-        normals.push(...normal, ...normal, ...normal, ...normal);
-
-        // Buat dua segitiga untuk dinding persegi panjang
-        indices.push(currentOffset, currentOffset + 1, currentOffset + 2);
-        indices.push(currentOffset + 2, currentOffset + 1, currentOffset + 3);
-    }
-
-    return {
-        vertices: new Float32Array(vertices),
-        normals: new Float32Array(normals),
-        indices: new Uint16Array(indices),
-    };
-},
+    return { vertices, normals, indices };
+}
 
 };
-
 

@@ -65,7 +65,7 @@ function main() {
   // const islandNode = createIsland(gl);
 
   const projectionMatrix = mat4.create();
-  const cameraPosition = [0, 1, 8]; //<- Angka Z diubah dari 5 menjadi 8
+  const cameraPosition = [0, 1, 15]; //<- Angka Z diubah dari 5 menjadi 8
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
