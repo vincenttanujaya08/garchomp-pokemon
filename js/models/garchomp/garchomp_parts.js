@@ -1254,81 +1254,81 @@ function createGarchompLeg(gl) {
 
   //asdasdsad
 
-  const tailBodyMesh = new Mesh(
-    gl,
-    Curves.createKatanaCrescent(
-      4.0, // length (lebih pendek, karena ada cone di ujung)
-      0.9, // width
-      0.4, // curve
-      0.8, // thickness
-      64
-    )
-  );
+  // const tailBodyMesh = new Mesh(
+  //   gl,
+  //   Curves.createKatanaCrescent(
+  //     4.0, // length (lebih pendek, karena ada cone di ujung)
+  //     0.9, // width
+  //     0.4, // curve
+  //     0.8, // thickness
+  //     64
+  //   )
+  // );
 
-  const tailBody = new SceneNode(tailBodyMesh, cfg.colors.darkBlue);
-  mat4.translate(
-    tailBody.localTransform,
-    tailBody.localTransform,
-    [0, -1.8, -2.8]
-  );
-  mat4.rotate(
-    tailBody.localTransform,
-    tailBody.localTransform,
-    -Math.PI,
-    [1, 0, 1]
-  );
-  legRoot.addChild(tailBody);
+  // const tailBody = new SceneNode(tailBodyMesh, cfg.colors.darkBlue);
+  // mat4.translate(
+  //   tailBody.localTransform,
+  //   tailBody.localTransform,
+  //   [0, -1.8, -2.8]
+  // );
+  // mat4.rotate(
+  //   tailBody.localTransform,
+  //   tailBody.localTransform,
+  //   -Math.PI,
+  //   [1, 0, 1]
+  // );
+  // legRoot.addChild(tailBody);
 
-  // === CONE TENGAH (Center spike) ===
-  const centerSpikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1.2, 32));
-  const centerSpike = new SceneNode(centerSpikeMesh, cfg.colors.darkBlue);
+  // // === CONE TENGAH (Center spike) ===
+  // const centerSpikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1.2, 32));
+  // const centerSpike = new SceneNode(centerSpikeMesh, cfg.colors.darkBlue);
 
-  mat4.translate(
-    centerSpike.localTransform,
-    centerSpike.localTransform,
-    [-2.6, -0, 0] // Di ujung tengah tail body
-  );
-  mat4.rotate(
-    centerSpike.localTransform,
-    centerSpike.localTransform,
-    Math.PI / 2, // Point forward (menghadap Z+)
-    [0, 0, 1]
-  );
-  tailBody.addChild(centerSpike);
+  // mat4.translate(
+  //   centerSpike.localTransform,
+  //   centerSpike.localTransform,
+  //   [-2.6, -0, 0] // Di ujung tengah tail body
+  // );
+  // mat4.rotate(
+  //   centerSpike.localTransform,
+  //   centerSpike.localTransform,
+  //   Math.PI / 2, // Point forward (menghadap Z+)
+  //   [0, 0, 1]
+  // );
+  // tailBody.addChild(centerSpike);
 
-  //cone kiri
-  const leftTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
-  const leftTipCone = new SceneNode(leftTipConeMesh, cfg.colors.darkBlue);
+  // //cone kiri
+  // const leftTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
+  // const leftTipCone = new SceneNode(leftTipConeMesh, cfg.colors.darkBlue);
 
-  mat4.translate(
-    leftTipCone.localTransform,
-    leftTipCone.localTransform,
-    [-1.8, 0.05, 0.7] // Di ujung blade kiri
-  );
-  mat4.rotate(
-    leftTipCone.localTransform,
-    leftTipCone.localTransform,
-    Math.PI / 2,
-    [1, 0, 0]
-  );
-  tailBody.addChild(leftTipCone);
+  // mat4.translate(
+  //   leftTipCone.localTransform,
+  //   leftTipCone.localTransform,
+  //   [-1.8, 0.05, 0.7] // Di ujung blade kiri
+  // );
+  // mat4.rotate(
+  //   leftTipCone.localTransform,
+  //   leftTipCone.localTransform,
+  //   Math.PI / 2,
+  //   [1, 0, 0]
+  // );
+  // tailBody.addChild(leftTipCone);
 
-  // Cone kanan (MIRROR dari kiri)
-  const rightTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
-  const rightTipCone = new SceneNode(rightTipConeMesh, cfg.colors.darkBlue);
+  // // Cone kanan (MIRROR dari kiri)
+  // const rightTipConeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
+  // const rightTipCone = new SceneNode(rightTipConeMesh, cfg.colors.darkBlue);
 
-  mat4.translate(
-    rightTipCone.localTransform,
-    rightTipCone.localTransform,
-    [-1.8, 0.05, -0.7] // Mirror Z: dari 0.7 jadi -0.7
-  );
-  mat4.rotate(
-    rightTipCone.localTransform,
-    rightTipCone.localTransform,
-    -Math.PI / 2,
-    [1, 0, 0]
-  );
-  tailBody.addChild(rightTipCone);
+  // mat4.translate(
+  //   rightTipCone.localTransform,
+  //   rightTipCone.localTransform,
+  //   [-1.8, 0.05, -0.7] // Mirror Z: dari 0.7 jadi -0.7
+  // );
+  // mat4.rotate(
+  //   rightTipCone.localTransform,
+  //   rightTipCone.localTransform,
+  //   -Math.PI / 2,
+  //   [1, 0, 0]
+  // );
+  // tailBody.addChild(rightTipCone);
 
   return legRoot;
 }
