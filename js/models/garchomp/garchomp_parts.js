@@ -777,7 +777,180 @@ function createMegaGarchompTorso(gl) {
   return torsoRoot;
 }
 
-function createGarchompArm(gl) {}
+function createGarchompArm(gl) {
+  const cfg = GarchompAnatomy;
+  const armRoot = new SceneNode();
+
+  const upperArmMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.5, 1.9, 0.5, 32, 32)
+  );
+  const forearmMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.4, 1.6, 0.5, 32, 32)
+  );
+
+  // ================== LENGAN KANAN (patokan) ==================
+  const rightUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightUpper.localTransform,
+    rightUpper.localTransform,
+    [2.2, 0.9, 0.7]
+  );
+  mat4.rotate(
+    rightUpper.localTransform,
+    rightUpper.localTransform,
+    -Math.PI / 4,
+    [1, 0, 0]
+  );
+  mat4.rotate(
+    rightUpper.localTransform,
+    rightUpper.localTransform,
+    Math.PI / 4,
+    [0, 0, 1]
+  );
+  armRoot.addChild(rightUpper);
+
+  const rightFore = new SceneNode(forearmMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    [3.2, -0.4, 2.5]
+  );
+  mat4.rotate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    -Math.PI / 3,
+    [1, 0, 0]
+  );
+  mat4.rotate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    Math.PI / 2,
+    [0, 1, 0]
+  );
+  armRoot.addChild(rightFore);
+
+  // ================== LENGAN KIRI (mirror dari kanan) ==================
+  const leftUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftUpper.localTransform,
+    leftUpper.localTransform,
+    [-2.2, 0.9, 0.7]
+  );
+  mat4.rotate(
+    leftUpper.localTransform,
+    leftUpper.localTransform,
+    -Math.PI / 4,
+    [1, 0, 0]
+  );
+  mat4.rotate(
+    leftUpper.localTransform,
+    leftUpper.localTransform,
+    -Math.PI / 4,
+    [0, 0, 1]
+  );
+  armRoot.addChild(leftUpper);
+
+  const leftFore = new SceneNode(forearmMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftFore.localTransform,
+    leftFore.localTransform,
+    [-3.2, -0.4, 2.5]
+  );
+  mat4.rotate(
+    leftFore.localTransform,
+    leftFore.localTransform,
+    -Math.PI / 3,
+    [1, 0, 0]
+  );
+  mat4.rotate(
+    leftFore.localTransform,
+    leftFore.localTransform,
+    -Math.PI / 2,
+    [0, 1, 0]
+  );
+  armRoot.addChild(leftFore);
+
+  // ============== CAKAR DI UJUNG FOREARM (kiri & kanan) ==============
+  // Cone default sumbu +Z; kita putar +π/2 di X supaya mengarah ke −Y (ujung forearm).
+  const clawMesh = new Mesh(gl, Primitives.createCone(0.3, 0.8, 24));
+  const wristOffset = -(1.6 + 0.1); // ujung bawah forearm (semi-tinggi 1.6) + sedikit keluar
+
+  // Kiri
+  const leftClaw = new SceneNode(clawMesh, cfg.colors.white);
+  // Posisi di ujung forearm kiri (arah −Y lokal), lalu orientasikan ke −Y
+  mat4.translate(leftClaw.localTransform, leftClaw.localTransform, [
+    0,
+    wristOffset,
+    0,
+  ]);
+  mat4.rotate(
+    leftClaw.localTransform,
+    leftClaw.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  leftFore.addChild(leftClaw);
+
+  // Kanan
+  const rightClaw = new SceneNode(clawMesh, cfg.colors.white);
+  mat4.translate(rightClaw.localTransform, rightClaw.localTransform, [
+    0,
+    wristOffset,
+    0,
+  ]);
+  mat4.rotate(
+    rightClaw.localTransform,
+    rightClaw.localTransform,
+    Math.PI,
+    [1, 0, 0]
+  );
+  rightFore.addChild(rightClaw);
+
+  // ============== SAIL (layar) sebagai anak forearm ==============
+  // Pastikan Curves.createSail sudah ada di modul Curves.
+  const sailGeom = Curves.createSail(2, 3, 0.4, 64); // width, height, bulge, segments
+  const sailMesh = new Mesh(gl, sailGeom);
+
+  // Parameter penempatan (lokal terhadap forearm)
+  const xSide = 0.45; // offset ke sisi luar lengan
+  const yAlong = -0.4; // sedikit turun sepanjang forearm
+  const zFront = 0.0; // tetap di tengah Z lokal forearm
+  const tilt = Math.PI / 8; // kemiringan kecil biar “mengembang”
+
+  // --- Sail kanan (anak rightFore) ---
+  const rightSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
+  // orientasi default sail berada di bidang XY (normal +Z), cukup miringkan dikit
+  mat4.translate(
+    rightSail.localTransform,
+    rightSail.localTransform,
+    [0.1, 1.0, 0]
+  );
+  mat4.rotate(
+    rightSail.localTransform,
+    rightSail.localTransform,
+    -Math.PI / 2,
+    [0, 0, 1]
+  ); // kipas ke luar
+  rightFore.addChild(rightSail);
+
+  // const leftSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
+  // mat4.translate(
+  //   leftSail.localTransform,
+  //   leftSail.localTransform,
+  //   [-0.1, 1.0, 0] // mirror X: 0.1 -> -0.1 ; Y & Z sama
+  // );
+  // mat4.rotate(
+  //   leftSail.localTransform,
+  //   leftSail.localTransform,
+  //   -1.5 * Math.PI, // mirror rotasi Z: -π/2 -> +π/2
+  //   [0, 0, 1]
+  // );
+  // rightFore.addChild(leftSail);
+
+  return armRoot;
+}
 
 function createGarchompLeg(gl) {
   const cfg = GarchompAnatomy;

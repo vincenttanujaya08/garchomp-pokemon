@@ -223,4 +223,66 @@ const Curves = {
       indices: new Uint16Array(indices),
     };
   },
+  // Curved right-triangle "sail" (segitiga siku-siku melengkung)
+  // - width, height : kaki segitiga (siku di (0,0))
+  // - bulge         : derajat “mengembung” busur hipotenusa (positif = ke dalam segitiga)
+  // - segments      : resolusi busur
+  createSail: function (width = 3, height = 4, bulge = 0.6, segments = 64) {
+    const W = Math.abs(width);
+    const H = Math.abs(height);
+    const N = Math.max(3, segments | 0);
+
+    // P0=(W,0), P2=(0,H), O=(0,0). Busur hipotenusa = Bezier kuadratik (P0 -> P2, CP=P1).
+    const P0 = [W, 0];
+    const P2 = [0, H];
+
+    // Midpoint garis miring & normal yang mengarah ke dalam segitiga (ke origin).
+    const Mx = 0.5 * (P0[0] + P2[0]); // W/2
+    const My = 0.5 * (P0[1] + P2[1]); // H/2
+    // v = P2 - P0 = (-W, H). Normal ke arah origin ~ (-H, -W).
+    const nx0 = -H,
+      ny0 = -W;
+    const nlen = Math.hypot(nx0, ny0) || 1;
+    const nx = nx0 / nlen,
+      ny = ny0 / nlen;
+
+    // Offset kontrol proporsional panjang hipotenusa
+    const L = Math.hypot(W, H);
+    const b = Math.max(-2, Math.min(2, bulge));
+    const s = b * 0.35 * L;
+    const P1 = [Mx + s * nx, My + s * ny];
+
+    function bez2(a, b, c, t) {
+      const it = 1 - t;
+      return it * it * a + 2 * it * t * b + t * t * c;
+    }
+
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+
+    // v0 = origin (siku)
+    vertices.push(0, 0, 0);
+    normals.push(0, 0, 1);
+
+    // Sampel busur dari P0 -> P2
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const x = bez2(P0[0], P1[0], P2[0], t);
+      const y = bez2(P0[1], P1[1], P2[1], t);
+      vertices.push(x, y, 0);
+      normals.push(0, 0, 1);
+    }
+
+    // Fan triangulation (CCW dilihat dari +Z): (0, i+1, i+2)
+    for (let i = 0; i < N; i++) {
+      indices.push(0, i + 1, i + 2);
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 };
