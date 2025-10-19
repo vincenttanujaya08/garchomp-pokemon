@@ -543,7 +543,49 @@ function createMegaGarchompRightLeg(gl) {
 
     return legRoot;
 }
+function createDorsalFin(gl) {
+    const darkBlue = [0.25, 0.25, 0.45, 1.0];
 
+    // -- Gabungkan semua titik menjadi SATU array --
+    // Urutan titik diatur untuk menjiplak seluruh outline sirip, TANPA B dan C
+    const finShapePoints = [
+        // Garis atas sirip
+        [0.06, 0, 2.87], // A
+        [1.6, 0, 2.97],  // D
+        [3.32, 0, 3.17], // E
+        [4.4, 0, 3.09],  // F
+        [5.38, 0, 2.91], // G
+        [6.5, 0, 2.57],  // H
+        [7.56, 0, 2.19], // I
+        // Lekukan-lekukan di bagian bawah
+        [6.08, 0, 1.65], // J
+        [5.14, 0, 1.93], // K
+        [4.24, 0, 2.03], // L
+        [5.22, 0, 1.41], // M
+        [3.86, 0, 0.91], // N
+        [3.02, 0, 1.23], // O
+        [2.22, 0, 1.41], // P
+        [3.02, 0, 0.63], // Q
+        [1.78, 0, 0.17], // R
+        [0.02, 0, 0.71]  // S
+    ];
+
+
+    // Buat satu mesh dari satu outline utuh
+    const finMesh = new Mesh(gl, Primitives.createExtrudedShape(finShapePoints, 0.2));
+
+    const dorsalFinRoot = new SceneNode(finMesh, darkBlue);
+    
+    // -- TRANSFORMASI KESELURUHAN --
+    // Rotasi agar berdiri tegak
+    mat4.rotate(dorsalFinRoot.localTransform, dorsalFinRoot.localTransform, Math.PI / 2, [-1, 0 , 0]);
+    mat4.rotate(dorsalFinRoot.localTransform, dorsalFinRoot.localTransform, Math.PI / 2, [0, 0 , 1]);
+    // Sesuaikan skala agar proporsional
+    mat4.scale(dorsalFinRoot.localTransform, dorsalFinRoot.localTransform, [0.4, 0.4, 0.4]);
+    mat4.translate(dorsalFinRoot.localTransform, dorsalFinRoot.localTransform, [1, 0, 0]);
+
+    return dorsalFinRoot;
+}
 
 // ---------------------------------------------------------
 //  MAIN ENTRY
@@ -553,6 +595,8 @@ function createMegaGarchomp(gl) {
   const tail = createMegaGarchompTail(gl);
   const leftLeg = createMegaGarchompLeftLeg(gl); // Buat kaki kiri
   const rightLeg = createMegaGarchompRightLeg(gl);
+  const DorsalFin = createDorsalFin(gl);
+  torso.addChild(DorsalFin);
   torso.addChild(tail);
   mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
   mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
