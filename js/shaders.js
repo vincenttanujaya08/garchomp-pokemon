@@ -1,5 +1,5 @@
 // ============================================================
-// js/shaders.js - COMPLETE WITH EXPORTS
+// js/shaders.js - WARM GOLDEN LIGHTING SYSTEM
 // ============================================================
 
 const vertexShaderSource = `
@@ -33,24 +33,44 @@ const fragmentShaderSource = `
     varying highp vec3 v_fragPosition;
 
     void main() {
-      // 1. Ambient
-      float ambientStrength = 0.2;
-      vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
+      // 🌅 WARM GOLDEN LIGHTING
+      
+      // 1. Ambient - Warm golden glow
+      float ambientStrength = 0.35; // Increased for brighter scene
+      vec3 ambientColor = vec3(1.0, 0.95, 0.85); // Warm golden tone
+      vec3 ambient = ambientStrength * ambientColor;
 
-      // 2. Diffuse
+      // 2. Diffuse - Main light with golden tint
       vec3 lightDir = normalize(u_lightDirection - v_fragPosition);
       vec3 normal = normalize(v_normal);
       float diff = max(dot(normal, lightDir), 0.0);
-      vec3 diffuse = diff * vec3(1.0, 1.0, 1.0);
+      
+      // Golden sunset light color
+      vec3 lightColor = vec3(1.0, 0.92, 0.75); // Warm golden yellow
+      vec3 diffuse = diff * lightColor * 1.2; // Boosted intensity
 
-      // 3. Specular
-      float specularStrength = 0.7;
+      // 3. Specular - Subtle golden highlights
+      float specularStrength = 0.5; // Slightly reduced for softer look
       vec3 viewDir = normalize(u_viewPosition - v_fragPosition);
       vec3 reflectDir = reflect(-lightDir, normal);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-      vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 24.0); // Softer specular
       
-      vec3 result = (ambient + diffuse + specular) * u_color.rgb;
+      // Golden specular highlights
+      vec3 specularColor = vec3(1.0, 0.95, 0.8);
+      vec3 specular = specularStrength * spec * specularColor;
+      
+      // 4. Rim lighting for depth (optional enhancement)
+      float rimStrength = 0.3;
+      float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+      rim = pow(rim, 3.0);
+      vec3 rimColor = vec3(1.0, 0.85, 0.6) * rimStrength * rim;
+      
+      // Combine all lighting
+      vec3 result = (ambient + diffuse + specular + rimColor) * u_color.rgb;
+      
+      // Slight color grading for warmth
+      result *= vec3(1.05, 1.0, 0.95); // Push towards warm tones
+      
       gl_FragColor = vec4(result, u_color.a);
     }
 `;
@@ -59,4 +79,4 @@ const fragmentShaderSource = `
 window.vertexShaderSource = vertexShaderSource;
 window.fragmentShaderSource = fragmentShaderSource;
 
-console.log("✅ Shaders loaded");
+console.log("✅ Shaders loaded - Warm Golden Lighting");

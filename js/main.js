@@ -1,6 +1,6 @@
 /**
  * Main Application Entry Point
- * Multi-Island Setup with Hybrid Camera System
+ * Multi-Island Setup with Hybrid Camera System & Warm Golden Lighting
  *
  * HYBRID CAMERA CONTROLS:
  * ========================
@@ -10,13 +10,6 @@
  *   - Mouse Wheel: Zoom in/out
  *   - WASD: Pan camera (free movement but orbit center stays on island)
  *   - Q/E: Move camera up/down
- *
- * FREE MODE:
- *   - Press F: Toggle free camera mode
- *   - Mouse Drag: Free look (FPS style)
- *   - WASD: Fly camera freely
- *   - Q/E: Up/down
- *   - Press 1/2/3: Return to locked mode on that island
  *
  * LAYOUT: 3 Islands Linear
  * 🏝️ Island A (X=0)  ──────→  🏝️ Island B (X=100)  ──────→  🏝️ Island C (X=200)
@@ -76,11 +69,6 @@ function main() {
     if (e.key === "1") switchToIsland(0);
     if (e.key === "2") switchToIsland(1);
     if (e.key === "3") switchToIsland(2);
-
-    // // Toggle free mode (F)
-    // if (e.key.toLowerCase() === "f") {
-    //   toggleCameraMode();
-    // }
   });
 
   window.addEventListener("keyup", (e) => {
@@ -120,15 +108,6 @@ function main() {
         Math.min(cameraState.maxElevation, cameraState.elevation)
       );
     }
-    // else {
-    //   // Free look mode
-    //   cameraState.yaw -= dx * 0.005;
-    //   cameraState.pitch -= dy * 0.005;
-    //   cameraState.pitch = Math.max(
-    //     -Math.PI / 2,
-    //     Math.min(Math.PI / 2, cameraState.pitch)
-    //   );
-    // }
   });
 
   // Mouse wheel
@@ -337,9 +316,9 @@ function main() {
     if (cameraState.mode === "LOCKED") {
       const island = ISLAND_CONFIG[cameraState.focusedIsland];
       indicator.innerHTML = `
-        <strong>LOCKED MODE</strong><br>
+        <strong>🌅 WARM LIGHTING MODE</strong><br>
         Focus: ${island.name} (${island.pokemonName})<br>
-        <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit</small>
+        <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small>
       `;
     } else {
       indicator.innerHTML = `
@@ -439,36 +418,6 @@ function main() {
       islandIndex: 0,
     });
   }
-
-  // TODO: Pokemon 2 - Pikachu on Island B
-  // if (window.createPikachu) {
-  //   const pikachuNode = window.createPikachu(gl);
-  //   pikachuNode.name = "PIKACHU";
-  //   mat4.scale(pikachuNode.localTransform, pikachuNode.localTransform, [1.0, 1.0, 1.0]);
-  //
-  //   const pikachuAnimator = new PikachuAnimator(pikachuNode, {
-  //     startPos: [ISLAND_CONFIG[1].position[0], -12, -5],
-  //     endPos: [ISLAND_CONFIG[1].position[0], -12, -15],
-  //     // ... other settings
-  //   });
-  //
-  //   pokemons.push({ node: pikachuNode, animator: pikachuAnimator, islandIndex: 1 });
-  // }
-
-  // TODO: Pokemon 3 - Charizard on Island C
-  // if (window.createCharizard) {
-  //   const charizardNode = window.createCharizard(gl);
-  //   charizardNode.name = "CHARIZARD";
-  //   mat4.scale(charizardNode.localTransform, charizardNode.localTransform, [1.5, 1.5, 1.5]);
-  //
-  //   const charizardAnimator = new CharizardAnimator(charizardNode, {
-  //     startPos: [ISLAND_CONFIG[2].position[0], -12, -5],
-  //     endPos: [ISLAND_CONFIG[2].position[0], -12, -15],
-  //     // ... other settings
-  //   });
-  //
-  //   pokemons.push({ node: charizardNode, animator: charizardAnimator, islandIndex: 2 });
-  // }
 
   // ===== INITIALIZE =====
   const projectionMatrix = mat4.create();
@@ -656,7 +605,13 @@ function drawScene(
 
     gl.useProgram(programInfo.program);
 
-    const lightPosition = [5, 10, 7];
+    // 🌅 DYNAMIC WARM LIGHT - Follows camera for beautiful golden lighting
+    // Light positioned to create cinematic warm glow from above and side
+    const lightPosition = [
+      cameraPosition[0] + 12, // Side-front offset (golden rim lighting)
+      cameraPosition[1] + 25, // High above (soft cascading light)
+      cameraPosition[2] - 8, // Forward (front-lit warmth)
+    ];
 
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
