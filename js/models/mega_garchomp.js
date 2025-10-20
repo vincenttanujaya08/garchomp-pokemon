@@ -62,61 +62,84 @@ function createMegaGarchompJaw(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompUpperHead(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
+    const yellow = [1.0, 0.84, 0.0, 1.0];
 
-    // --- MESH ---
-    // PERBAIKAN: Mengganti Surface of Revolution dengan Ellipsoid yang lebih sederhana
-    // Radius Y dibuat lebih besar untuk mendapatkan bentuk seperti bola rugby
-    const ellipsoidMesh = new Mesh(gl, Primitives.createEllipsoid(0.7, 1.5, 0.7, 32, 32));
+    // --- MESHES ---
 
+    // BARU: Membuat profil 2D untuk bentuk rugby menggunakan kurva Bezier
     const rugbyProfile = [];
-    const smoothness = 2; // Jumlah titik per kurva, naikkan untuk lebih halus
+    const smoothness = 10; // Jumlah titik, naikkan untuk lebih halus
 
-    // Kurva untuk setengah bagian atas
-    const p0_top = [0.0, 1.5, 0];   // Ujung atas
-    const p1_top = [0.5, 1.5, 0];   // Kontrol untuk kebulatan ujung atas
-    const p2_top = [0.7, 0.75, 0];  // Kontrol untuk bagian tengah
-    const p3_top = [0.7, 0.0, 0];   // Titik tengah (paling lebar)
+    // Titik-titik untuk setengah profil (dari ujung atas ke tengah)
+    const p0 = [0.0, 1.8, 0];   // Ujung atas (lebih runcing)
+    const p1 = [0.4, 1.2, 0];   // Kontrol untuk kelengkungan atas
+    const p2 = [0.7, 0.5, 0];   // Kontrol untuk bagian tengah yang lebih lebar
+    const p3 = [0.7, 0.0, 0];   // Titik tengah (paling lebar di sumbu X)
 
-    // Kurva untuk setengah bagian bawah (simetris)
-    const p0_bottom = [0.7, 0.0, 0];
-    const p1_bottom = [0.7, -0.75, 0];
-    const p2_bottom = [0.5, -1.5, 0];
-    const p3_bottom = [0.0, -1.5, 0];
-
-    // Hasilkan titik-titik di sepanjang kurva bawah
+    // Hasilkan titik-titik di sepanjang kurva atas
     for (let i = 0; i <= smoothness; i++) {
         const t = i / smoothness;
-        const pt = Curves.getBezierPoint(t, p3_bottom, p2_bottom, p1_bottom, p0_bottom);
-        rugbyProfile.push([pt[0], pt[1]]);
+        const pt = Curves.getBezierPoint(t, p0, p1, p2, p3);
+        rugbyProfile.push([pt[0], pt[1]]); // Hanya perlu x dan y untuk surface of revolution
     }
-    // Hasilkan titik-titik di sepanjang kurva atas (mulai dari 1 agar tidak duplikat)
-    for (let i = 1; i <= smoothness; i++) {
-        const t = i / smoothness;
-        const pt = Curves.getBezierPoint(t, p3_top, p2_top, p1_top, p0_top);
-        rugbyProfile.push([pt[0], pt[1]]);
+    
+    // Cerminkan profil untuk membuat bagian bawah, pastikan tidak ada titik duplikat di tengah
+    for (let i = smoothness - 1; i >= 0; i--) {
+        const pt = rugbyProfile[i];
+        // Hanya tambahkan jika titiknya tidak nol di sumbu y untuk menghindari duplikasi
+        if (Math.abs(pt[1]) > 0.0001) {
+             rugbyProfile.push([pt[0], -pt[1]]);
+        }
     }
 
+    // Buat mesh dengan memutar profil di sekitar sumbu Y
     const rugbyMesh = new Mesh(gl, Curves.createSurfaceOfRevolution(rugbyProfile, 32));
+
+    // Mesh untuk penghubung tetap sama
+    const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16));
+
     // --- NODES & HIERARCHY ---
     const upperHeadRoot = new SceneNode(null);
-    const centerRugbyNode = new SceneNode(ellipsoidMesh, darkBlue);
-    const leftRugbyNode = new SceneNode(rugbyMesh, darkBlue);
-    const rightRugbyNode = new SceneNode(rugbyMesh, darkBlue);
 
+    // Sekarang setiap "rugby" hanya butuh satu node
+    const centerRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+    const leftRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+    const rightRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+
+    const leftConnectorNode = new SceneNode(connectorMesh, lightBlue);
+    const rightConnectorNode = new SceneNode(connectorMesh, lightBlue);
+
+    // Gabungkan semua
     upperHeadRoot.addChild(centerRugbyNode);
     upperHeadRoot.addChild(leftRugbyNode);
     upperHeadRoot.addChild(rightRugbyNode);
+    upperHeadRoot.addChild(leftConnectorNode);
+    upperHeadRoot.addChild(rightConnectorNode);
 
     // --- TRANSFORMATIONS ---
-    // Rugby tengah (biarkan di tengah)
+    // Transformasi GLOBAL untuk seluruh kepala
+    mat4.translate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [0, 1.5, 0]);
+    mat4.scale(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [1, 0.7, 1]);
     
     // Rugby kiri
-    mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.2, 0, 0]);
+    mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.7, 0, 0]);
     mat4.scale(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [0.6, 0.6, 0.6]);
 
     // Rugby kanan
-    mat4.translate(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [1.2, 0, 0]);
+    mat4.translate(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [1.7, 0, 0]);
     mat4.scale(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [0.6, 0.6, 0.6]);
+
+    // Transformasi untuk penghubung
+    // Penghubung Kiri
+    mat4.translate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [-0.9, 0, 0]);
+    mat4.rotate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]); 
+    mat4.scale(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [0.8, 1, 0.25]);
+
+    // Penghubung Kanan
+    mat4.translate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.9, 0, 0]);
+    mat4.rotate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]);
+    mat4.scale(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.8, 1, 0.25]);
 
     // Putar seluruh bagian kepala atas agar horizontal
     mat4.rotate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, Math.PI / 2, [1, 0, 0]);
