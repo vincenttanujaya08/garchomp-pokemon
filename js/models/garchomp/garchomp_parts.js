@@ -1942,7 +1942,7 @@ function createMegaGarchompTorsoAnimated(gl) {
   mat4.translate(
     tailData.root.localTransform,
     tailData.root.localTransform,
-    [0, 0.2, -0.8]
+    [0, 0.2, -0.3]
   );
 
   // ===== SIDE FINS (FIX: Attach ke tail segment, bukan lowerBody!) =====
