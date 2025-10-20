@@ -618,22 +618,17 @@ function createMegaGarchompRightArm(gl) {
     
     const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
     const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
-    
-    // Scythe Blade
-    const scytheProfile = [[0, 0.2], [0.05, 0], [0, -0.2], [-0.02, 0]];
-    const scythe_p0 = [0, 0, 0];
-    const scythe_p1 = [-0.5, -1.5, 0]; // Mirror X
-    const scythe_p2 = [-1.5, -3.0, 0]; // Mirror X
-    const scythe_p3 = [-3.0, -3.5, 0]; // Mirror X
-    const scythePath = [];
-    const scytheScales = [];
-    const scytheSegments = 100;
-    for (let i = 0; i <= scytheSegments; i++) {
-        const t = i / scytheSegments;
-        scythePath.push(Curves.getBezierPoint(t, scythe_p0, scythe_p1, scythe_p2, scythe_p3));
-        scytheScales.push(1.0 - Math.pow(t, 2));
-    }
-    const scytheMesh = new Mesh(gl, Curves.createTaperedSweptSurface(scytheProfile, scythePath, scytheScales, true));
+     // BARU: Scythe Blade dibuat menggunakan Coons Patch
+    const scytheMesh = new Mesh(gl, Primitives.createSailCoons3D(
+        2.5,       // width
+        3.5,       // height
+        0.8,       // topBulge (punggung sabit)
+        -0.5,      // bottomBulge (sisi tajam)
+        -0.4,      // leftBulge (pangkal sabit)
+        32,        // segU
+        16,        // segV
+        0.15       // thickness
+    ));
 
     // --- NODES & HIERARCHY ---
     const armRoot = new SceneNode(null);
