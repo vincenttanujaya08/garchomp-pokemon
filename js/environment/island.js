@@ -33,6 +33,8 @@ function createIsland(gl) {
   const earthNode = new SceneNode(dirtMesh, [0.6, 0.4, 0.2, 1.0]);
   const baseRockNode = new SceneNode(rockMesh, [0.5, 0.5, 0.5, 1.0]);
 
+  const baseRockNode2 = new SceneNode(rockMesh, [0.5, 0.5, 0.5, 2.0]);
+
   mat4.translate(earthNode.localTransform, earthNode.localTransform, [
     0,
     -grassThickness,
@@ -74,6 +76,21 @@ function createIsland(gl) {
   mat4.scale(rock2.localTransform, rock2.localTransform, [0.1, 0.1, 0.1]);
   islandRoot.addChild(rock2);
 
+  const rock3 = createRock(gl);
+  mat4.translate(rock3.localTransform, rock3.localTransform, [
+    -0.9,
+    grassThickness,
+    -0.6,
+  ]);
+  mat4.rotate(
+    rock3.localTransform,
+    rock3.localTransform,
+    Math.PI / 4,
+    [0, 1, 0]
+  );
+  mat4.scale(rock3.localTransform, rock3.localTransform, [0.1, 0.1, 0.1]);
+  islandRoot.addChild(rock3);
+
   const tree1 = createDeadTree(gl);
   mat4.translate(tree1.localTransform, tree1.localTransform, [
     -0.2,
@@ -102,7 +119,7 @@ function createIsland(gl) {
   mat4.scale(
     islandRoot.localTransform,
     islandRoot.localTransform,
-    [15, 15, 15]
+    [30, 30, 30]
   );
   mat4.translate(
     islandRoot.localTransform,

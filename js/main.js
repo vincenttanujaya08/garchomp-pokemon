@@ -1,6 +1,11 @@
 /**
  * Main Application Entry Point
  * Clean & Modular - Teman bisa tambah Pokemon baru dengan mudah
+ *
+ * ORBIT CAMERA CONTROLS:
+ * - Drag mouse: Rotate camera around scene
+ * - Mouse wheel: Zoom in/out
+ * - Camera always looks at island center
  */
 
 function main() {
@@ -11,11 +16,20 @@ function main() {
     return;
   }
 
-  // ===== MOUSE INTERACTION =====
+  // ===== ORBIT CAMERA SETUP =====
+  const orbitCamera = {
+    target: [0, -6, -12], // Fokus ke tengah scene (antara pulau & Garchomp)
+    distance: 45, // Jarak camera dari target
+    azimuth: 0, // Rotasi horizontal (kiri-kanan) dalam radian
+    elevation: 0.3, // Rotasi vertikal (atas-bawah) dalam radian
+    minElevation: -Math.PI / 3, // Limit bawah (-60 derajat)
+    maxElevation: Math.PI / 3, // Limit atas (60 derajat)
+  };
+
+  // ===== MOUSE INTERACTION (ORBIT CAMERA) =====
   let isDragging = false;
-  let lastMouseX = -1,
-    lastMouseY = -1;
-  const modelRotationMatrix = mat4.create();
+  let lastMouseX = -1;
+  let lastMouseY = -1;
   const skyboxRotationMatrix = mat4.create();
 
   canvas.addEventListener("mousedown", (e) => {
@@ -30,15 +44,28 @@ function main() {
 
   canvas.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
+
     const dx = e.clientX - lastMouseX;
     const dy = e.clientY - lastMouseY;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
 
-    const R = mat4.create();
-    mat4.rotate(R, R, dx * 0.01, [0, 1, 0]);
-    mat4.rotate(R, R, dy * 0.01, [1, 0, 0]);
-    mat4.multiply(modelRotationMatrix, R, modelRotationMatrix);
+    // Update orbit angles
+    orbitCamera.azimuth -= dx * 0.01; // Horizontal rotation
+    orbitCamera.elevation -= dy * 0.01; // Vertical rotation
+
+    // Clamp elevation untuk prevent flipping
+    orbitCamera.elevation = Math.max(
+      orbitCamera.minElevation,
+      Math.min(orbitCamera.maxElevation, orbitCamera.elevation)
+    );
+  });
+
+  // Mouse wheel untuk zoom in/out
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    orbitCamera.distance += e.deltaY * 0.01;
+    orbitCamera.distance = Math.max(20, Math.min(100, orbitCamera.distance)); // Limit zoom
   });
 
   // ===== SHADER SETUP =====
@@ -76,8 +103,8 @@ function main() {
   // ===== ANIMATION SETUP =====
   const garchompAnimator = new GarchompAnimator(garchompNode, {
     // POSITION FIX: Turunkan Y agar tidak ngambang
-    startPos: [0, -0.5, -5], // Y dari 1.5 → 0.2 (lebih rendah!)
-    endPos: [0, -0.5, -15], // Y dari 1.5 → 0.2
+    startPos: [0, -3, -5], // Y dari 1.5 → 0.2 (lebih rendah!)
+    endPos: [0, -3, -15], // Y dari 1.5 → 0.2
     startRotation: Math.PI, // Face forward
 
     // Timing (custom sesuai kebutuhan)
@@ -96,9 +123,32 @@ function main() {
 
   // ===== CAMERA SETUP =====
   const projectionMatrix = mat4.create();
-  const cameraPosition = [0, 1, 25];
   const viewMatrix = mat4.create();
-  mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
+
+  // Function untuk update camera position dari orbit parameters
+  function updateOrbitCamera() {
+    // Calculate camera position based on spherical coordinates
+    const camX =
+      orbitCamera.target[0] +
+      orbitCamera.distance *
+        Math.cos(orbitCamera.elevation) *
+        Math.sin(orbitCamera.azimuth);
+    const camY =
+      orbitCamera.target[1] +
+      orbitCamera.distance * Math.sin(orbitCamera.elevation);
+    const camZ =
+      orbitCamera.target[2] +
+      orbitCamera.distance *
+        Math.cos(orbitCamera.elevation) *
+        Math.cos(orbitCamera.azimuth);
+
+    const cameraPosition = [camX, camY, camZ];
+
+    // Update view matrix to look at target
+    mat4.lookAt(viewMatrix, cameraPosition, orbitCamera.target, [0, 1, 0]);
+
+    return cameraPosition;
+  }
 
   // ===== TIMING =====
   let lastTime = 0;
@@ -123,6 +173,9 @@ function main() {
       100.0
     );
 
+    // Update orbit camera position
+    const cameraPosition = updateOrbitCamera();
+
     // Skybox rotation
     mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
 
@@ -131,6 +184,7 @@ function main() {
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL); // Fix z-fighting
 
     // ===== UPDATE ANIMATIONS =====
     garchompAnimator.update(deltaTime);
@@ -141,17 +195,20 @@ function main() {
 
     // ===== RENDER SCENE =====
 
-    // 1. Skybox (always first)
+    // 1. Skybox (always first, disable depth write)
+    gl.depthMask(false); // CRITICAL: Jangan tulis ke depth buffer
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
+    gl.depthMask(true); // Re-enable depth write untuk objek lain
 
     // 2. Garchomp (animated - SKIP config dari entityConfig)
+    const identityMatrix = mat4.create();
     drawScene(
       gl,
       programInfo,
       garchompNode,
       projectionMatrix,
       viewMatrix,
-      modelRotationMatrix,
+      identityMatrix, // No rotation - camera yang gerak!
       cameraPosition
     );
 
@@ -163,7 +220,7 @@ function main() {
         islandNode,
         projectionMatrix,
         viewMatrix,
-        modelRotationMatrix,
+        identityMatrix, // No rotation - camera yang gerak!
         cameraPosition
       );
     }
