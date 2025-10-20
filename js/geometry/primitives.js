@@ -891,7 +891,53 @@ createSailCoons3D: function (
       normals: new Float32Array(normals),
       indices: new Uint16Array(indices),
     };
-  }
+  },
+  
+  // BARU: FUNGSI UNTUK MEMBUAT BALOK (CUBOID)
+  createCuboid: function (width = 1, height = 1, depth = 1) {
+    const halfW = width / 2;
+    const halfH = height / 2;
+    const halfD = depth / 2;
 
+    const p = [
+        [-halfW, -halfH,  halfD], // 0: Depan kiri bawah
+        [ halfW, -halfH,  halfD], // 1: Depan kanan bawah
+        [ halfW,  halfH,  halfD], // 2: Depan kanan atas
+        [-halfW,  halfH,  halfD], // 3: Depan kiri atas
+        [-halfW, -halfH, -halfD], // 4: Belakang kiri bawah
+        [ halfW, -halfH, -halfD], // 5: Belakang kanan bawah
+        [ halfW,  halfH, -halfD], // 6: Belakang kanan atas
+        [-halfW,  halfH, -halfD], // 7: Belakang kiri atas
+    ];
+
+    const vertices = new Float32Array([
+        ...p[0], ...p[1], ...p[2], ...p[3], // Depan
+        ...p[5], ...p[4], ...p[7], ...p[6], // Belakang
+        ...p[3], ...p[2], ...p[6], ...p[7], // Atas
+        ...p[4], ...p[5], ...p[1], ...p[0], // Bawah
+        ...p[4], ...p[0], ...p[3], ...p[7], // Kiri
+        ...p[1], ...p[5], ...p[6], ...p[2]  // Kanan
+    ]);
+
+    const normals = new Float32Array([
+        0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1,   // Depan
+        0, 0, -1,  0, 0, -1,  0, 0, -1,  0, 0, -1,  // Belakang
+        0, 1, 0,   0, 1, 0,   0, 1, 0,   0, 1, 0,   // Atas
+        0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,  // Bawah
+        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  // Kiri
+        1, 0, 0,   1, 0, 0,   1, 0, 0,   1, 0, 0    // Kanan
+    ]);
+
+    const indices = new Uint16Array([
+        0, 1, 2,   0, 2, 3,    // Depan
+        4, 5, 6,   4, 6, 7,    // Belakang
+        8, 9, 10,  8, 10, 11,   // Atas
+        12, 13, 14, 12, 14, 15,  // Bawah
+        16, 17, 18, 16, 18, 19,  // Kiri
+        20, 21, 22, 20, 22, 23   // Kanan
+    ]);
+
+    return { vertices, normals, indices };
+  }
 };
 

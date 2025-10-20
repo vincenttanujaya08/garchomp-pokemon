@@ -8,7 +8,9 @@
 
 function createMegaGarchompNeck(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const red = [0.8, 0.15, 0.1, 1.0];
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
 
     // --- MESH ---
     // Menggunakan Hyperboloid of 1 Sheet untuk bentuk leher yang organik
@@ -31,8 +33,8 @@ function createMegaGarchompNeck(gl) {
     ));
 
     // --- NODE ---
-    const neckNode = new SceneNode(neckMesh, darkBlue);
-    const neckNode2 = new SceneNode (neckMesh2, red);
+    const neckNode = new SceneNode(neckMesh, lightBlue);
+    const neckNode2 = new SceneNode (neckMesh2, redOrange);
 
     neckNode.addChild(neckNode2);
 
@@ -49,9 +51,78 @@ function createMegaGarchompNeck(gl) {
 
     return neckNode;
 }
+// ---------------------------------------------------------
+//  Build Lower Jaw
+// ---------------------------------------------------------
+function createMegaGarchompJaw(gl) {
+}
 
-function createMegaGarchompHead(gl) {
-  
+// ---------------------------------------------------------
+//  Build Upper Head (Bentuk Rugby)
+// ---------------------------------------------------------
+function createMegaGarchompUpperHead(gl) {
+    const darkBlue = [0.25, 0.25, 0.45, 1.0];
+
+    // --- MESH ---
+    // PERBAIKAN: Mengganti Surface of Revolution dengan Ellipsoid yang lebih sederhana
+    // Radius Y dibuat lebih besar untuk mendapatkan bentuk seperti bola rugby
+    const ellipsoidMesh = new Mesh(gl, Primitives.createEllipsoid(0.7, 1.5, 0.7, 32, 32));
+
+    const rugbyProfile = [];
+    const smoothness = 2; // Jumlah titik per kurva, naikkan untuk lebih halus
+
+    // Kurva untuk setengah bagian atas
+    const p0_top = [0.0, 1.5, 0];   // Ujung atas
+    const p1_top = [0.5, 1.5, 0];   // Kontrol untuk kebulatan ujung atas
+    const p2_top = [0.7, 0.75, 0];  // Kontrol untuk bagian tengah
+    const p3_top = [0.7, 0.0, 0];   // Titik tengah (paling lebar)
+
+    // Kurva untuk setengah bagian bawah (simetris)
+    const p0_bottom = [0.7, 0.0, 0];
+    const p1_bottom = [0.7, -0.75, 0];
+    const p2_bottom = [0.5, -1.5, 0];
+    const p3_bottom = [0.0, -1.5, 0];
+
+    // Hasilkan titik-titik di sepanjang kurva bawah
+    for (let i = 0; i <= smoothness; i++) {
+        const t = i / smoothness;
+        const pt = Curves.getBezierPoint(t, p3_bottom, p2_bottom, p1_bottom, p0_bottom);
+        rugbyProfile.push([pt[0], pt[1]]);
+    }
+    // Hasilkan titik-titik di sepanjang kurva atas (mulai dari 1 agar tidak duplikat)
+    for (let i = 1; i <= smoothness; i++) {
+        const t = i / smoothness;
+        const pt = Curves.getBezierPoint(t, p3_top, p2_top, p1_top, p0_top);
+        rugbyProfile.push([pt[0], pt[1]]);
+    }
+
+    const rugbyMesh = new Mesh(gl, Curves.createSurfaceOfRevolution(rugbyProfile, 32));
+    // --- NODES & HIERARCHY ---
+    const upperHeadRoot = new SceneNode(null);
+    const centerRugbyNode = new SceneNode(ellipsoidMesh, darkBlue);
+    const leftRugbyNode = new SceneNode(rugbyMesh, darkBlue);
+    const rightRugbyNode = new SceneNode(rugbyMesh, darkBlue);
+
+    upperHeadRoot.addChild(centerRugbyNode);
+    upperHeadRoot.addChild(leftRugbyNode);
+    upperHeadRoot.addChild(rightRugbyNode);
+
+    // --- TRANSFORMATIONS ---
+    // Rugby tengah (biarkan di tengah)
+    
+    // Rugby kiri
+    mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.2, 0, 0]);
+    mat4.scale(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [0.6, 0.6, 0.6]);
+
+    // Rugby kanan
+    mat4.translate(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [1.2, 0, 0]);
+    mat4.scale(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [0.6, 0.6, 0.6]);
+
+    // Putar seluruh bagian kepala atas agar horizontal
+    mat4.rotate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, Math.PI / 2, [1, 0, 0]);
+
+
+    return upperHeadRoot;
 }
 
 // ---------------------------------------------------------
@@ -62,6 +133,7 @@ function createMegaGarchompTorso(gl) {
   const darkBlue = [0.25, 0.25, 0.45, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
+  const redOrange = [1.0, 0.4, 0.2, 1.0];
   const yellow = [1.0, 0.84, 0.0, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0]; // Warna putih untuk duri
 
@@ -78,15 +150,15 @@ function createMegaGarchompTorso(gl) {
 
   // --- SCENE NODES ---
   const torsoRoot = new SceneNode(null);
-  const upperBodyNode = new SceneNode(upperBodyMesh, darkBlue);
-  const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue);
-  const leftShoulderNode = new SceneNode(shoulderMesh, darkBlue);
-  const rightShoulderNode = new SceneNode(shoulderMesh, darkBlue);
-  const connectorNode = new SceneNode(connectorMesh, darkBlue);
-  const chestPlateNode = new SceneNode(chestPlateMesh, red);
-  const waistPlateNode = new SceneNode(waistPlateMesh, red);
+  const upperBodyNode = new SceneNode(upperBodyMesh, lightBlue);
+  const lowerBodyNode = new SceneNode(lowerBodyMesh, lightBlue);
+  const leftShoulderNode = new SceneNode(shoulderMesh, lightBlue);
+  const rightShoulderNode = new SceneNode(shoulderMesh, lightBlue);
+  const connectorNode = new SceneNode(connectorMesh, lightBlue);
+  const chestPlateNode = new SceneNode(chestPlateMesh, redOrange);
+  const waistPlateNode = new SceneNode(waistPlateMesh, redOrange);
   const stomachPlateNode1 = new SceneNode(stomachPlateMesh1, yellow);
-  const stomachPlateNode2  = new SceneNode(stomachPlateMesh2, red);
+  const stomachPlateNode2  = new SceneNode(stomachPlateMesh2, redOrange);
   const ChestSpikeNode1 = new SceneNode(spikeMesh, white);
   const ChestSpikeNode2 = new SceneNode(spikeMesh, white);
   const ChestSpikeNode3 = new SceneNode(spikeMesh, white);
@@ -190,6 +262,7 @@ function createMegaGarchompTorso(gl) {
 function createMegaGarchompTail(gl) {
 
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const pathSegments = 25; // Tingkatkan detail kurva
 
     // --- EKOR UTAMA ---
@@ -256,9 +329,9 @@ function createMegaGarchompTail(gl) {
 
     // --- NODE & HIERARKI ---
     const tailRoot = new SceneNode(null); // Node root untuk seluruh bagian ekor
-    const mainTailNode = new SceneNode(tailMesh, darkBlue);
-    const leftFinNode = new SceneNode(leftFinMesh, darkBlue);
-    const rightFinNode = new SceneNode(rightFinMesh, darkBlue);
+    const mainTailNode = new SceneNode(tailMesh, lightBlue);
+    const leftFinNode = new SceneNode(leftFinMesh, lightBlue);
+    const rightFinNode = new SceneNode(rightFinMesh, lightBlue);
 
     // Gabungkan semua ke root ekor
     tailRoot.addChild(mainTailNode);
@@ -286,8 +359,10 @@ function createMegaGarchompTail(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompLeftLeg(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const white = [0.9, 0.9, 0.9, 1.0];
     const red = [0.8, 0.15, 0.1, 1.0];
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
 
     // --- MESHES ---
     const thighMesh = new Mesh(gl, Primitives.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
@@ -298,13 +373,13 @@ function createMegaGarchompLeftLeg(gl) {
 
     // --- NODES & HIERARCHY ---
     const legRoot = new SceneNode(null);
-    const thighNode = new SceneNode(thighMesh, darkBlue);
-    const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
-    const shinNode = new SceneNode(shinMesh, darkBlue);
-    const footNode = new SceneNode(footMesh, darkBlue);
+    const thighNode = new SceneNode(thighMesh, lightBlue);
+    const shinConnectorNode = new SceneNode(shinConnectorMesh, lightBlue);
+    const shinNode = new SceneNode(shinMesh, lightBlue);
+    const footNode = new SceneNode(footMesh, lightBlue);
     const thighSpikeNode = new SceneNode(spikeMesh, white);
     const thighSpikeNode2 = new SceneNode(spikeMesh, white); // Node untuk duri
-    const thighSpikeNode3 = new SceneNode(spikeMesh, red);
+    const thighSpikeNode3 = new SceneNode(spikeMesh, redOrange);
     const footSpikeNode = new SceneNode(spikeMesh,white);
     const footSpikeNode2 = new SceneNode(spikeMesh,white);
     const footSpikeNode3 = new SceneNode(spikeMesh,white);
@@ -374,8 +449,10 @@ function createMegaGarchompLeftLeg(gl) {
 
 function createMegaGarchompRightLeg(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const white = [0.9, 0.9, 0.9, 1.0];
     const red = [0.8, 0.15, 0.1, 1.0];
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
 
     // --- MESHES ---
     const thighMesh = new Mesh(gl, Primitives.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
@@ -386,13 +463,13 @@ function createMegaGarchompRightLeg(gl) {
 
     // --- NODES & HIERARCHY ---
     const legRoot = new SceneNode(null);
-    const thighNode = new SceneNode(thighMesh, darkBlue);
-    const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
-    const shinNode = new SceneNode(shinMesh, darkBlue);
-    const footNode = new SceneNode(footMesh, darkBlue);
+    const thighNode = new SceneNode(thighMesh, lightBlue);
+    const shinConnectorNode = new SceneNode(shinConnectorMesh, lightBlue);
+    const shinNode = new SceneNode(shinMesh, lightBlue);
+    const footNode = new SceneNode(footMesh, lightBlue);
     const thighSpikeNode = new SceneNode(spikeMesh, white);
     const thighSpikeNode2 = new SceneNode(spikeMesh, white);
-    const thighSpikeNode3 = new SceneNode(spikeMesh, red);
+    const thighSpikeNode3 = new SceneNode(spikeMesh, redOrange);
     const footSpikeNode = new SceneNode(spikeMesh, white);
     const footSpikeNode2 = new SceneNode(spikeMesh, white);
     const footSpikeNode3 = new SceneNode(spikeMesh, white);
@@ -458,6 +535,7 @@ function createMegaGarchompRightLeg(gl) {
 }
 function createDorsalFin(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
 
     // -- Gabungkan semua titik menjadi SATU array --
     // Urutan titik diatur untuk menjiplak seluruh outline sirip, TANPA B dan C
@@ -487,7 +565,7 @@ function createDorsalFin(gl) {
     // Buat satu mesh dari satu outline utuh
     const finMesh = new Mesh(gl, Primitives.createExtrudedShape(finShapePoints, 0.2));
 
-    const dorsalFinRoot = new SceneNode(finMesh, darkBlue);
+    const dorsalFinRoot = new SceneNode(finMesh, lightBlue);
     
     // -- TRANSFORMASI KESELURUHAN --
     // Rotasi agar berdiri tegak
@@ -505,7 +583,9 @@ function createDorsalFin(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompRightArm(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const red = [0.8, 0.15, 0.1, 1.0];
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
 
     // --- MESHES ---
     // NEW: Define path and profile for a curved upper arm (mirrored)
@@ -579,11 +659,11 @@ function createMegaGarchompRightArm(gl) {
     
     // --- NODES & HIERARCHY ---
     const armRoot = new SceneNode(null);
-    const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
-    const elbowNode = new SceneNode(elbowMesh, darkBlue);
-    const connectorNode = new SceneNode(connectorMesh, darkBlue);
-    const outerScytheNode = new SceneNode(outerScytheMesh, red); // Sabit luar berwarna MERAH
-    const innerScytheNode = new SceneNode(innerScytheMesh, darkBlue); // Sabit dalam berwarna BIRU
+    const upperArmNode = new SceneNode(upperArmMesh, lightBlue);
+    const elbowNode = new SceneNode(elbowMesh, lightBlue);
+    const connectorNode = new SceneNode(connectorMesh, lightBlue);
+    const outerScytheNode = new SceneNode(outerScytheMesh, redOrange); // Sabit luar berwarna MERAH
+    const innerScytheNode = new SceneNode(innerScytheMesh, lightBlue); // Sabit dalam berwarna BIRU
 
     armRoot.addChild(upperArmNode);
     upperArmNode.addChild(elbowNode);
@@ -634,7 +714,9 @@ function createMegaGarchompRightArm(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompLeftArm(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const red = [0.8, 0.15, 0.1, 1.0];
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
 
     // --- MESHES ---
     // Lengan atas melengkung
@@ -663,9 +745,9 @@ function createMegaGarchompLeftArm(gl) {
     
     // --- NODES & HIERARCHY ---
     const armRoot = new SceneNode(null);
-    const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
-    const elbowNode = new SceneNode(elbowMesh, darkBlue);
-    const connectorNode = new SceneNode(connectorMesh, darkBlue);
+    const upperArmNode = new SceneNode(upperArmMesh, lightBlue);
+    const elbowNode = new SceneNode(elbowMesh, lightBlue);
+    const connectorNode = new SceneNode(connectorMesh, lightBlue);
 
     armRoot.addChild(upperArmNode);
     upperArmNode.addChild(elbowNode);
@@ -702,6 +784,10 @@ function createMegaGarchomp(gl) {
   const rightarm = createMegaGarchompRightArm(gl);
   const leftarm = createMegaGarchompLeftArm(gl);
   const neck = createMegaGarchompNeck(gl);
+  const upperHead = createMegaGarchompUpperHead(gl);
+//   const jaw = createMegaGarchompJaw(gl);
+//   neck.addChild(jaw)
+    neck.addChild(upperHead);
   torso.addChild(DorsalFin);
   torso.addChild(tail);
   torso.addChild(rightarm);
