@@ -716,3 +716,7 @@ const Curves = {
     };
   },
 };
+
+window.Curves = Curves;
+
+console.log("✅ Curves loaded:", Object.keys(Curves));

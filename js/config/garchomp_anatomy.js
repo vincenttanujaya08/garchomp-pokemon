@@ -1,3 +1,7 @@
+// ============================================================
+// js/config/garchomp_anatomy.js
+// ============================================================
+
 const GarchompAnatomy = {
   colors: {
     darkBlue: [0.18, 0.22, 0.38, 1.0],
@@ -10,22 +14,19 @@ const GarchompAnatomy = {
   },
 
   head: {
-    // Tonjolan kiri-kanan
     lobe: {
       radiusX: 0.5,
       radiusY: 0.6,
       radiusZ: 1.5,
     },
-    lobeDistance: 0.75, // Jarak dari center ke kiri/kanan (lebih dekat)
+    lobeDistance: 0.75,
 
-    // Segitiga tengah
     centerTriangle: {
-      width: 1.6, // Lebih besar
-      height: 1.4, // Lebih tinggi
-      depth: 0.12, // Tipis
+      width: 1.6,
+      height: 1.4,
+      depth: 0.12,
     },
 
-    // Ujung bulat depan
     tip: {
       radiusX: 0.4,
       radiusY: 0.5,
@@ -38,3 +39,8 @@ const GarchompAnatomy = {
     height: 0.4,
   },
 };
+
+// Export to window
+window.GarchompAnatomy = GarchompAnatomy;
+
+console.log("✅ GarchompAnatomy loaded");

@@ -874,3 +874,7 @@ const Primitives = {
     };
   },
 };
+
+window.Primitives = Primitives;
+
+console.log("✅ Primitives loaded:", Object.keys(Primitives));

@@ -1,3 +1,8 @@
+/**
+ * Main Application Entry Point
+ * Clean & Modular - Teman bisa tambah Pokemon baru dengan mudah
+ */
+
 function main() {
   const canvas = document.querySelector("#glCanvas");
   const gl = canvas.getContext("webgl", { antialias: true });
@@ -6,7 +11,7 @@ function main() {
     return;
   }
 
-  // rotasi objek via mouse
+  // ===== MOUSE INTERACTION =====
   let isDragging = false;
   let lastMouseX = -1,
     lastMouseY = -1;
@@ -18,22 +23,25 @@ function main() {
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
   });
+
   canvas.addEventListener("mouseup", () => {
     isDragging = false;
   });
+
   canvas.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
-    const dx = e.clientX - lastMouseX,
-      dy = e.clientY - lastMouseY;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
+
     const R = mat4.create();
     mat4.rotate(R, R, dx * 0.01, [0, 1, 0]);
     mat4.rotate(R, R, dy * 0.01, [1, 0, 0]);
     mat4.multiply(modelRotationMatrix, R, modelRotationMatrix);
   });
 
-  // shader program (punyamu)
+  // ===== SHADER SETUP =====
   const shaderProgram = initShaderProgram(
     gl,
     vertexShaderSource,
@@ -59,27 +67,54 @@ function main() {
     },
   };
 
-  // skybox (global dari skybox.js)
+  // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
 
-  // nodes
+  // Create Garchomp
   const garchompNode = window.createGarchomp(gl);
-  garchompNode.name = "GARCHOMP";
 
+  // ===== ANIMATION SETUP =====
+  const garchompAnimator = new GarchompAnimator(garchompNode, {
+    // POSITION FIX: Turunkan Y agar tidak ngambang
+    startPos: [0, -0.5, -5], // Y dari 1.5 → 0.2 (lebih rendah!)
+    endPos: [0, -0.5, -15], // Y dari 1.5 → 0.2
+    startRotation: Math.PI, // Face forward
+
+    // Timing (custom sesuai kebutuhan)
+    walkDuration: 3.0,
+    pauseDuration: 5.0,
+    turnDuration: 1.0,
+
+    // Tail sway (reduce untuk smoother motion)
+    tailSwayAmount: 0.2, // Reduced dari 0.3
+    tailSwayFreq: 1.2, // Reduced dari 1.5
+  });
+
+  // Create Island (opsional)
   const islandNode = window.createIsland ? window.createIsland(gl) : null;
   if (islandNode) islandNode.name = "ISLAND";
 
-  // kamera
+  // ===== CAMERA SETUP =====
   const projectionMatrix = mat4.create();
   const cameraPosition = [0, 1, 25];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
-  function render() {
+  // ===== TIMING =====
+  let lastTime = 0;
+
+  // ===== RENDER LOOP =====
+  function render(currentTime) {
+    currentTime *= 0.001; // Convert to seconds
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+
+    // Resize handling
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     }
 
+    // Update projection
     mat4.perspective(
       projectionMatrix,
       (45 * Math.PI) / 180,
@@ -88,18 +123,28 @@ function main() {
       100.0
     );
 
-    // rotasi skybox pelan
+    // Skybox rotation
     mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
 
+    // Clear
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
-    // 1) skybox
+    // ===== UPDATE ANIMATIONS =====
+    garchompAnimator.update(deltaTime);
+
+    // TODO: Teman bisa tambah animator lain di sini
+    // pikachuAnimator.update(deltaTime);
+    // charizardAnimator.update(deltaTime);
+
+    // ===== RENDER SCENE =====
+
+    // 1. Skybox (always first)
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
 
-    // 2) garchomp (pakai entityConfig.GARCHOMP)
+    // 2. Garchomp (animated - SKIP config dari entityConfig)
     drawScene(
       gl,
       programInfo,
@@ -110,7 +155,7 @@ function main() {
       cameraPosition
     );
 
-    // 3) island (opsional)
+    // 3. Island (static)
     if (islandNode) {
       drawScene(
         gl,
@@ -129,9 +174,7 @@ function main() {
   requestAnimationFrame(render);
 }
 
-// jalankan setelah semua <script> ter‐load
-window.addEventListener("DOMContentLoaded", main);
-
+// ===== DRAW SCENE FUNCTION =====
 function drawScene(
   gl,
   programInfo,
@@ -141,12 +184,15 @@ function drawScene(
   parentTransform,
   cameraPosition
 ) {
-  // ----- Bangun local transform -----
   let local = mat4.create();
   const cfgTable = window.entityConfig || {};
   const cfg = node.name ? cfgTable[node.name] : null;
 
-  if (cfg) {
+  // CRITICAL: Skip entityConfig untuk animated entities
+  const isAnimated = node.name === "GARCHOMP"; // Add more names here
+
+  if (cfg && !isAnimated) {
+    // Apply config untuk non-animated entities
     const p = cfg.position || [0, 0, 0];
     const s = cfg.scale || [1, 1, 1];
     const e = cfg.rotationEuler || [0, 0, 0];
@@ -171,13 +217,12 @@ function drawScene(
     mat4.identity(local);
   }
 
-  // ----- Komposisi dengan parent -----
+  // Compute model matrix
   let modelMatrix = mat4.create();
   const worldSpace =
     (cfg && cfg.worldSpace === true) || node.worldSpace === true;
 
   if (worldSpace) {
-    // model = T * parent * (R*S)
     const Tonly = mat4.create();
     mat4.identity(Tonly);
     Tonly[12] = local[12];
@@ -191,11 +236,10 @@ function drawScene(
     mat4.multiply(tmp, parentTransform, RS);
     mat4.multiply(modelMatrix, Tonly, tmp);
   } else {
-    // default: model = parent * local
     mat4.multiply(modelMatrix, parentTransform, local);
   }
 
-  // ----- Draw mesh -----
+  // Draw mesh if exists
   if (node.mesh) {
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.vertexBuffer);
     gl.vertexAttribPointer(
@@ -255,7 +299,7 @@ function drawScene(
     gl.drawElements(gl.TRIANGLES, node.mesh.indicesCount, gl.UNSIGNED_SHORT, 0);
   }
 
-  // ----- Rekursi anak -----
+  // Recursive draw children
   for (const child of node.children) {
     drawScene(
       gl,
@@ -268,6 +312,8 @@ function drawScene(
     );
   }
 }
+
+// ===== HELPER FUNCTIONS =====
 
 function initShaderProgram(gl, vsSource, fsSource) {
   const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
@@ -286,7 +332,6 @@ function initShaderProgram(gl, vsSource, fsSource) {
 function resizeCanvasToDisplaySize(canvas) {
   const displayWidth = canvas.clientWidth;
   const displayHeight = canvas.clientHeight;
-
   if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
     canvas.width = displayWidth;
     canvas.height = displayHeight;
@@ -307,4 +352,5 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-main();
+// ===== START APP =====
+window.addEventListener("DOMContentLoaded", main);

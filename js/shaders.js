@@ -1,4 +1,6 @@
-// File: js/shaders.js
+// ============================================================
+// js/shaders.js - COMPLETE WITH EXPORTS
+// ============================================================
 
 const vertexShaderSource = `
     attribute vec4 a_position;
@@ -10,7 +12,7 @@ const vertexShaderSource = `
     uniform mat4 u_normalMatrix;
 
     varying highp vec3 v_normal;
-    varying highp vec3 v_fragPosition; // Kirim posisi fragmen
+    varying highp vec3 v_fragPosition;
 
     void main() {
       gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;
@@ -24,11 +26,11 @@ const fragmentShaderSource = `
     precision mediump float;
     
     uniform vec4 u_color;
-    uniform vec3 u_lightDirection; // Kita akan gunakan ini sebagai posisi cahaya
-    uniform vec3 u_viewPosition;   // Posisi kamera/mata kita
+    uniform vec3 u_lightDirection;
+    uniform vec3 u_viewPosition;
 
     varying highp vec3 v_normal;
-    varying highp vec3 v_fragPosition; // Posisi fragmen di world space
+    varying highp vec3 v_fragPosition;
 
     void main() {
       // 1. Ambient
@@ -41,15 +43,20 @@ const fragmentShaderSource = `
       float diff = max(dot(normal, lightDir), 0.0);
       vec3 diffuse = diff * vec3(1.0, 1.0, 1.0);
 
-      // 3. Specular (Kilauan)
-      float specularStrength = 0.7; // Seberapa kuat kilauannya
+      // 3. Specular
+      float specularStrength = 0.7;
       vec3 viewDir = normalize(u_viewPosition - v_fragPosition);
       vec3 reflectDir = reflect(-lightDir, normal);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0); // 32.0 adalah 'shininess'
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
       vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
       
-      // Gabungkan ketiganya dengan warna objek
       vec3 result = (ambient + diffuse + specular) * u_color.rgb;
       gl_FragColor = vec4(result, u_color.a);
     }
 `;
+
+// Export to window
+window.vertexShaderSource = vertexShaderSource;
+window.fragmentShaderSource = fragmentShaderSource;
+
+console.log("✅ Shaders loaded");

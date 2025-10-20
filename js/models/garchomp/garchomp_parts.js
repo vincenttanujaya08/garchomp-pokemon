@@ -530,45 +530,6 @@ function createGarchompNeck(gl) {
 //asdadadasfasasfadfasf//asdadassadas
 //asdadadasfasasfadfasf
 
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-//asdadassadas
-//asdadadasfasasfadfasf
-
-//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf//asdadassadas
-//asdadadasfasasfadfasf
-
 function createMegaGarchompTorso(gl) {
   const cfg = GarchompAnatomy;
   const torsoRoot = new SceneNode(null);
@@ -876,8 +837,8 @@ function createMegaGarchompTorso(gl) {
 
   // Gabungkan semua ke root ekor
   tailRoot.addChild(mainTailNode);
-  tailRoot.addChild(leftFinNode);
-  tailRoot.addChild(rightFinNode);
+  mainTailNode.addChild(leftFinNode);
+  mainTailNode.addChild(rightFinNode);
 
   // Posisikan sirip-sirip (Anda bisa atur ini nanti)
   // Diberi posisi awal agar terlihat
@@ -1504,3 +1465,634 @@ function createGarchompLeg(gl) {
 
   return legRoot;
 }
+// ============================================================
+// TAMBAHKAN INI DI AKHIR FILE garchomp_parts.js (ATAU REPLACE FUNGSI LAMA)
+// ============================================================
+
+/**
+ * FIXED: Animated Tail - Ekor tidak akan hilang lagi!
+ * Returns: { root, joints, segmentLength }
+ */
+function createAnimatedTail(gl) {
+  const cfg = GarchompAnatomy;
+  const tailRoot = new SceneNode(null);
+  tailRoot.name = "TailRoot";
+
+  const numSegments = 8;
+  const segmentLength = 0.8;
+
+  const tailProfile = [
+    [0.0, 0.7],
+    [0.5, 0.5],
+    [0.7, 0.0],
+    [0.5, -0.5],
+    [0.0, -0.7],
+    [-0.5, -0.5],
+    [-0.7, 0.0],
+    [-0.5, 0.5],
+  ];
+
+  const joints = [];
+  let previousJoint = tailRoot;
+
+  for (let i = 0; i < numSegments; i++) {
+    const t = i / numSegments;
+    const scaleStart = 1.0 - t;
+    const scaleEnd = 1.0 - (i + 1) / numSegments;
+
+    const segPath = [
+      [0, 0, 0],
+      [0, 0, -segmentLength],
+    ];
+    const segScales = [scaleStart, scaleEnd];
+
+    const segmentGeom = Curves.createTaperedSweptSurface(
+      tailProfile,
+      segPath,
+      segScales,
+      true
+    );
+    const segmentMesh = new Mesh(gl, segmentGeom);
+
+    // Joint node (pivot point)
+    const jointNode = new SceneNode(null);
+    jointNode.name = `TailJoint${i}`;
+
+    // CRITICAL FIX: Store metadata
+    jointNode._segmentLength = segmentLength;
+    jointNode._segmentIndex = i;
+
+    // Mesh as child
+    const segmentNode = new SceneNode(segmentMesh, cfg.colors.darkBlue);
+    jointNode.addChild(segmentNode);
+
+    // Position (only if not first)
+    if (i > 0) {
+      mat4.translate(jointNode.localTransform, jointNode.localTransform, [
+        0,
+        0,
+        -segmentLength,
+      ]);
+    }
+
+    previousJoint.addChild(jointNode);
+    joints.push(jointNode);
+    previousJoint = jointNode;
+  }
+
+  return { root: tailRoot, joints: joints, segmentLength: segmentLength };
+}
+
+/**
+ * Animated Legs dengan joint references
+ */
+function createAnimatedLegs(gl) {
+  const cfg = GarchompAnatomy;
+  const legRoot = new SceneNode();
+  legRoot.name = "LegsRoot";
+
+  const thighMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.8, 2, 1.0, 32, 32)
+  );
+  const calfMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.6, 1.5, 0.6, 32, 32)
+  );
+  const spikeMesh = new Mesh(gl, Primitives.createCone(0.4, 1, 32));
+  const footMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.6, 1.2, 0.4, 32, 32)
+  );
+  const clawMesh = new Mesh(gl, Primitives.createCone(0.1, 0.25, 16));
+
+  // LEFT LEG
+  const leftHipJoint = new SceneNode(null);
+  leftHipJoint.name = "LeftHip";
+  mat4.translate(
+    leftHipJoint.localTransform,
+    leftHipJoint.localTransform,
+    [-1.5, -2.5, -0.2]
+  );
+
+  const leftThigh = new SceneNode(thighMesh, cfg.colors.darkBlue);
+  mat4.rotate(
+    leftThigh.localTransform,
+    leftThigh.localTransform,
+    -Math.PI / 10,
+    [1, 0, 0]
+  );
+  leftHipJoint.addChild(leftThigh);
+
+  // Spikes
+  const leftSpikeTop = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    leftSpikeTop.localTransform,
+    leftSpikeTop.localTransform,
+    [-0.2, 0.5, 0.8]
+  );
+  mat4.rotate(
+    leftSpikeTop.localTransform,
+    leftSpikeTop.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  leftThigh.addChild(leftSpikeTop);
+
+  const leftSpikeBottom = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    leftSpikeBottom.localTransform,
+    leftSpikeBottom.localTransform,
+    [-0.3, -0.5, 0.7]
+  );
+  mat4.rotate(
+    leftSpikeBottom.localTransform,
+    leftSpikeBottom.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  leftThigh.addChild(leftSpikeBottom);
+
+  // Knee
+  const leftKneeJoint = new SceneNode(null);
+  leftKneeJoint.name = "LeftKnee";
+  mat4.translate(
+    leftKneeJoint.localTransform,
+    leftKneeJoint.localTransform,
+    [0, -2.0, 0]
+  );
+  leftThigh.addChild(leftKneeJoint);
+
+  // Calf
+  const leftCalf = new SceneNode(calfMesh, cfg.colors.darkBlue);
+  mat4.rotate(
+    leftCalf.localTransform,
+    leftCalf.localTransform,
+    Math.PI / 6,
+    [1, 0, 0]
+  );
+  leftKneeJoint.addChild(leftCalf);
+
+  // Foot
+  const leftFoot = new SceneNode(footMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    leftFoot.localTransform,
+    leftFoot.localTransform,
+    [0, -1.5, 0.4]
+  );
+  mat4.rotate(
+    leftFoot.localTransform,
+    leftFoot.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
+  leftCalf.addChild(leftFoot);
+
+  // Claws
+  for (let i = 0; i < 3; i++) {
+    const claw = new SceneNode(clawMesh, cfg.colors.white);
+    const xOffset = (i - 1) * 0.3;
+    mat4.translate(claw.localTransform, claw.localTransform, [
+      xOffset,
+      -1.1 - (i === 1 ? 0.2 : 0),
+      0,
+    ]);
+    mat4.rotate(claw.localTransform, claw.localTransform, Math.PI, [1, 0, 0]);
+    leftFoot.addChild(claw);
+  }
+
+  legRoot.addChild(leftHipJoint);
+
+  // RIGHT LEG (mirror)
+  const rightHipJoint = new SceneNode(null);
+  rightHipJoint.name = "RightHip";
+  mat4.translate(
+    rightHipJoint.localTransform,
+    rightHipJoint.localTransform,
+    [1.5, -2.5, -0.2]
+  );
+
+  const rightThigh = new SceneNode(thighMesh, cfg.colors.darkBlue);
+  mat4.rotate(
+    rightThigh.localTransform,
+    rightThigh.localTransform,
+    -Math.PI / 10,
+    [1, 0, 0]
+  );
+  rightHipJoint.addChild(rightThigh);
+
+  const rightSpikeTop = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    rightSpikeTop.localTransform,
+    rightSpikeTop.localTransform,
+    [0.2, 0.5, 0.8]
+  );
+  mat4.rotate(
+    rightSpikeTop.localTransform,
+    rightSpikeTop.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  rightThigh.addChild(rightSpikeTop);
+
+  const rightSpikeBottom = new SceneNode(spikeMesh, cfg.colors.white);
+  mat4.translate(
+    rightSpikeBottom.localTransform,
+    rightSpikeBottom.localTransform,
+    [0.25, -0.5, 0.8]
+  );
+  mat4.rotate(
+    rightSpikeBottom.localTransform,
+    rightSpikeBottom.localTransform,
+    Math.PI / 2,
+    [1, 0, 0]
+  );
+  rightThigh.addChild(rightSpikeBottom);
+
+  const rightKneeJoint = new SceneNode(null);
+  rightKneeJoint.name = "RightKnee";
+  mat4.translate(
+    rightKneeJoint.localTransform,
+    rightKneeJoint.localTransform,
+    [0, -2.0, 0]
+  );
+  rightThigh.addChild(rightKneeJoint);
+
+  const rightCalf = new SceneNode(calfMesh, cfg.colors.darkBlue);
+  mat4.rotate(
+    rightCalf.localTransform,
+    rightCalf.localTransform,
+    Math.PI / 6,
+    [1, 0, 0]
+  );
+  rightKneeJoint.addChild(rightCalf);
+
+  const rightFoot = new SceneNode(footMesh, cfg.colors.darkBlue);
+  mat4.translate(
+    rightFoot.localTransform,
+    rightFoot.localTransform,
+    [0, -1.5, 0.4]
+  );
+  mat4.rotate(
+    rightFoot.localTransform,
+    rightFoot.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
+  rightCalf.addChild(rightFoot);
+
+  for (let i = 0; i < 3; i++) {
+    const claw = new SceneNode(clawMesh, cfg.colors.white);
+    const xOffset = (i - 1) * 0.3;
+    mat4.translate(claw.localTransform, claw.localTransform, [
+      xOffset,
+      -1.1 - (i === 1 ? 0.2 : 0),
+      0,
+    ]);
+    mat4.rotate(claw.localTransform, claw.localTransform, Math.PI, [1, 0, 0]);
+    rightFoot.addChild(claw);
+  }
+
+  legRoot.addChild(rightHipJoint);
+
+  return {
+    root: legRoot,
+    leftHip: leftHipJoint,
+    rightHip: rightHipJoint,
+    leftKnee: leftKneeJoint,
+    rightKnee: rightKneeJoint,
+  };
+}
+
+/**
+ * IMPORTANT: Ganti createMegaGarchompTorso() lama dengan ini
+ * Atau buat fungsi baru: createMegaGarchompTorsoAnimated()
+ */
+function createMegaGarchompTorsoAnimated(gl) {
+  const cfg = GarchompAnatomy;
+  const torsoRoot = new SceneNode(null);
+  torsoRoot.name = "TorsoRoot";
+
+  // Create body parts
+  const upperBodyMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
+  );
+  const lowerBodyMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(0.84, 0.9, 0.73, 32, 32)
+  );
+  const shoulderMesh = new Mesh(
+    gl,
+    Primitives.createEllipticParaboloid(0.8, 0.7, 1.5, 16)
+  );
+  const connectorMesh = new Mesh(
+    gl,
+    Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
+  );
+  const chestPlateMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(1, 1, 1, 32, 32)
+  );
+  const waistPlateMesh = new Mesh(
+    gl,
+    Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
+  );
+  const stomachPlateMesh = new Mesh(
+    gl,
+    Primitives.createEllipsoid(1, 1, 1, 32, 32)
+  );
+
+  const upperBodyNode = new SceneNode(upperBodyMesh, cfg.colors.darkBlue);
+  const lowerBodyNode = new SceneNode(lowerBodyMesh, cfg.colors.darkBlue);
+  const leftShoulderNode = new SceneNode(shoulderMesh, cfg.colors.darkBlue);
+  const rightShoulderNode = new SceneNode(shoulderMesh, cfg.colors.darkBlue);
+  const connectorNode = new SceneNode(connectorMesh, cfg.colors.darkBlue);
+  const chestPlateNode = new SceneNode(chestPlateMesh, cfg.colors.red);
+  const waistPlateNode = new SceneNode(waistPlateMesh, cfg.colors.red);
+  const stomachPlateNode = new SceneNode(stomachPlateMesh, cfg.colors.yellow);
+
+  torsoRoot.addChild(upperBodyNode);
+  torsoRoot.addChild(lowerBodyNode);
+  torsoRoot.addChild(leftShoulderNode);
+  torsoRoot.addChild(rightShoulderNode);
+  torsoRoot.addChild(connectorNode);
+  torsoRoot.addChild(chestPlateNode);
+  torsoRoot.addChild(waistPlateNode);
+  torsoRoot.addChild(stomachPlateNode);
+
+  const scale = 1.5;
+
+  // Apply transforms
+  mat4.translate(upperBodyNode.localTransform, upperBodyNode.localTransform, [
+    0,
+    0.5 * scale,
+    0,
+  ]);
+  mat4.scale(upperBodyNode.localTransform, upperBodyNode.localTransform, [
+    scale,
+    scale,
+    scale,
+  ]);
+
+  mat4.translate(lowerBodyNode.localTransform, lowerBodyNode.localTransform, [
+    0,
+    -1.5 * scale,
+    0,
+  ]);
+  mat4.scale(lowerBodyNode.localTransform, lowerBodyNode.localTransform, [
+    scale,
+    scale,
+    scale,
+  ]);
+
+  mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [
+    0,
+    -0.6 * scale,
+    0,
+  ]);
+  mat4.scale(connectorNode.localTransform, connectorNode.localTransform, [
+    0.64 * scale,
+    0.3 * scale,
+    0.65 * scale,
+  ]);
+
+  mat4.translate(
+    leftShoulderNode.localTransform,
+    leftShoulderNode.localTransform,
+    [-1.4 * scale, 1.36 * scale, 0]
+  );
+  mat4.rotate(
+    leftShoulderNode.localTransform,
+    leftShoulderNode.localTransform,
+    Math.PI / 2.2,
+    [0, 0, -1]
+  );
+  mat4.rotate(
+    leftShoulderNode.localTransform,
+    leftShoulderNode.localTransform,
+    Math.PI / 8,
+    [0, 1, -3]
+  );
+  mat4.scale(leftShoulderNode.localTransform, leftShoulderNode.localTransform, [
+    0.78 * scale,
+    0.8 * scale,
+    0.75 * scale,
+  ]);
+
+  mat4.translate(
+    rightShoulderNode.localTransform,
+    rightShoulderNode.localTransform,
+    [1.4 * scale, 1.36 * scale, 0]
+  );
+  mat4.rotate(
+    rightShoulderNode.localTransform,
+    rightShoulderNode.localTransform,
+    -Math.PI / 2.2,
+    [0, 0, -1]
+  );
+  mat4.rotate(
+    rightShoulderNode.localTransform,
+    rightShoulderNode.localTransform,
+    -Math.PI / 8,
+    [0, 1, -3]
+  );
+  mat4.scale(
+    rightShoulderNode.localTransform,
+    rightShoulderNode.localTransform,
+    [0.78 * scale, 0.8 * scale, 0.75 * scale]
+  );
+
+  mat4.translate(chestPlateNode.localTransform, chestPlateNode.localTransform, [
+    0,
+    0.5 * scale,
+    0.15 * scale,
+  ]);
+  mat4.scale(chestPlateNode.localTransform, chestPlateNode.localTransform, [
+    0.64 * scale,
+    1.2 * scale,
+    0.75 * scale,
+  ]);
+
+  mat4.translate(waistPlateNode.localTransform, waistPlateNode.localTransform, [
+    0,
+    -0.6 * scale,
+    0.05 * scale,
+  ]);
+  mat4.scale(waistPlateNode.localTransform, waistPlateNode.localTransform, [
+    0.6 * scale,
+    1.2 * scale,
+    0.65 * scale,
+  ]);
+
+  mat4.translate(
+    stomachPlateNode.localTransform,
+    stomachPlateNode.localTransform,
+    [0, -1.26 * scale, 0.12 * scale]
+  );
+  mat4.scale(stomachPlateNode.localTransform, stomachPlateNode.localTransform, [
+    0.62 * scale,
+    0.68 * scale,
+    0.5 * scale,
+  ]);
+
+  // ===== ANIMATED TAIL =====
+  const tailData = createAnimatedTail(gl);
+  lowerBodyNode.addChild(tailData.root);
+  mat4.translate(
+    tailData.root.localTransform,
+    tailData.root.localTransform,
+    [0, -0.5, -0.8]
+  );
+
+  // ===== SIDE FINS (FIX: Attach ke tail segment, bukan lowerBody!) =====
+  const finProfile = [
+    [0, 0.3],
+    [0.15, 0],
+    [0, -0.3],
+    [-0.1, 0],
+  ];
+
+  // LEFT FIN - Attach ke tail segment ke-5 (middle)
+  const leftFinPath = [];
+  const leftFinScales = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    leftFinPath.push(
+      Curves.getBezierPoint(
+        t,
+        [0, 0, 0],
+        [0.5, 0.1, -0.5],
+        [1.0, 0.0, -1.0],
+        [1.5, -0.2, -1.5]
+      )
+    );
+    leftFinScales.push(1.0 - t);
+  }
+  const leftFinMesh = new Mesh(
+    gl,
+    Curves.createTaperedSweptSurface(
+      finProfile,
+      leftFinPath,
+      leftFinScales,
+      true
+    )
+  );
+  const leftFinNode = new SceneNode(leftFinMesh, cfg.colors.darkBlue);
+
+  // Position relative to tail segment
+  mat4.translate(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    [0, 0, 0]
+  );
+  mat4.rotate(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    -Math.PI / 2,
+    [-1, -1, 0]
+  );
+  mat4.scale(
+    leftFinNode.localTransform,
+    leftFinNode.localTransform,
+    [0.8, 0.8, 0.4]
+  );
+
+  // FIX: Attach ke tail joint ke-4 (middle of tail)
+  if (tailData.joints && tailData.joints.length > 4) {
+    tailData.joints[4].addChild(leftFinNode);
+  }
+
+  // RIGHT FIN - Attach ke tail segment ke-5 (middle)
+  const rightFinPath = [];
+  const rightFinScales = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    rightFinPath.push(
+      Curves.getBezierPoint(
+        t,
+        [0, 0, 0],
+        [-0.5, 0.1, -0.5],
+        [-1.0, 0.0, -1.0],
+        [-1.5, -0.2, -1.5]
+      )
+    );
+    rightFinScales.push(1.0 - t);
+  }
+  const rightFinMesh = new Mesh(
+    gl,
+    Curves.createTaperedSweptSurface(
+      finProfile,
+      rightFinPath,
+      rightFinScales,
+      true
+    )
+  );
+  const rightFinNode = new SceneNode(rightFinMesh, cfg.colors.darkBlue);
+
+  // Position relative to tail segment
+  mat4.translate(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    [0, 0, 0]
+  );
+  mat4.rotate(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    Math.PI / 1.3,
+    [1, 1, 1]
+  );
+  mat4.scale(
+    rightFinNode.localTransform,
+    rightFinNode.localTransform,
+    [0.8, 0.8, 0.08]
+  );
+
+  // FIX: Attach ke tail joint ke-4 (middle of tail)
+  if (tailData.joints && tailData.joints.length > 4) {
+    tailData.joints[4].addChild(rightFinNode);
+  }
+
+  // ===== DORSAL SAIL =====
+  const sail3DGeom = Curves.createSailCoons3D(
+    4,
+    2,
+    0.15,
+    0.32,
+    0.2,
+    64,
+    20,
+    0.3
+  );
+  const sail3DMesh = new Mesh(gl, sail3DGeom);
+  const sail3DNode = new SceneNode(sail3DMesh, cfg.colors.darkBlue);
+  mat4.rotate(
+    sail3DNode.localTransform,
+    sail3DNode.localTransform,
+    1.5,
+    [0, 1, 0]
+  );
+  mat4.translate(
+    sail3DNode.localTransform,
+    sail3DNode.localTransform,
+    [-0.2, -0.7, -0.15]
+  );
+  upperBodyNode.addChild(sail3DNode);
+
+  mat4.translate(
+    torsoRoot.localTransform,
+    torsoRoot.localTransform,
+    [0, -3, 5]
+  );
+
+  // Export tail data untuk animator
+  torsoRoot.tailJoints = tailData.joints;
+  torsoRoot.tailSegmentLength = tailData.segmentLength;
+
+  return torsoRoot;
+}
+
+// EXPORT untuk compatibility
+window.createAnimatedTail = createAnimatedTail;
+window.createAnimatedLegs = createAnimatedLegs;
+window.createMegaGarchompTorsoAnimated = createMegaGarchompTorsoAnimated;

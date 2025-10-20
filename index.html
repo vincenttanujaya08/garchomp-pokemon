@@ -3,11 +3,13 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Garchomp Simple Model</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garchomp Walking Animation</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
@@ -16,24 +18,75 @@
             height: 100vh;
             background: #1a1a1a;
         }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            z-index: 1000;
+        }
+
+        #error {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1001;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        #error pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 
 <body>
+    <div id="loading">Loading...</div>
+    <div id="error">
+        <h3>Error Detected:</h3>
+        <pre id="error-message"></pre>
+    </div>
     <canvas id="glCanvas"></canvas>
 
-    <!-- 1) Lib dulu -->
-    <!-- 1) gl-matrix dulu -->
+    <!-- ============================================================ -->
+    <!-- 1) LIBRARY: gl-matrix -->
+    <!-- ============================================================ -->
     <script src="js/lib/gl-matrix.js"></script>
 
-    <!-- 2) Polyfill agar API v3 tersedia -->
+    <!-- ============================================================ -->
+    <!-- 2) POLYFILLS: Extend gl-matrix API -->
+    <!-- ============================================================ -->
     <script>
-        // Ambil namespace UMD
+        // Global error handler
+        window.addEventListener('error', function (e) {
+            const errorDiv = document.getElementById('error');
+            const errorMsg = document.getElementById('error-message');
+            errorDiv.style.display = 'block';
+            errorMsg.textContent = e.error.stack || e.error.message || e.message;
+            console.error('Global error:', e.error);
+        });
+
+        // Check gl-matrix loaded
+        if (typeof glMatrix === 'undefined') {
+            throw new Error('gl-matrix.js not loaded! Check file path.');
+        }
+
+        // Expose mat4 & vec3
         const mat4 = glMatrix.mat4;
         const vec3 = glMatrix.vec3;
 
-        // Tambahkan API yang tidak ada di varian kamu:
-
+        // Polyfill missing functions
         if (!mat4.copy) {
             mat4.copy = function (out, a) {
                 for (let i = 0; i < 16; i++) out[i] = a[i];
@@ -52,21 +105,19 @@
         if (!mat4.fromTranslation) {
             mat4.fromTranslation = function (out, v) {
                 mat4.identity(out);
-                return mat4.translate(out, out, v); // v2 style
+                return mat4.translate(out, out, v);
             };
         }
 
         if (!mat4.fromScaling) {
             mat4.fromScaling = function (out, v) {
                 mat4.identity(out);
-                return mat4.scale(out, out, v); // v2 style
+                return mat4.scale(out, out, v);
             };
         }
 
         if (!mat4.fromQuat) {
-            // Implementasi sederhana: buat rotasi dari quaternion (opsional—pakai kalau perlu)
             mat4.fromQuat = function (out, q) {
-                // q = [x,y,z,w]
                 const x = q[0], y = q[1], z = q[2], w = q[3];
                 const x2 = x + x, y2 = y + y, z2 = z + z;
                 const xx = x * x2, xy = x * y2, xz = x * z2;
@@ -81,41 +132,147 @@
         }
 
         if (!mat4.rotateX) {
-            mat4.rotateX = function (out, a, rad) { return mat4.rotate(out, a, rad, [1, 0, 0]); };
-        }
-        if (!mat4.rotateY) {
-            mat4.rotateY = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 1, 0]); };
-        }
-        if (!mat4.rotateZ) {
-            mat4.rotateZ = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 0, 1]); };
+            mat4.rotateX = function (out, a, rad) {
+                return mat4.rotate(out, a, rad, [1, 0, 0]);
+            };
         }
 
-        // (Opsional) ekspose ke global biar konsisten dengan file lain
+        if (!mat4.rotateY) {
+            mat4.rotateY = function (out, a, rad) {
+                return mat4.rotate(out, a, rad, [0, 1, 0]);
+            };
+        }
+
+        if (!mat4.rotateZ) {
+            mat4.rotateZ = function (out, a, rad) {
+                return mat4.rotate(out, a, rad, [0, 0, 1]);
+            };
+        }
+
+        // Expose globally
         window.mat4 = mat4;
         window.vec3 = vec3;
+
+        console.log('✅ gl-matrix loaded & polyfilled');
     </script>
 
-    <!-- 2) Core engine & util -->
-    <script src="js/core/scene.js"></script>
-    <script src="js/geometry/primitives.js"></script>
-    <script src="js/geometry/curves.js"></script>
-    <script src="js/shaders.js"></script>
+    <!-- ============================================================ -->
+    <!-- 3) CORE ENGINE -->
+    <!-- ============================================================ -->
+    <script src="js/core/scene.js" onerror="console.error('Failed to load: js/core/scene.js')"></script>
+    <script src="js/geometry/primitives.js"
+        onerror="console.error('Failed to load: js/geometry/primitives.js')"></script>
+    <script src="js/geometry/curves.js" onerror="console.error('Failed to load: js/geometry/curves.js')"></script>
+    <script src="js/shaders.js" onerror="console.error('Failed to load: js/shaders.js')"></script>
 
-    <!-- 3) Environment (boleh pakai mat4, jadi taruh setelah gl-matrix) -->
-    <script src="js/environment/skybox.js"></script>
-    <script src="js/environment/island.js"></script>
-    <script src="js/environment/scenery.js"></script>
+    <!-- ============================================================ -->
+    <!-- 4) ENVIRONMENT -->
+    <!-- ============================================================ -->
+    <script src="js/environment/skybox.js" onerror="console.error('Failed to load: js/environment/skybox.js')"></script>
+    <script src="js/environment/scenery.js"
+        onerror="console.error('Failed to load: js/environment/scenery.js')"></script>
+    <script src="js/environment/island.js" onerror="console.error('Failed to load: js/environment/island.js')"></script>
 
-    <!-- 4) Model parts -->
-    <script src="js/models/garchomp/garchomp_parts.js"></script>
-    <script src="js/models/garchomp/garchomp.js"></script>
+    <!-- ============================================================ -->
+    <!-- 5) CONFIG -->
+    <!-- ============================================================ -->
+    <script src="js/config/garchomp_anatomy.js"
+        onerror="console.error('Failed to load: js/config/garchomp_anatomy.js')"></script>
+    <script src="js/config/config.js" onerror="console.error('Failed to load: js/config/config.js')"></script>
 
-    <!-- 5) Config (entityConfig) -->
-    <script src="js/config/garchomp_anatomy.js"></script> <!-- kalau ini berisi data tulang -->
-    <script src="js/config/config.js"></script> <!-- ini berisi entityConfig -->
+    <!-- ============================================================ -->
+    <!-- 6) MODEL PARTS -->
+    <!-- ============================================================ -->
+    <script src="js/models/garchomp/garchomp_parts.js"
+        onerror="console.error('Failed to load: js/models/garchomp/garchomp_parts.js')"></script>
+    <script src="js/models/garchomp/garchomp.js"
+        onerror="console.error('Failed to load: js/models/garchomp/garchomp.js')"></script>
 
-    <!-- 6) Entry point -->
-    <script src="js/main.js"></script>
+    <!-- ============================================================ -->
+    <!-- 7) ANIMATION SYSTEM (MODULAR!) -->
+    <!-- ============================================================ -->
+    <script src="js/animation/AnimationController.js"
+        onerror="console.error('Failed to load: js/animation/AnimationController.js')"></script>
+    <script src="js/animation/GarchompAnimator.js"
+        onerror="console.error('Failed to load: js/animation/GarchompAnimator.js')"></script>
+
+    <!-- Future Pokemon animations (uncomment when ready):
+    <script src="js/animation/PikachuAnimator.js"></script>
+    <script src="js/animation/CharizardAnimator.js"></script>
+    -->
+
+    <!-- ============================================================ -->
+    <!-- 8) MAIN APPLICATION -->
+    <!-- ============================================================ -->
+    <script src="js/main.js" onerror="console.error('Failed to load: js/main.js')"></script>
+
+    <!-- ============================================================ -->
+    <!-- 9) STARTUP CHECK -->
+    <!-- ============================================================ -->
+    <script>
+        // Check all critical functions loaded
+        window.addEventListener('DOMContentLoaded', function () {
+            const loading = document.getElementById('loading');
+
+            try {
+                // Check critical functions
+                const checks = [
+                    { name: 'mat4', obj: window.mat4 },
+                    { name: 'vec3', obj: window.vec3 },
+                    { name: 'Mesh', obj: window.Mesh || window.SceneNode?.prototype?.constructor },
+                    { name: 'SceneNode', obj: window.SceneNode },
+                    { name: 'Primitives', obj: window.Primitives },
+                    { name: 'Curves', obj: window.Curves },
+                    { name: 'vertexShaderSource', obj: window.vertexShaderSource },
+                    { name: 'fragmentShaderSource', obj: window.fragmentShaderSource },
+                    { name: 'GarchompAnatomy', obj: window.GarchompAnatomy },
+                    { name: 'createGarchomp', obj: window.createGarchomp },
+                    { name: 'AnimationController', obj: window.AnimationController },
+                    { name: 'GarchompAnimator', obj: window.GarchompAnimator }
+                ];
+
+                const missing = checks.filter(c => !c.obj);
+
+                if (missing.length > 0) {
+                    throw new Error('Missing critical functions:\n' +
+                        missing.map(m => `- ${m.name}`).join('\n') +
+                        '\n\nCheck console for load errors.');
+                }
+
+                console.log('✅ All files loaded successfully');
+                loading.style.display = 'none';
+
+            } catch (e) {
+                loading.textContent = 'Error loading files - Check console';
+                loading.style.color = '#ff6666';
+                console.error('Startup check failed:', e);
+
+                const errorDiv = document.getElementById('error');
+                const errorMsg = document.getElementById('error-message');
+                errorDiv.style.display = 'block';
+                errorMsg.textContent = e.message;
+            }
+        });
+
+        // Log when main() starts
+        const originalMain = window.main;
+        if (typeof originalMain === 'function') {
+            window.main = function () {
+                console.log('🚀 Starting main application...');
+                try {
+                    return originalMain();
+                } catch (e) {
+                    console.error('Error in main():', e);
+                    const errorDiv = document.getElementById('error');
+                    const errorMsg = document.getElementById('error-message');
+                    errorDiv.style.display = 'block';
+                    errorMsg.textContent = 'Error in main():\n' + (e.stack || e.message);
+                    throw e;
+                }
+            };
+        }
+    </script>
+
 </body>
 
 </html>
