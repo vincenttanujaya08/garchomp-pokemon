@@ -5,7 +5,9 @@
  * You can start by developing the torso in createMegaGarchompTorso().
  * The old head is safely stored in createMegaGarchompHead() for future use.
  */
-
+// ---------------------------------------------------------
+//  Build Neck
+// ---------------------------------------------------------
 function createMegaGarchompNeck(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -41,86 +43,208 @@ function createMegaGarchompNeck(gl) {
     // --- TRANSFORMASI ---
     // Sedikit memiringkan leher ke depan
     mat4.rotate(neckNode.localTransform, neckNode.localTransform, Math.PI / 10, [1, 0, 0]);
-    mat4.scale(neckNode.localTransform,neckNode.localTransform, [0.6, 0.85, 0.5]);
+    mat4.scale(neckNode.localTransform,neckNode.localTransform, [0.6, 1 , 0.5]);
     mat4.translate(neckNode.localTransform, neckNode.localTransform, [0, 2, -0.7]);
 
     mat4.rotate(neckNode2.localTransform, neckNode2.localTransform, Math.PI / 12, [1, 0, 0]);
     mat4.scale(neckNode2.localTransform,neckNode2.localTransform, [0.6, 0.7, 0.5]);
-    mat4.translate(neckNode2.localTransform, neckNode2.localTransform, [0, 0.4, 0.7]);
+    mat4.translate(neckNode2.localTransform, neckNode2.localTransform, [0, 0.1, 1.4]);
 
 
     return neckNode;
 }
 // ---------------------------------------------------------
-//  Build Lower Jaw
+//  Build Lower Jaw (gajadi)
 // ---------------------------------------------------------
 function createMegaGarchompJaw(gl) {
-}
+    const redOrange = [1.0, 0.4, 0.2, 1.0];
+    const white = [1.0, 1.0, 1.0, 1.0];
+    const black = [0.1, 0.1, 0.1, 1.0]; // Warna untuk bagian dalam mulut
 
+    // --- MESH ---
+    const jawBaseMesh = new Mesh(gl, Primitives.createCuboid(1, 1, 1)); 
+    const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+
+    // BARU: Mesh untuk penutup dagu dan bagian dalam mulut
+    const chinCoverMesh = new Mesh(gl, Primitives.createTriangularPrism(1, 1, 1));
+    const innerMouthMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 32, 32));
+
+    // --- NODE ---
+    const jawRoot = new SceneNode(null);
+    const jawCenter = new SceneNode(jawBaseMesh, redOrange);
+    const leftJawBlock = new SceneNode(jawBaseMesh, redOrange);
+    const rightJawBlock = new SceneNode(jawBaseMesh, redOrange);
+
+    const leftJawCover = new SceneNode(jawBaseMesh, redOrange);
+    const rightJawCover = new SceneNode(jawBaseMesh, redOrange);
+
+    // BARU: Node untuk penutup dagu dan bagian dalam mulut
+    const chinCoverNode = new SceneNode(chinCoverMesh, redOrange);
+    const innerMouthNode = new SceneNode(innerMouthMesh, black);
+
+    const lowerToothL1 = new SceneNode(toothMesh, white);
+    const lowerToothL2 = new SceneNode(toothMesh, white);
+    const lowerToothL3 = new SceneNode(toothMesh, white);
+    const lowerToothR1 = new SceneNode(toothMesh, white);
+    const lowerToothR2 = new SceneNode(toothMesh, white);
+    const lowerToothR3 = new SceneNode(toothMesh, white);
+
+
+    jawRoot.addChild(jawCenter);
+    jawRoot.addChild(leftJawBlock);
+    jawRoot.addChild(rightJawBlock);
+
+    jawRoot.addChild(leftJawCover);
+    jawRoot.addChild(rightJawCover);
+
+    // BARU: Tambahkan node baru ke root rahang
+    jawRoot.addChild(chinCoverNode);
+    jawRoot.addChild(innerMouthNode);
+    
+    jawRoot.addChild(lowerToothL1);
+    jawRoot.addChild(lowerToothL2);
+    jawRoot.addChild(lowerToothL3);
+    jawRoot.addChild(lowerToothR1);
+    jawRoot.addChild(lowerToothR2);
+    jawRoot.addChild(lowerToothR3);
+    
+    // --- TRANSFORMASI ---
+    mat4.translate(jawRoot.localTransform, jawRoot.localTransform, [0, 0.25, 1.1]);
+    
+    mat4.translate(jawCenter.localTransform, jawCenter.localTransform, [0, 0.4, 1 ]);
+    mat4.rotate(jawCenter.localTransform, jawCenter.localTransform, -Math.PI / 12, [-1, 0, 0]);
+    mat4.scale(jawCenter.localTransform, jawCenter.localTransform, [0.4, 0.2, 0.6]); 
+
+    mat4.translate(leftJawBlock.localTransform, leftJawBlock.localTransform, [-0.3, 0.45, 0.3]);
+    mat4.rotate(leftJawBlock.localTransform, leftJawBlock.localTransform, Math.PI / 6, [0, 1, 0]);
+    mat4.scale(leftJawBlock.localTransform, leftJawBlock.localTransform, [0.3, 0.2, 1.5]); 
+
+    mat4.translate(rightJawBlock.localTransform, rightJawBlock.localTransform, [0.3, 0.45, 0.3]);
+    mat4.rotate(rightJawBlock.localTransform, rightJawBlock.localTransform, -Math.PI / 6, [0, 1, 0]);
+    mat4.scale(rightJawBlock.localTransform, rightJawBlock.localTransform, [0.3, 0.2, 1.5]); 
+
+    mat4.translate(leftJawCover.localTransform, leftJawCover.localTransform, [-0.8, 0.6, -0.4]);
+    mat4.scale(leftJawCover.localTransform, leftJawCover.localTransform, [0.2, 0.5, 0.3]);
+
+    mat4.translate(rightJawCover.localTransform, rightJawCover.localTransform, [0.8, 0.6, -0.4]);
+    mat4.scale(rightJawCover.localTransform, rightJawCover.localTransform, [0.2, 0.5, 0.3]);
+    
+    // BARU: Transformasi untuk elipsoid dalam mulut
+    mat4.translate(innerMouthNode.localTransform, innerMouthNode.localTransform, [0, 0.6, -0.6]);
+    mat4.scale(innerMouthNode.localTransform, innerMouthNode.localTransform, [0.7, 0.2, 1]);
+
+    // BARU: Transformasi untuk prisma segitiga di bawah dagu
+    mat4.translate(chinCoverNode.localTransform, chinCoverNode.localTransform, [0, 0.3, 0.3]);
+    mat4.rotate(chinCoverNode.localTransform, chinCoverNode.localTransform, Math.PI / 2, [1, 0, 0]); // Posisikan tidur
+    mat4.scale(chinCoverNode.localTransform, chinCoverNode.localTransform, [1.4, 1.4, 0.05]); // Geprek sangat tipis
+
+    mat4.translate(lowerToothL1.localTransform, lowerToothL1.localTransform, [-0.15, 0.65, 0.58]);
+    mat4.scale(lowerToothL1.localTransform, lowerToothL1.localTransform, [1, 0.7, 1]);
+
+    mat4.translate(lowerToothL2.localTransform, lowerToothL2.localTransform, [-0.36, 0.65, 0.28]);
+    mat4.scale(lowerToothL2.localTransform, lowerToothL2.localTransform, [1, 0.7, 1]);
+
+    mat4.translate(lowerToothL3.localTransform, lowerToothL3.localTransform, [-0.6, 0.65, -0.02]); 
+    mat4.scale(lowerToothL3.localTransform, lowerToothL3.localTransform, [1, 0.7, 1]);
+
+    mat4.translate(lowerToothR1.localTransform, lowerToothR1.localTransform, [0.15, 0.65, 0.58]);
+    mat4.scale(lowerToothR1.localTransform, lowerToothR1.localTransform, [1, 0.7, 1]);
+
+    mat4.translate(lowerToothR2.localTransform, lowerToothR2.localTransform, [0.4, 0.65, 0.28]);
+    mat4.scale(lowerToothR2.localTransform, lowerToothR2.localTransform, [1, 0.7, 1]);
+    
+    mat4.translate(lowerToothR3.localTransform, lowerToothR3.localTransform, [0.6, 0.65, -0.02]); 
+    mat4.scale(lowerToothR3.localTransform, lowerToothR3.localTransform, [1, 0.7, 1]);
+
+    return jawRoot;
+}
 // ---------------------------------------------------------
-//  Build Upper Head (Bentuk Rugby)
+//  Build Upper Head (gajadi)
 // ---------------------------------------------------------
 function createMegaGarchompUpperHead(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const yellow = [1.0, 0.84, 0.0, 1.0];
+    const black = [0.1, 0.1, 0.1, 1.0]; 
+    const white = [1.0, 1.0, 1.0, 1.0]; 
 
     // --- MESHES ---
 
-    // BARU: Membuat profil 2D untuk bentuk rugby menggunakan kurva Bezier
     const rugbyProfile = [];
-    const smoothness = 10; // Jumlah titik, naikkan untuk lebih halus
+    const smoothness = 10; 
 
-    // Titik-titik untuk setengah profil (dari ujung atas ke tengah)
-    const p0 = [0.0, 1.8, 0];   // Ujung atas (lebih runcing)
-    const p1 = [0.4, 1.2, 0];   // Kontrol untuk kelengkungan atas
-    const p2 = [0.7, 0.5, 0];   // Kontrol untuk bagian tengah yang lebih lebar
-    const p3 = [0.7, 0.0, 0];   // Titik tengah (paling lebar di sumbu X)
+    const p0 = [0.0, 1.8, 0];   
+    const p1 = [0.4, 1.2, 0];   
+    const p2 = [0.7, 0.5, 0];   
+    const p3 = [0.7, 0.0, 0];   
 
-    // Hasilkan titik-titik di sepanjang kurva atas
     for (let i = 0; i <= smoothness; i++) {
         const t = i / smoothness;
         const pt = Curves.getBezierPoint(t, p0, p1, p2, p3);
-        rugbyProfile.push([pt[0], pt[1]]); // Hanya perlu x dan y untuk surface of revolution
+        rugbyProfile.push([pt[0], pt[1]]);
     }
     
-    // Cerminkan profil untuk membuat bagian bawah, pastikan tidak ada titik duplikat di tengah
     for (let i = smoothness - 1; i >= 0; i--) {
         const pt = rugbyProfile[i];
-        // Hanya tambahkan jika titiknya tidak nol di sumbu y untuk menghindari duplikasi
         if (Math.abs(pt[1]) > 0.0001) {
              rugbyProfile.push([pt[0], -pt[1]]);
         }
     }
 
-    // Buat mesh dengan memutar profil di sekitar sumbu Y
     const rugbyMesh = new Mesh(gl, Curves.createSurfaceOfRevolution(rugbyProfile, 32));
 
-    // Mesh untuk penghubung tetap sama
     const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16));
 
-    // Mesh untuk hidung
     const nosePrismMesh = new Mesh(gl, Primitives.createTriangularPrism(0.4, 0.7, 0.2));
-
-    // BARU: Mesh untuk bagian bawah rahang
+    
     const underJawMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 32, 32));
+
+    const eyeMesh = new Mesh(gl, Primitives.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2));
+
+    const pupilMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+
+    const retinaMesh = pupilMesh;
+
+    const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+
+    // BARU: Mesh untuk tanduk depan
+    const hornMesh = new Mesh(gl, Primitives.createCone(0.6, 1, 4));
+
 
     // --- NODES & HIERARCHY ---
     const upperHeadRoot = new SceneNode(null);
 
-    // Sekarang setiap "rugby" hanya butuh satu node
     const centerRugbyNode = new SceneNode(rugbyMesh, lightBlue);
     const leftRugbyNode = new SceneNode(rugbyMesh, lightBlue);
     const rightRugbyNode = new SceneNode(rugbyMesh, lightBlue);
 
     const leftConnectorNode = new SceneNode(connectorMesh, lightBlue);
     const rightConnectorNode = new SceneNode(connectorMesh, lightBlue);
-    
+
     const noseLeftNode = new SceneNode(nosePrismMesh, lightBlue);
     const noseRightNode = new SceneNode(nosePrismMesh, lightBlue);
-
-    // BARU: Node untuk bagian mata
+    
     const underJawNode = new SceneNode(underJawMesh, lightBlue);
+
+    const leftEyeNode = new SceneNode(eyeMesh, black);
+    const rightEyeNode = new SceneNode(eyeMesh, black);
+
+    const leftPupilNode = new SceneNode(pupilMesh, yellow);
+    const rightPupilNode = new SceneNode(pupilMesh, yellow);
+
+    const leftRetinaNode = new SceneNode(retinaMesh, black);
+    const rightRetinaNode = new SceneNode(retinaMesh, black);
+
+    const toothL1 = new SceneNode(toothMesh, white);
+    const toothL2 = new SceneNode(toothMesh, white);
+    const toothL3 = new SceneNode(toothMesh, white);
+    const toothR1 = new SceneNode(toothMesh, white);
+    const toothR2 = new SceneNode(toothMesh, white);
+    const toothR3 = new SceneNode(toothMesh, white);
+
+    // BARU: Node untuk tanduk depan
+    const centerHornNode = new SceneNode(hornMesh, yellow);
+
 
     // Gabungkan semua
     upperHeadRoot.addChild(centerRugbyNode);
@@ -129,68 +253,362 @@ function createMegaGarchompUpperHead(gl) {
     upperHeadRoot.addChild(leftConnectorNode);
     upperHeadRoot.addChild(rightConnectorNode);
 
-    // Tambahkan hidung sebagai anak dari rugby tengah
     centerRugbyNode.addChild(noseLeftNode);
     centerRugbyNode.addChild(noseRightNode);
-    
-    // BARU: Tambahkan bagian bawah rahang sebagai anak dari rugby tengah
+
     centerRugbyNode.addChild(underJawNode);
+    centerRugbyNode.addChild(leftEyeNode);
+    centerRugbyNode.addChild(rightEyeNode);
+
+    // BARU: Tambahkan tanduk depan ke rugby tengah
+    centerRugbyNode.addChild(centerHornNode);
+
+    leftEyeNode.addChild(leftPupilNode);
+    rightEyeNode.addChild(rightPupilNode);
+
+    leftPupilNode.addChild(leftRetinaNode);
+    rightPupilNode.addChild(rightRetinaNode);
+    
+    underJawNode.addChild(toothL1);
+    underJawNode.addChild(toothL2);
+    underJawNode.addChild(toothL3);
+    underJawNode.addChild(toothR1);
+    underJawNode.addChild(toothR2);
+    underJawNode.addChild(toothR3);
 
 
     // --- TRANSFORMATIONS ---
-    // Transformasi GLOBAL untuk seluruh kepala
-    mat4.translate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [0, 1.5, 0]);
+    mat4.translate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [0, 1.5, 0.5]);
     mat4.scale(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [1, 0.7, 1.2]);
-    // Rugby Tengah
+    
     mat4.scale(centerRugbyNode.localTransform, centerRugbyNode.localTransform, [1.3, 1, 1]);
-    // Rugby kiri
+    
     mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.7, 0, 0]);
     mat4.scale(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [0.6, 0.6, 0.6]);
 
-    // Rugby kanan
     mat4.translate(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [1.7, 0, 0]);
     mat4.scale(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [0.6, 0.6, 0.6]);
 
-    // Transformasi untuk penghubung
-    // Penghubung Kiri
     mat4.translate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [-0.9, 0, 0]);
     mat4.rotate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]); 
     mat4.scale(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [0.8, 1, 0.25]);
 
-    // Penghubung Kanan
     mat4.translate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.9, 0, 0]);
     mat4.rotate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]);
     mat4.scale(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.8, 1, 0.25]);
-
-    // Transformasi untuk "hidung" (tidak diubah)
+    
     mat4.translate(noseLeftNode.localTransform, noseLeftNode.localTransform, [-0.08, 1, 0.6]);
     mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 50, [0, 1, 0]);
     mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 2, [1, 0, 0]);
     mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, 6.07, [0, 0, 1]);
-    mat4.scale(noseLeftNode.localTransform, noseLeftNode.localTransform, [1, 1.1, 0.3]);
+    mat4.scale(noseLeftNode.localTransform, noseLeftNode.localTransform, [1, 1.2, 0.3]);
 
     mat4.translate(noseRightNode.localTransform, noseRightNode.localTransform, [0.1, 1, 0.6]);
     mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, -Math.PI / 50, [0, 1, 0]);
     mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, Math.PI / 2, [1, 0, 0]);
     mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, 6.1, [0, 0, -1]);
-    mat4.scale(noseRightNode.localTransform, noseRightNode.localTransform, [1, 1.1, 0.3]);
+    mat4.scale(noseRightNode.localTransform, noseRightNode.localTransform, [1, 1.2, 0.3]);
+
+    mat4.translate(underJawNode.localTransform, underJawNode.localTransform, [0, -0.03, 0.35]); 
+    mat4.rotate(underJawNode.localTransform, underJawNode.localTransform, Math.PI / 10, [1, 0, 0]); 
+    mat4.scale(underJawNode.localTransform, underJawNode.localTransform, [0.6, 1.1, 0.5]); 
+
+    mat4.translate(leftEyeNode.localTransform, leftEyeNode.localTransform, [-0.45, 0.6, 0.6]); 
+    mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, Math.PI / 2, [1, 0, 0]); 
+    mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, Math.PI / 2, [0, 0, -1]); 
+    mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, 2, [1, 0, 0]); 
+    mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, 3, [0, 0, 1]); 
+    mat4.scale(leftEyeNode.localTransform, leftEyeNode.localTransform, [0.8, 0.7, 0.3]); 
+
+    mat4.translate(rightEyeNode.localTransform, rightEyeNode.localTransform, [0.45, 0.6, 0.6]); 
+    mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, Math.PI / 2, [1, 0, 0]); 
+    mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, Math.PI / 2, [0, 0, 1]); 
+    mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, 2, [1, 0, 0]);  
+    mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, 3, [0, 0, -1]); 
+    mat4.scale(rightEyeNode.localTransform, rightEyeNode.localTransform, [0.8, 0.7, 0.3]); 
+
+    mat4.translate(leftPupilNode.localTransform, leftPupilNode.localTransform, [-0.04, 0.3, 0.11]); 
+    mat4.scale(leftPupilNode.localTransform, leftPupilNode.localTransform, [0.15, 0.2, 0.05]); 
+
+    mat4.translate(rightPupilNode.localTransform, rightPupilNode.localTransform, [0.04, 0.3, 0.11]);
+    mat4.scale(rightPupilNode.localTransform, rightPupilNode.localTransform, [0.15, 0.2, 0.05]);
+
+    mat4.translate(leftRetinaNode.localTransform, leftRetinaNode.localTransform, [0, 0.5, 1]); 
+    mat4.scale(leftRetinaNode.localTransform, leftRetinaNode.localTransform, [0.9, 0.2, 0.1]); 
     
-    // BARU: Transformasi untuk elipsoid bawah rahang
-    mat4.translate(underJawNode.localTransform, underJawNode.localTransform, [0, -0.03, 0.3]); // Posisikan di bawah-depan
-    mat4.rotate(underJawNode.localTransform, underJawNode.localTransform, Math.PI / 10, [1, 0, 0]); // REBAHKAN elipsoid agar 'tidur'
-    mat4.scale(underJawNode.localTransform, underJawNode.localTransform, [0.6, 1.1, 0.5]); // Buat gepeng dan lonjong
+    mat4.translate(rightRetinaNode.localTransform, rightRetinaNode.localTransform, [0, 0.5, 1]);
+    mat4.scale(rightRetinaNode.localTransform, rightRetinaNode.localTransform, [0.9, 0.2, 0.1]);
+
+    // Transformasi untuk setiap gigi secara manual
+    // Gigi Kiri
+    mat4.translate(toothL1.localTransform, toothL1.localTransform, [-0.3, 0.9, 0.5]);
+    mat4.rotate(toothL1.localTransform, toothL1.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothL1.localTransform, toothL1.localTransform, [1.6, 1.6, 1.6]);
+
+    mat4.translate(toothL2.localTransform, toothL2.localTransform, [-0.55, 0.75, 0.6]);
+    mat4.rotate(toothL2.localTransform, toothL2.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothL2.localTransform, toothL2.localTransform, [1.6, 1.6, 1.6]);
+
+    mat4.translate(toothL3.localTransform, toothL3.localTransform, [-0.74, 0.6, 0.6]);
+    mat4.rotate(toothL3.localTransform, toothL3.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothL3.localTransform, toothL3.localTransform, [1.6, 1.6, 1.6]);
+
+    // Gigi Kanan
+    mat4.translate(toothR1.localTransform, toothR1.localTransform, [0.3, 0.9, 0.5]);
+    mat4.rotate(toothR1.localTransform, toothR1.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothR1.localTransform, toothR1.localTransform, [1.6, 1.6, 1.6]);
+
+    mat4.translate(toothR2.localTransform, toothR2.localTransform, [0.55, 0.75, 0.6]);
+    mat4.rotate(toothR2.localTransform, toothR2.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothR2.localTransform, toothR2.localTransform, [1.6, 1.6, 1.6]);
+    
+    mat4.translate(toothR3.localTransform, toothR3.localTransform, [0.74, 0.6, 0.6]);
+    mat4.rotate(toothR3.localTransform, toothR3.localTransform, 1.1, [1, 0, 0]);
+    mat4.scale(toothR3.localTransform, toothR3.localTransform, [1.6, 1.6, 1.6]);
+
+    // BARU: Transformasi untuk tanduk depan
+    mat4.translate(centerHornNode.localTransform, centerHornNode.localTransform, [0, 1.6, 0]); // Posisikan di ujung rugby
+    mat4.scale(centerHornNode.localTransform, centerHornNode.localTransform, [0.65, 0.7, 0.8]);
 
 
-    // Putar seluruh bagian kepala atas agar horizontal
     mat4.rotate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, Math.PI / 2, [1, 0, 0]);
 
 
     return upperHeadRoot;
 }
-
-
 // ---------------------------------------------------------
-//  NEW: Start Fresh from the Torso
+//  Build Head
+// ---------------------------------------------------------
+function createMegaGarchompHead(gl){
+    const headRoot = new SceneNode(null);
+
+    // --- UPPER HEAD ---
+    const upperHead = (function createMegaGarchompUpperHead(gl) {
+        const lightBlue = [0.6, 0.6, 1.0, 1.0];
+        const yellow = [1.0, 0.84, 0.0, 1.0];
+        const black = [0.1, 0.1, 0.1, 1.0]; 
+        const white = [1.0, 1.0, 1.0, 1.0]; 
+
+        const rugbyProfile = [];
+        const smoothness = 10; 
+        const p0 = [0.0, 1.8, 0], p1 = [0.4, 1.2, 0], p2 = [0.7, 0.5, 0], p3 = [0.7, 0.0, 0];
+        for (let i = 0; i <= smoothness; i++) {
+            const t = i / smoothness;
+            rugbyProfile.push(Curves.getBezierPoint(t, p0, p1, p2, p3).slice(0, 2));
+        }
+        for (let i = smoothness - 1; i >= 0; i--) {
+            const pt = rugbyProfile[i];
+            if (Math.abs(pt[1]) > 0.0001) rugbyProfile.push([pt[0], -pt[1]]);
+        }
+
+        const rugbyMesh = new Mesh(gl, Curves.createSurfaceOfRevolution(rugbyProfile, 32));
+        const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16));
+        const nosePrismMesh = new Mesh(gl, Primitives.createTriangularPrism(0.4, 0.7, 0.2));
+        const underJawMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 32, 32));
+        const eyeMesh = new Mesh(gl, Primitives.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2));
+        const pupilMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+        const retinaMesh = pupilMesh;
+        const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+        const hornMesh = new Mesh(gl, Primitives.createCone(0.6, 1, 4));
+
+        const upperHeadRoot = new SceneNode(null);
+        const centerRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+        const leftRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+        const rightRugbyNode = new SceneNode(rugbyMesh, lightBlue);
+        const leftConnectorNode = new SceneNode(connectorMesh, lightBlue);
+        const rightConnectorNode = new SceneNode(connectorMesh, lightBlue);
+        const noseLeftNode = new SceneNode(nosePrismMesh, lightBlue);
+        const noseRightNode = new SceneNode(nosePrismMesh, lightBlue);
+        const underJawNode = new SceneNode(underJawMesh, lightBlue);
+        const leftEyeNode = new SceneNode(eyeMesh, black);
+        const rightEyeNode = new SceneNode(eyeMesh, black);
+        const leftPupilNode = new SceneNode(pupilMesh, yellow);
+        const rightPupilNode = new SceneNode(pupilMesh, yellow);
+        const leftRetinaNode = new SceneNode(retinaMesh, black);
+        const rightRetinaNode = new SceneNode(retinaMesh, black);
+        const toothL1 = new SceneNode(toothMesh, white), toothL2 = new SceneNode(toothMesh, white), toothL3 = new SceneNode(toothMesh, white);
+        const toothR1 = new SceneNode(toothMesh, white), toothR2 = new SceneNode(toothMesh, white), toothR3 = new SceneNode(toothMesh, white);
+        const centerHornNode = new SceneNode(hornMesh, yellow);
+
+        upperHeadRoot.addChild(centerRugbyNode);
+        upperHeadRoot.addChild(leftRugbyNode);
+        upperHeadRoot.addChild(rightRugbyNode);
+        upperHeadRoot.addChild(leftConnectorNode);
+        upperHeadRoot.addChild(rightConnectorNode);
+        centerRugbyNode.addChild(noseLeftNode);
+        centerRugbyNode.addChild(noseRightNode);
+        centerRugbyNode.addChild(underJawNode);
+        centerRugbyNode.addChild(leftEyeNode);
+        centerRugbyNode.addChild(rightEyeNode);
+        centerRugbyNode.addChild(centerHornNode);
+        leftEyeNode.addChild(leftPupilNode);
+        rightEyeNode.addChild(rightPupilNode);
+        leftPupilNode.addChild(leftRetinaNode);
+        rightPupilNode.addChild(rightRetinaNode);
+        underJawNode.addChild(toothL1);
+        underJawNode.addChild(toothL2);
+        underJawNode.addChild(toothL3);
+        underJawNode.addChild(toothR1);
+        underJawNode.addChild(toothR2);
+        underJawNode.addChild(toothR3);
+
+        mat4.translate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [0, 1.5, 0.5]);
+        mat4.scale(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [1, 0.7, 1.2]);
+        mat4.scale(centerRugbyNode.localTransform, centerRugbyNode.localTransform, [1.3, 1, 1]);
+        mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.7, 0, 0]);
+        mat4.scale(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [0.6, 0.6, 0.6]);
+        mat4.translate(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [1.7, 0, 0]);
+        mat4.scale(rightRugbyNode.localTransform, rightRugbyNode.localTransform, [0.6, 0.6, 0.6]);
+        mat4.translate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [-0.9, 0, 0]);
+        mat4.rotate(leftConnectorNode.localTransform, leftConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]);
+        mat4.scale(leftConnectorNode.localTransform, leftConnectorNode.localTransform, [0.8, 1, 0.25]);
+        mat4.translate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.9, 0, 0]);
+        mat4.rotate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]);
+        mat4.scale(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.8, 1, 0.25]);
+        mat4.translate(noseLeftNode.localTransform, noseLeftNode.localTransform, [-0.08, 1, 0.6]);
+        mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 50, [0, 1, 0]);
+        mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 2, [1, 0, 0]);
+        mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, 6.07, [0, 0, 1]);
+        mat4.scale(noseLeftNode.localTransform, noseLeftNode.localTransform, [1, 1.2, 0.3]);
+        mat4.translate(noseRightNode.localTransform, noseRightNode.localTransform, [0.1, 1, 0.6]);
+        mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, -Math.PI / 50, [0, 1, 0]);
+        mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, Math.PI / 2, [1, 0, 0]);
+        mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, 6.1, [0, 0, -1]);
+        mat4.scale(noseRightNode.localTransform, noseRightNode.localTransform, [1, 1.2, 0.3]);
+        mat4.translate(underJawNode.localTransform, underJawNode.localTransform, [0, -0.03, 0.35]);
+        mat4.rotate(underJawNode.localTransform, underJawNode.localTransform, Math.PI / 10, [1, 0, 0]);
+        mat4.scale(underJawNode.localTransform, underJawNode.localTransform, [0.6, 1.1, 0.5]);
+        mat4.translate(leftEyeNode.localTransform, leftEyeNode.localTransform, [-0.45, 0.6, 0.6]);
+        mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, Math.PI / 2, [1, 0, 0]);
+        mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, Math.PI / 2, [0, 0, -1]);
+        mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, 2, [1, 0, 0]);
+        mat4.rotate(leftEyeNode.localTransform, leftEyeNode.localTransform, 3, [0, 0, 1]);
+        mat4.scale(leftEyeNode.localTransform, leftEyeNode.localTransform, [0.8, 0.7, 0.3]);
+        mat4.translate(rightEyeNode.localTransform, rightEyeNode.localTransform, [0.45, 0.6, 0.6]);
+        mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, Math.PI / 2, [1, 0, 0]);
+        mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, Math.PI / 2, [0, 0, 1]);
+        mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, 2, [1, 0, 0]);
+        mat4.rotate(rightEyeNode.localTransform, rightEyeNode.localTransform, 3, [0, 0, -1]);
+        mat4.scale(rightEyeNode.localTransform, rightEyeNode.localTransform, [0.8, 0.7, 0.3]);
+        mat4.translate(leftPupilNode.localTransform, leftPupilNode.localTransform, [-0.04, 0.3, 0.11]);
+        mat4.scale(leftPupilNode.localTransform, leftPupilNode.localTransform, [0.15, 0.2, 0.05]);
+        mat4.translate(rightPupilNode.localTransform, rightPupilNode.localTransform, [0.04, 0.3, 0.11]);
+        mat4.scale(rightPupilNode.localTransform, rightPupilNode.localTransform, [0.15, 0.2, 0.05]);
+        mat4.translate(leftRetinaNode.localTransform, leftRetinaNode.localTransform, [0, 0.5, 1]);
+        mat4.scale(leftRetinaNode.localTransform, leftRetinaNode.localTransform, [0.9, 0.2, 0.1]);
+        mat4.translate(rightRetinaNode.localTransform, rightRetinaNode.localTransform, [0, 0.5, 1]);
+        mat4.scale(rightRetinaNode.localTransform, rightRetinaNode.localTransform, [0.9, 0.2, 0.1]);
+        mat4.translate(toothL1.localTransform, toothL1.localTransform, [-0.3, 0.9, 0.5]);
+        mat4.rotate(toothL1.localTransform, toothL1.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothL1.localTransform, toothL1.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(toothL2.localTransform, toothL2.localTransform, [-0.55, 0.75, 0.6]);
+        mat4.rotate(toothL2.localTransform, toothL2.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothL2.localTransform, toothL2.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(toothL3.localTransform, toothL3.localTransform, [-0.74, 0.6, 0.6]);
+        mat4.rotate(toothL3.localTransform, toothL3.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothL3.localTransform, toothL3.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(toothR1.localTransform, toothR1.localTransform, [0.3, 0.9, 0.5]);
+        mat4.rotate(toothR1.localTransform, toothR1.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothR1.localTransform, toothR1.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(toothR2.localTransform, toothR2.localTransform, [0.55, 0.75, 0.6]);
+        mat4.rotate(toothR2.localTransform, toothR2.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothR2.localTransform, toothR2.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(toothR3.localTransform, toothR3.localTransform, [0.74, 0.6, 0.6]);
+        mat4.rotate(toothR3.localTransform, toothR3.localTransform, 1.1, [1, 0, 0]);
+        mat4.scale(toothR3.localTransform, toothR3.localTransform, [1.6, 1.6, 1.6]);
+        mat4.translate(centerHornNode.localTransform, centerHornNode.localTransform, [0, 1.6, 0]);
+        mat4.scale(centerHornNode.localTransform, centerHornNode.localTransform, [0.65, 0.7, 0.8]);
+        mat4.rotate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, Math.PI / 2, [1, 0, 0]);
+        return upperHeadRoot;
+    })(gl);
+
+
+    // --- LOWER JAW ---
+    const lowerJaw = (function createMegaGarchompJaw(gl) {
+        const redOrange = [1.0, 0.4, 0.2, 1.0];
+        const white = [1.0, 1.0, 1.0, 1.0];
+        const black = [0.1, 0.1, 0.1, 1.0];
+
+        const jawBaseMesh = new Mesh(gl, Primitives.createCuboid(1, 1, 1));
+        const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+        const chinCoverMesh = new Mesh(gl, Primitives.createTriangularPrism(1, 1, 1));
+        const innerMouthMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 32, 32));
+
+        const jawRoot = new SceneNode(null);
+        const jawCenter = new SceneNode(jawBaseMesh, redOrange);
+        const leftJawBlock = new SceneNode(jawBaseMesh, redOrange);
+        const rightJawBlock = new SceneNode(jawBaseMesh, redOrange);
+        const leftJawCover = new SceneNode(jawBaseMesh, redOrange);
+        const rightJawCover = new SceneNode(jawBaseMesh, redOrange);
+        const chinCoverNode = new SceneNode(chinCoverMesh, redOrange);
+        const innerMouthNode = new SceneNode(innerMouthMesh, black);
+        const lowerToothL1 = new SceneNode(toothMesh, white), lowerToothL2 = new SceneNode(toothMesh, white), lowerToothL3 = new SceneNode(toothMesh, white);
+        const lowerToothR1 = new SceneNode(toothMesh, white), lowerToothR2 = new SceneNode(toothMesh, white), lowerToothR3 = new SceneNode(toothMesh, white);
+
+        jawRoot.addChild(jawCenter);
+        jawRoot.addChild(leftJawBlock);
+        jawRoot.addChild(rightJawBlock);
+        jawRoot.addChild(leftJawCover);
+        jawRoot.addChild(rightJawCover);
+        jawRoot.addChild(chinCoverNode);
+        jawRoot.addChild(innerMouthNode);
+        jawRoot.addChild(lowerToothL1);
+        jawRoot.addChild(lowerToothL2);
+        jawRoot.addChild(lowerToothL3);
+        jawRoot.addChild(lowerToothR1);
+        jawRoot.addChild(lowerToothR2);
+        jawRoot.addChild(lowerToothR3);
+
+        mat4.translate(jawRoot.localTransform, jawRoot.localTransform, [0, 0.25, 1.1]);
+
+        mat4.translate(jawCenter.localTransform, jawCenter.localTransform, [0, 0.4, 1]);
+        mat4.rotate(jawCenter.localTransform, jawCenter.localTransform, -Math.PI / 12, [-1, 0, 0]);
+        mat4.scale(jawCenter.localTransform, jawCenter.localTransform, [0.4, 0.2, 0.6]);
+
+        mat4.translate(leftJawBlock.localTransform, leftJawBlock.localTransform, [-0.3, 0.45, 0.3]);
+        mat4.rotate(leftJawBlock.localTransform, leftJawBlock.localTransform, Math.PI / 6, [0, 1, 0]);
+        mat4.scale(leftJawBlock.localTransform, leftJawBlock.localTransform, [0.3, 0.2, 1.5]);
+
+        mat4.translate(rightJawBlock.localTransform, rightJawBlock.localTransform, [0.3, 0.45, 0.3]);
+        mat4.rotate(rightJawBlock.localTransform, rightJawBlock.localTransform, -Math.PI / 6, [0, 1, 0]);
+        mat4.scale(rightJawBlock.localTransform, rightJawBlock.localTransform, [0.3, 0.2, 1.5]);
+
+        mat4.translate(leftJawCover.localTransform, leftJawCover.localTransform, [-0.7, 0.6, -0.4]);
+        mat4.scale(leftJawCover.localTransform, leftJawCover.localTransform, [0.2, 0.5, 0.3]);
+
+        mat4.translate(rightJawCover.localTransform, rightJawCover.localTransform, [0.7, 0.6, -0.4]);
+        mat4.scale(rightJawCover.localTransform, rightJawCover.localTransform, [0.2, 0.5, 0.3]);
+
+        mat4.translate(innerMouthNode.localTransform, innerMouthNode.localTransform, [0, 0.6, -0.6]);
+        mat4.scale(innerMouthNode.localTransform, innerMouthNode.localTransform, [0.45, 0.2, 1]);
+
+        mat4.translate(chinCoverNode.localTransform, chinCoverNode.localTransform, [0, 0.3, 0.3]);
+        mat4.rotate(chinCoverNode.localTransform, chinCoverNode.localTransform, Math.PI / 2, [1, 0, 0]);
+        mat4.scale(chinCoverNode.localTransform, chinCoverNode.localTransform, [1.4, 1.4, 0.05]);
+        
+        mat4.translate(lowerToothL1.localTransform, lowerToothL1.localTransform, [-0.15, 0.65, 0.58]);
+        mat4.scale(lowerToothL1.localTransform, lowerToothL1.localTransform, [1, 0.7, 1]);
+        mat4.translate(lowerToothL2.localTransform, lowerToothL2.localTransform, [-0.36, 0.65, 0.28]);
+        mat4.scale(lowerToothL2.localTransform, lowerToothL2.localTransform, [1, 0.7, 1]);
+        mat4.translate(lowerToothL3.localTransform, lowerToothL3.localTransform, [-0.6, 0.65, -0.02]);
+        mat4.scale(lowerToothL3.localTransform, lowerToothL3.localTransform, [1, 0.7, 1]);
+        mat4.translate(lowerToothR1.localTransform, lowerToothR1.localTransform, [0.15, 0.65, 0.58]);
+        mat4.scale(lowerToothR1.localTransform, lowerToothR1.localTransform, [1, 0.7, 1]);
+        mat4.translate(lowerToothR2.localTransform, lowerToothR2.localTransform, [0.4, 0.65, 0.28]);
+        mat4.scale(lowerToothR2.localTransform, lowerToothR2.localTransform, [1, 0.7, 1]);
+        mat4.translate(lowerToothR3.localTransform, lowerToothR3.localTransform, [0.6, 0.65, -0.02]);
+        mat4.scale(lowerToothR3.localTransform, lowerToothR3.localTransform, [1, 0.7, 1]);
+        return jawRoot;
+    })(gl);
+
+    headRoot.addChild(upperHead);
+    headRoot.addChild(lowerJaw);
+    mat4.translate(headRoot.localTransform,headRoot.localTransform, [0, -0.78, 0]);
+    
+    return headRoot;
+}
+// ---------------------------------------------------------
+//  Build Torso
 // ---------------------------------------------------------
 function createMegaGarchompTorso(gl) {
   // --- COLORS ---
@@ -318,8 +736,6 @@ function createMegaGarchompTorso(gl) {
 
   return torsoRoot;
 }
-
-
 // ---------------------------------------------------------
 //  Build Tail
 // ---------------------------------------------------------
@@ -417,9 +833,8 @@ function createMegaGarchompTail(gl) {
     return tailRoot;
 
 }
-
 // ---------------------------------------------------------
-//  Build Left Leg (DENGAN DURI)
+//  Build Left Leg
 // ---------------------------------------------------------
 function createMegaGarchompLeftLeg(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
@@ -510,7 +925,9 @@ function createMegaGarchompLeftLeg(gl) {
 
     return legRoot;
 }
-
+// ---------------------------------------------------------
+//  Build Right Leg
+// ---------------------------------------------------------
 function createMegaGarchompRightLeg(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -597,6 +1014,9 @@ function createMegaGarchompRightLeg(gl) {
 
     return legRoot;
 }
+// ---------------------------------------------------------
+//  Build Dorsal Fin
+// ---------------------------------------------------------
 function createDorsalFin(gl) {
     const darkBlue = [0.25, 0.25, 0.45, 1.0];
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -641,7 +1061,6 @@ function createDorsalFin(gl) {
 
     return dorsalFinRoot;
 }
-
 // ---------------------------------------------------------
 //  Build Right Arm
 // ---------------------------------------------------------
@@ -772,7 +1191,6 @@ function createMegaGarchompRightArm(gl) {
   
     return armRoot;
 }
-
 // ---------------------------------------------------------
 //  Build Left Arm
 // ---------------------------------------------------------
@@ -835,9 +1253,8 @@ function createMegaGarchompLeftArm(gl) {
 
     return armRoot;
 }
-
 // ---------------------------------------------------------
-//  MAIN ENTRY
+//  Main Builder
 // ---------------------------------------------------------
 function createMegaGarchomp(gl) {
   const torso = createMegaGarchompTorso(gl);
@@ -848,10 +1265,12 @@ function createMegaGarchomp(gl) {
   const rightarm = createMegaGarchompRightArm(gl);
   const leftarm = createMegaGarchompLeftArm(gl);
   const neck = createMegaGarchompNeck(gl);
-  const upperHead = createMegaGarchompUpperHead(gl);
+//   const upperHead = createMegaGarchompUpperHead(gl);
 //   const jaw = createMegaGarchompJaw(gl);
-//   neck.addChild(jaw)
-    neck.addChild(upperHead);
+  const head = createMegaGarchompHead(gl);
+//   neck.addChild(jaw);
+//   neck.addChild(upperHead);
+  neck.addChild(head);
   torso.addChild(DorsalFin);
   torso.addChild(tail);
   torso.addChild(rightarm);
