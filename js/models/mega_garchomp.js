@@ -588,6 +588,92 @@ function createDorsalFin(gl) {
 }
 
 // ---------------------------------------------------------
+//  Build Right Arm
+// ---------------------------------------------------------
+function createMegaGarchompRightArm(gl) {
+    const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const red = [0.8, 0.15, 0.1, 1.0];
+
+    // --- MESHES ---
+    // NEW: Define path and profile for a curved upper arm (mirrored)
+    const armProfile = [];
+    const armRadius = 0.3;
+    const armSides = 16;
+    for (let i = 0; i <= armSides; i++) {
+        const angle = (i / armSides) * 2 * Math.PI;
+        armProfile.push([Math.cos(angle) * armRadius, Math.sin(angle) * armRadius]);
+    }
+
+    const arm_p0 = [0, 0, 0];
+    const arm_p1 = [-0.1, -0.4, 0]; // Mirrored X
+    const arm_p2 = [-0.1, -1.0, 0]; // Mirrored X
+    const arm_p3 = [-0.2, -1.5, 0]; // Mirrored X
+    const armPath = [];
+    const armSegments = 10;
+    for (let i = 0; i <= armSegments; i++) {
+        const t = i / armSegments;
+        armPath.push(Curves.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
+    }
+    const upperArmMesh = new Mesh(gl, Curves.createSweptSurface(armProfile, armPath, true));
+    
+    const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
+    const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
+    
+    // Scythe Blade
+    const scytheProfile = [[0, 0.2], [0.05, 0], [0, -0.2], [-0.02, 0]];
+    const scythe_p0 = [0, 0, 0];
+    const scythe_p1 = [-0.5, -1.5, 0]; // Mirror X
+    const scythe_p2 = [-1.5, -3.0, 0]; // Mirror X
+    const scythe_p3 = [-3.0, -3.5, 0]; // Mirror X
+    const scythePath = [];
+    const scytheScales = [];
+    const scytheSegments = 100;
+    for (let i = 0; i <= scytheSegments; i++) {
+        const t = i / scytheSegments;
+        scythePath.push(Curves.getBezierPoint(t, scythe_p0, scythe_p1, scythe_p2, scythe_p3));
+        scytheScales.push(1.0 - Math.pow(t, 2));
+    }
+    const scytheMesh = new Mesh(gl, Curves.createTaperedSweptSurface(scytheProfile, scythePath, scytheScales, true));
+
+    // --- NODES & HIERARCHY ---
+    const armRoot = new SceneNode(null);
+    const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
+    const elbowNode = new SceneNode(elbowMesh, darkBlue);
+    const connectorNode = new SceneNode(connectorMesh, darkBlue);
+    const scytheNode = new SceneNode(scytheMesh, red);
+
+    armRoot.addChild(upperArmNode);
+    upperArmNode.addChild(elbowNode);
+    elbowNode.addChild(connectorNode);
+    connectorNode.addChild(scytheNode);
+
+    // --- TRANSFORMATIONS (Mirrored) ---
+    // Upper Arm
+    mat4.translate(upperArmNode.localTransform, upperArmNode.localTransform, [1, 1, 0]);
+    mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 3.6, [0, 0, 1]); // Mirror Z rotation
+    mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 8, [0, 1, 0]); // Mirror Y rotation
+    mat4.scale(upperArmNode.localTransform, upperArmNode.localTransform, [0.7, 0.7, 0.7]);
+
+    // Elbow is positioned at the end point of the mirrored Bezier curve (p3)
+    mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
+
+    // Connector
+    mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [-0, 0, 0.8]);
+    mat4.rotate(connectorNode.localTransform, connectorNode.localTransform, -Math.PI / 6, [0, 0, 1]);
+    mat4.rotate(connectorNode.localTransform, connectorNode.localTransform, -Math.PI / 2, [1, 0, 0]); // Mirror Z rotation
+    mat4.scale(connectorNode.localTransform, connectorNode.localTransform, [0.8, 2.5, 1]);
+
+    // Scythe
+    mat4.translate(scytheNode.localTransform, scytheNode.localTransform, [-0.1, -0.2, 0]); // Mirror X translation
+    mat4.rotate(scytheNode.localTransform, scytheNode.localTransform, -Math.PI / 2.2, [0, 1, 0]); // Mirror Z rotation
+    mat4.scale(scytheNode.localTransform, scytheNode.localTransform, [1.2, 1.2, 1.2]);
+
+    return armRoot;
+}
+
+
+
+// ---------------------------------------------------------
 //  MAIN ENTRY
 // ---------------------------------------------------------
 function createMegaGarchomp(gl) {
@@ -596,8 +682,10 @@ function createMegaGarchomp(gl) {
   const leftLeg = createMegaGarchompLeftLeg(gl); // Buat kaki kiri
   const rightLeg = createMegaGarchompRightLeg(gl);
   const DorsalFin = createDorsalFin(gl);
+  const rightarm = createMegaGarchompRightArm(gl);
   torso.addChild(DorsalFin);
   torso.addChild(tail);
+  torso.addChild(rightarm);
   mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
   mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
 
