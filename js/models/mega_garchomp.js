@@ -619,55 +619,64 @@ function createMegaGarchompRightArm(gl) {
     const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
     const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
     
-    /*
-    // Bagian Scythe dihilangkan untuk sementara
-    const scytheShapePointsRaw = [
-        [0.45, 8.38], [1.24, 8.74], [1.81, 9.56], [2.92, 8.42], [3.88, 6.81],
-        [3.88, 4.81], [3.13, 3.06], [2.92, 4.92], [2.38, 6.02], [1.84, 6.59],
-        [1.09, 7.06], [0.56, 7.24]
-    ];
-
-    const scytheSmoothness = 10;
-    const smoothScytheOutline = [];
-    
-    // PENAMBAHAN: Variabel ini hilang dari fungsi Anda
-    const scytheControlPoints = scytheShapePointsRaw;
-
-    const curve1 = [scytheControlPoints[0], scytheControlPoints[1], scytheControlPoints[2], scytheControlPoints[3]];
-    const curve2 = [scytheControlPoints[3], scytheControlPoints[4], scytheControlPoints[5], scytheControlPoints[6]];
-    const curve3 = [scytheControlPoints[6], scytheControlPoints[7], scytheControlPoints[8], scytheControlPoints[9]];
-    const curve4 = [scytheControlPoints[9], scytheControlPoints[10], scytheControlPoints[11], scytheControlPoints[0]];
-
-    const curves = [curve1, curve2, curve3, curve4];
-
-    for(const curve of curves) {
-        for(let i = 0; i < scytheSmoothness; i++) {
-            const t = i / scytheSmoothness;
-            const pt = Curves.getBezierPoint(t, curve[0], curve[1], curve[2], curve[3]);
-            smoothScytheOutline.push(pt);
-        }
+    // --- Implementasi Scythe Baru ---
+    // 1. Profil "geprek" (elliptical) untuk bentuk sabit BIRU (DALAM)
+    const innerScytheProfile = [];
+    const profileRadiusX = 0.2; // Lebar penampang
+    const profileRadiusY = 1; // Ketebalan penampang (tipis)
+    const profileSides = 16;
+    for (let i = 0; i <= profileSides; i++) {
+        const angle = (i / profileSides) * 2 * Math.PI;
+        innerScytheProfile.push([Math.cos(angle) * profileRadiusX, Math.sin(angle) * profileRadiusY]);
     }
 
-    const scytheShapePoints = smoothScytheOutline.map(p => [
-        -((p[0] - 2.2) * 0.8), // Cerminkan sumbu X
-        0,
-        (p[1] - 6.5) * 0.8
-    ]);
+    // BARU: Profil untuk sabit MERAH (LUAR) yang lebih besar
+    const outerScytheProfile = [];
+    const outerProfileRadiusX = profileRadiusX * 1.2; // Dibuat lebih lebar (dari 1.1 menjadi 1.2)
+    const outerProfileRadiusY = profileRadiusY * 1.2; // Dibuat lebih tebal (dari 1.1 menjadi 1.2)
+    for (let i = 0; i <= profileSides; i++) {
+        const angle = (i / profileSides) * 2 * Math.PI;
+        outerScytheProfile.push([Math.cos(angle) * outerProfileRadiusX, Math.sin(angle) * outerProfileRadiusY]);
+    }
 
-    const scytheMesh = new Mesh(gl, Primitives.createExtrudedShape(scytheShapePoints, 0.2));
-    */
+    // 2. Jalur kurva Bezier untuk membentuk bulan sabit (digunakan oleh kedua scythe)
+    const scythePath = [];
+    const scytheSegments = 20; // Jumlah segmen untuk kehalusan
+    const p0 = [0, 0, 0];                  // Titik awal di pergelangan
+    const p1 = [-1.5, -0.5, 0];            // Titik kontrol 1
+    const p2 = [-2.5, -2.5, 0];            // Titik kontrol 2
+    const p3 = [-1.0, -4.0, 0];            // Titik ujung sabit
+    for (let i = 0; i <= scytheSegments; i++) {
+        const t = i / scytheSegments;
+        scythePath.push(Curves.getBezierPoint(t, p0, p1, p2, p3));
+    }
 
+    // 3. Faktor skala (kecil -> besar -> kecil)
+    const scaleFactors = [];
+    for (let i = 0; i <= scytheSegments; i++) {
+        const t = i / scytheSegments;
+        // Math.sin(t * Math.PI) menghasilkan kurva 0 -> 1 -> 0, sempurna untuk efek ini
+        const bulge = Math.sin(t * Math.PI); 
+        // 0.1 adalah skala minimum di ujung, 0.9 adalah seberapa besar puncaknya
+        scaleFactors.push(0.01 + bulge * 0.9);
+    }
+
+    const innerScytheMesh = new Mesh(gl, Curves.createTaperedSweptSurface(innerScytheProfile, scythePath, scaleFactors, true));
+    const outerScytheMesh = new Mesh(gl, Curves.createTaperedSweptSurface(outerScytheProfile, scythePath, scaleFactors, true));
+    
     // --- NODES & HIERARCHY ---
     const armRoot = new SceneNode(null);
     const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
     const elbowNode = new SceneNode(elbowMesh, darkBlue);
     const connectorNode = new SceneNode(connectorMesh, darkBlue);
-    // const scytheNode = new SceneNode(scytheMesh, darkBlue);
+    const outerScytheNode = new SceneNode(outerScytheMesh, red); // Sabit luar berwarna MERAH
+    const innerScytheNode = new SceneNode(innerScytheMesh, darkBlue); // Sabit dalam berwarna BIRU
 
     armRoot.addChild(upperArmNode);
     upperArmNode.addChild(elbowNode);
     elbowNode.addChild(connectorNode);
-    // connectorNode.addChild(scytheNode);
+    // connectorNode.addChild(outerScytheNode); // Sambungkan sabit luar ke connector
+    // connectorNode.addChild(innerScytheNode); // Sambungkan sabit dalam ke sabit luar
 
     // --- TRANSFORMATIONS (Mirrored) ---
     // Upper Arm
@@ -681,17 +690,29 @@ function createMegaGarchompRightArm(gl) {
 
     // Connector
     mat4.translate(connectorNode.localTransform, connectorNode.localTransform, [-0, 0, 0.8]);
-    mat4.rotate(connectorNode.localTransform, connectorNode.localTransform, -Math.PI / 6, [0, 0, 1]);
+    mat4.rotate(connectorNode.localTransform, connectorNode.localTransform, -Math.PI / 5, [0, 0, 1]);
     mat4.rotate(connectorNode.localTransform, connectorNode.localTransform, -Math.PI / 2, [1, 0, 0]); // Mirror Z rotation
     mat4.scale(connectorNode.localTransform, connectorNode.localTransform, [0.8, 2.5, 1]);
 
-  /*
-  // Scythe
-    // Cerminkan dengan scale [-1, 1, 1] dan sesuaikan rotasi
-    mat4.translate(scytheNode.localTransform, scytheNode.localTransform, [0.0, 0.5, 0.0]);
-    mat4.rotate(scytheNode.localTransform, scytheNode.localTransform, -Math.PI / 2, [1, 0, 0]);
-    mat4.rotate(scytheNode.localTransform, scytheNode.localTransform, Math.PI / 2.5, [0, 1, 0]);
-  */
+  
+    // // Atur posisi dan orientasi sabit LUAR (MERAH)
+    // mat4.translate(outerScytheNode.localTransform, outerScytheNode.localTransform, [0.2, -0.1, -1.5]);
+    // mat4.rotate(outerScytheNode.localTransform, outerScytheNode.localTransform, -Math.PI / 2.2, [1, 0, 0]);
+    // mat4.rotate(outerScytheNode.localTransform, outerScytheNode.localTransform, Math.PI / 10, [0, -1, 0]);
+    
+    // // PERBAIKAN: Dibuat geprek ke samping (sumbu X) dan sedikit lebih besar dari sabit biru
+    // mat4.scale(outerScytheNode.localTransform, outerScytheNode.localTransform, [0.3, 1, 1]); 
+
+    // // ====================================================================================================================
+
+    //     // Atur posisi dan orientasi sabit DALAM (BIRU)
+    // mat4.translate(innerScytheNode.localTransform, innerScytheNode.localTransform, [1, 0.2, -0.9]);
+    // mat4.rotate(innerScytheNode.localTransform, innerScytheNode.localTransform, -Math.PI / 2.2, [1, 0, 0]);
+    // mat4.rotate(innerScytheNode.localTransform, innerScytheNode.localTransform, Math.PI / 10, [0, -1, 0]);
+    
+    // // Terapkan skala normal untuk sabit BIRU (tidak geprek)
+    // mat4.scale(innerScytheNode.localTransform, innerScytheNode.localTransform, [0.8, 0.8, 0.8]);
+  
     return armRoot;
 }
 
