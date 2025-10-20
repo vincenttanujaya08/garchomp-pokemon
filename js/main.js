@@ -103,8 +103,8 @@ function main() {
   // ===== ANIMATION SETUP =====
   const garchompAnimator = new GarchompAnimator(garchompNode, {
     // POSITION FIX: Turunkan Y agar tidak ngambang
-    startPos: [0, -3, -5], // Y dari 1.5 → 0.2 (lebih rendah!)
-    endPos: [0, -3, -15], // Y dari 1.5 → 0.2
+    startPos: [0, -2.7, -5], // Y dari 1.5 → 0.2 (lebih rendah!)
+    endPos: [0, -2.7, -15], // Y dari 1.5 → 0.2
     startRotation: Math.PI, // Face forward
 
     // Timing (custom sesuai kebutuhan)
