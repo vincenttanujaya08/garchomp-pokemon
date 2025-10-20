@@ -56,7 +56,8 @@ function main() {
     },
   };
 
-  const garchompNode = createGarchomp(gl);
+  // Memanggil fungsi untuk membuat model Gabite
+  const gabiteNode = createGabite(gl);
 
   const projectionMatrix = mat4.create();
   mat4.perspective(
@@ -67,9 +68,14 @@ function main() {
     100.0
   );
 
-  const cameraPosition = [0, 10, 25];
+  // --- PERBAIKAN ---
+  // 1. Posisi kamera diatur agar lebih dekat dan sedikit lebih tinggi
+  //    Ini memberikan sudut pandang yang lebih baik untuk model torso.
+  const cameraPosition = [0, 2, 10];
   const viewMatrix = mat4.create();
-  mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
+  // 2. Kamera melihat sedikit ke bawah (ke arah Y = -1),
+  //    yang merupakan pusat dari torso kita.
+  mat4.lookAt(viewMatrix, cameraPosition, [0, -1, 0], [0, 1, 0]);
 
   function render() {
     if (resizeCanvasToDisplaySize(gl.canvas)) {
@@ -87,10 +93,11 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
+    // Menggambar scene dengan node Gabite
     drawScene(
       gl,
       programInfo,
-      garchompNode,
+      gabiteNode,
       projectionMatrix,
       viewMatrix,
       modelRotationMatrix,
@@ -115,7 +122,6 @@ function drawScene(
   mat4.multiply(modelMatrix, parentTransform, node.localTransform);
 
   if (node.mesh) {
-    // --- BLOK SETUP ATRIBUT MANUAL (CARA WEBGL 1) ---
     // Setup buffer posisi
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.vertexBuffer);
     gl.vertexAttribPointer(
@@ -139,7 +145,6 @@ function drawScene(
       0
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
-    // --------------------------------------------------
 
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelMatrix);
@@ -173,7 +178,6 @@ function drawScene(
     gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPosition);
     gl.uniform3fv(programInfo.uniformLocations.viewPosition, cameraPosition);
 
-    // Bind buffer index dan gambar
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.indexBuffer);
     gl.drawElements(gl.TRIANGLES, node.mesh.indicesCount, gl.UNSIGNED_SHORT, 0);
   }

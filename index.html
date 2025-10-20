@@ -3,11 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Garchomp Simple Model</title>
+    <title>Gabite 3D Model</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
@@ -16,6 +17,17 @@
             height: 100vh;
             background-color: #1a1a1a;
         }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -23,7 +35,7 @@
     <canvas id="glCanvas"></canvas>
 
     <script src="js/lib/gl-matrix.js"></script>
-    <script src="js/config/garchomp_anatomy.js"></script>
+    <script src="js/config/gabite_anatomy.js"></script>
     <script>
         const mat4 = glMatrix.mat4;
         const vec3 = glMatrix.vec3;
