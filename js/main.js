@@ -1,18 +1,23 @@
 /**
  * Main Application Entry Point
- * Multi-Island Setup with Hybrid Camera System & Warm Golden Lighting
+ * Multi-Island Setup with Cinematic Intro & Warm Golden Lighting
  *
- * HYBRID CAMERA CONTROLS:
- * ========================
- * LOCKED MODE (Default):
- *   - Press 1/2/3: Focus on Island A/B/C with smooth transition
- *   - Mouse Drag: Orbit around focused island
- *   - Mouse Wheel: Zoom in/out
- *   - WASD: Pan camera (free movement but orbit center stays on island)
- *   - Q/E: Move camera up/down
+ * INTRO SYSTEM:
+ * =============
+ * FIRST VISIT: 4-5 second cinematic flyover of all 3 islands
+ * RETURN VISITS: 1-2 second quick zoom animation from last island
+ * - Press ANY KEY or CLICK to skip intro
+ * - localStorage tracks: hasSeenIntro, lastFocusedIsland
  *
- * LAYOUT: 3 Islands Linear
- * 🏝️ Island A (X=0)  ──────→  🏝️ Island B (X=100)  ──────→  🏝️ Island C (X=200)
+ * CONTROLS:
+ * =========
+ * - Press 1/2/3: Focus on Island A/B/C with smooth transition
+ * - Mouse Drag: Orbit around focused island
+ * - Mouse Wheel: Zoom in/out
+ * - WASD/QE: Pan camera
+ *
+ * LAYOUT: Triangle Formation
+ * 🏝️ Island A (Left)  🏝️ Island B (Right)  🏝️ Island C (Center Back)
  */
 
 function main() {
@@ -25,17 +30,73 @@ function main() {
 
   // ===== ISLAND CONFIGURATION =====
   const ISLAND_CONFIG = [
-    { name: "ISLAND_A", position: [0, 0, 0], pokemonName: "Garchomp" },
-    { name: "ISLAND_B", position: [100, 0, 0], pokemonName: "Gabite" },
-    { name: "ISLAND_C", position: [200, 0, 0], pokemonName: "Mega Garchomp" },
+    { name: "ISLAND_A", position: [-80, 0, 20], pokemonName: "Garchomp" },
+    { name: "ISLAND_B", position: [80, 0, 20], pokemonName: "Gabite" },
+    { name: "ISLAND_C", position: [0, 0, -100], pokemonName: "Mega Garchomp" },
   ];
+
+  // ===== INTRO SYSTEM =====
+  const introState = {
+    isPlaying: false,
+    type: null, // "CINEMATIC" or "QUICK"
+    progress: 0,
+    duration: 0,
+    isSkippable: true,
+
+    // Cinematic waypoints
+    cinematicPath: [
+      {
+        target: [0, 0, -20],
+        distance: 150,
+        azimuth: 0,
+        elevation: 0.8,
+        duration: 1.5,
+      },
+      {
+        target: [0, 0, -20],
+        distance: 120,
+        azimuth: Math.PI * 0.5,
+        elevation: 0.6,
+        duration: 1.5,
+      },
+      {
+        target: [0, 0, -20],
+        distance: 100,
+        azimuth: Math.PI,
+        elevation: 0.5,
+        duration: 1.0,
+      },
+      {
+        target: [-80, -6, 8],
+        distance: 50,
+        azimuth: 0,
+        elevation: 0.4,
+        duration: 1.0,
+      },
+    ],
+    currentWaypoint: 0,
+    waypointProgress: 0,
+
+    // Quick zoom params
+    quickZoomStart: {
+      target: [0, 0, 0],
+      distance: 80,
+      azimuth: 0,
+      elevation: 0.5,
+    },
+    quickZoomEnd: {
+      target: [0, 0, 0],
+      distance: 50,
+      azimuth: 0,
+      elevation: 0.4,
+    },
+  };
 
   // ===== CAMERA STATE =====
   const cameraState = {
-    mode: "LOCKED", // "LOCKED" or "FREE"
-    focusedIsland: 0, // Index 0, 1, 2
+    mode: "LOCKED",
+    focusedIsland: 0,
 
-    // Orbit parameters (for LOCKED mode)
     target: [0, -6, -12],
     distance: 50,
     azimuth: 0,
@@ -43,15 +104,13 @@ function main() {
     minElevation: -Math.PI / 3,
     maxElevation: Math.PI / 2.5,
 
-    // Free camera parameters (for FREE mode)
     position: [0, 5, 40],
     yaw: -Math.PI / 2,
     pitch: 0,
 
-    // Transition animation
     isTransitioning: false,
     transitionProgress: 0,
-    transitionDuration: 1.5, // seconds
+    transitionDuration: 1.5,
     transitionStartTarget: [0, 0, 0],
     transitionEndTarget: [0, 0, 0],
     transitionStartDistance: 50,
@@ -62,18 +121,28 @@ function main() {
 
   // ===== KEYBOARD STATE =====
   const keys = {};
-  window.addEventListener("keydown", (e) => {
+
+  function handleKeyDown(e) {
     keys[e.key.toLowerCase()] = true;
 
-    // Island focus switching (1, 2, 3)
+    // Skip intro
+    if (introState.isPlaying && introState.isSkippable) {
+      skipIntro();
+      return;
+    }
+
+    // Island focus switching
     if (e.key === "1") switchToIsland(0);
     if (e.key === "2") switchToIsland(1);
     if (e.key === "3") switchToIsland(2);
-  });
+  }
 
-  window.addEventListener("keyup", (e) => {
+  function handleKeyUp(e) {
     keys[e.key.toLowerCase()] = false;
-  });
+  }
+
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
 
   // ===== MOUSE INTERACTION =====
   let isDragging = false;
@@ -81,18 +150,24 @@ function main() {
   let lastMouseY = -1;
   const skyboxRotationMatrix = mat4.create();
 
-  canvas.addEventListener("mousedown", (e) => {
+  function handleMouseDown(e) {
+    // Skip intro on click
+    if (introState.isPlaying && introState.isSkippable) {
+      skipIntro();
+      return;
+    }
+
     isDragging = true;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
-  });
+  }
 
-  canvas.addEventListener("mouseup", () => {
+  function handleMouseUp() {
     isDragging = false;
-  });
+  }
 
-  canvas.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
+  function handleMouseMove(e) {
+    if (!isDragging || introState.isPlaying) return;
 
     const dx = e.clientX - lastMouseX;
     const dy = e.clientY - lastMouseY;
@@ -100,7 +175,6 @@ function main() {
     lastMouseY = e.clientY;
 
     if (cameraState.mode === "LOCKED") {
-      // Orbit mode
       cameraState.azimuth -= dx * 0.01;
       cameraState.elevation -= dy * 0.01;
       cameraState.elevation = Math.max(
@@ -108,26 +182,257 @@ function main() {
         Math.min(cameraState.maxElevation, cameraState.elevation)
       );
     }
-  });
+  }
 
-  // Mouse wheel
-  canvas.addEventListener("wheel", (e) => {
+  function handleWheel(e) {
+    if (introState.isPlaying) return;
+
     e.preventDefault();
     if (cameraState.mode === "LOCKED") {
       cameraState.distance += e.deltaY * 0.05;
       cameraState.distance = Math.max(20, Math.min(100, cameraState.distance));
     }
-  });
+  }
+
+  canvas.addEventListener("mousedown", handleMouseDown);
+  canvas.addEventListener("mouseup", handleMouseUp);
+  canvas.addEventListener("mousemove", handleMouseMove);
+  canvas.addEventListener("wheel", handleWheel);
+
+  // ===== INTRO FUNCTIONS =====
+
+  function startIntro() {
+    const hasSeenIntro = localStorage.getItem("hasSeenIntro");
+    const lastIsland = parseInt(
+      localStorage.getItem("lastFocusedIsland") || "0"
+    );
+
+    if (!hasSeenIntro) {
+      // First time - Full cinematic
+      startCinematicIntro();
+    } else {
+      // Return visit - Quick zoom
+      startQuickIntro(lastIsland);
+    }
+  }
+
+  function startCinematicIntro() {
+    console.log("🎬 Starting cinematic intro...");
+    introState.isPlaying = true;
+    introState.type = "CINEMATIC";
+    introState.progress = 0;
+    introState.currentWaypoint = 0;
+    introState.waypointProgress = 0;
+    introState.isSkippable = true;
+
+    // Start from first waypoint
+    const firstWaypoint = introState.cinematicPath[0];
+    cameraState.target = [...firstWaypoint.target];
+    cameraState.distance = firstWaypoint.distance;
+    cameraState.azimuth = firstWaypoint.azimuth;
+    cameraState.elevation = firstWaypoint.elevation;
+
+    showSkipUI();
+  }
+
+  function startQuickIntro(islandIndex) {
+    console.log(`⚡ Quick intro to Island ${islandIndex}...`);
+    introState.isPlaying = true;
+    introState.type = "QUICK";
+    introState.progress = 0;
+    introState.duration = 1.5;
+    introState.isSkippable = true;
+
+    const island = ISLAND_CONFIG[islandIndex];
+
+    // Zoom out position
+    introState.quickZoomStart = {
+      target: [island.position[0], -6, island.position[2] - 12],
+      distance: 80,
+      azimuth: 0,
+      elevation: 0.5,
+    };
+
+    // Final position
+    introState.quickZoomEnd = {
+      target: [island.position[0], -6, island.position[2] - 12],
+      distance: 50,
+      azimuth: 0,
+      elevation: 0.4,
+    };
+
+    // Set camera to start position
+    cameraState.target = [...introState.quickZoomStart.target];
+    cameraState.distance = introState.quickZoomStart.distance;
+    cameraState.azimuth = introState.quickZoomStart.azimuth;
+    cameraState.elevation = introState.quickZoomStart.elevation;
+    cameraState.focusedIsland = islandIndex;
+
+    showSkipUI();
+  }
+
+  function updateIntro(deltaTime) {
+    if (!introState.isPlaying) return;
+
+    if (introState.type === "CINEMATIC") {
+      updateCinematicIntro(deltaTime);
+    } else if (introState.type === "QUICK") {
+      updateQuickIntro(deltaTime);
+    }
+  }
+
+  function updateCinematicIntro(deltaTime) {
+    const waypoints = introState.cinematicPath;
+    const currentIdx = introState.currentWaypoint;
+
+    if (currentIdx >= waypoints.length) {
+      finishIntro();
+      return;
+    }
+
+    const currentWaypoint = waypoints[currentIdx];
+    introState.waypointProgress += deltaTime / currentWaypoint.duration;
+
+    if (introState.waypointProgress >= 1.0) {
+      // Move to next waypoint
+      introState.currentWaypoint++;
+      introState.waypointProgress = 0;
+
+      if (introState.currentWaypoint >= waypoints.length) {
+        finishIntro();
+        return;
+      }
+    }
+
+    // Interpolate to current waypoint
+    const t = easeInOutCubic(introState.waypointProgress);
+    const nextIdx = introState.currentWaypoint;
+    const nextWaypoint = waypoints[nextIdx];
+
+    if (currentIdx > 0) {
+      const prevWaypoint = waypoints[currentIdx - 1];
+      cameraState.target = lerpVec3(
+        prevWaypoint.target,
+        currentWaypoint.target,
+        t
+      );
+      cameraState.distance = lerp(
+        prevWaypoint.distance,
+        currentWaypoint.distance,
+        t
+      );
+      cameraState.azimuth = lerpAngle(
+        prevWaypoint.azimuth,
+        currentWaypoint.azimuth,
+        t
+      );
+      cameraState.elevation = lerp(
+        prevWaypoint.elevation,
+        currentWaypoint.elevation,
+        t
+      );
+    }
+  }
+
+  function updateQuickIntro(deltaTime) {
+    introState.progress += deltaTime / introState.duration;
+
+    if (introState.progress >= 1.0) {
+      finishIntro();
+      return;
+    }
+
+    const t = easeInOutCubic(introState.progress);
+    const start = introState.quickZoomStart;
+    const end = introState.quickZoomEnd;
+
+    cameraState.target = lerpVec3(start.target, end.target, t);
+    cameraState.distance = lerp(start.distance, end.distance, t);
+    cameraState.azimuth = lerpAngle(start.azimuth, end.azimuth, t);
+    cameraState.elevation = lerp(start.elevation, end.elevation, t);
+  }
+
+  function skipIntro() {
+    console.log("⏭️ Intro skipped!");
+    finishIntro();
+  }
+
+  function finishIntro() {
+    introState.isPlaying = false;
+
+    // Mark intro as seen
+    localStorage.setItem("hasSeenIntro", "true");
+
+    // Set camera to Island A (or last focused island for quick intro)
+    const targetIsland =
+      introState.type === "QUICK" ? cameraState.focusedIsland : 0;
+    const island = ISLAND_CONFIG[targetIsland];
+
+    cameraState.target = [island.position[0], -6, island.position[2] - 12];
+    cameraState.distance = 50;
+    cameraState.azimuth = 0;
+    cameraState.elevation = 0.4;
+    cameraState.focusedIsland = targetIsland;
+
+    hideSkipUI();
+    updateUIIndicator();
+
+    console.log("✅ Intro finished!");
+  }
+
+  function showSkipUI() {
+    let skipUI = document.getElementById("skip-intro-ui");
+    if (!skipUI) {
+      skipUI = document.createElement("div");
+      skipUI.id = "skip-intro-ui";
+      skipUI.style.position = "fixed";
+      skipUI.style.bottom = "30px";
+      skipUI.style.left = "50%";
+      skipUI.style.transform = "translateX(-50%)";
+      skipUI.style.padding = "12px 20px";
+      skipUI.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+      skipUI.style.color = "white";
+      skipUI.style.fontFamily = "monospace";
+      skipUI.style.fontSize = "14px";
+      skipUI.style.borderRadius = "8px";
+      skipUI.style.border = "2px solid rgba(255, 255, 255, 0.3)";
+      skipUI.style.zIndex = "2000";
+      skipUI.style.animation = "pulse 2s ease-in-out infinite";
+      skipUI.innerHTML = "⏭️ Press any key or click to skip";
+      document.body.appendChild(skipUI);
+
+      // Add pulse animation
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes pulse {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    skipUI.style.display = "block";
+  }
+
+  function hideSkipUI() {
+    const skipUI = document.getElementById("skip-intro-ui");
+    if (skipUI) {
+      skipUI.style.display = "none";
+    }
+  }
 
   // ===== CAMERA FUNCTIONS =====
 
   function switchToIsland(index) {
     if (index < 0 || index >= ISLAND_CONFIG.length) return;
-    if (cameraState.isTransitioning) return; // Don't interrupt transition
+    if (cameraState.isTransitioning || introState.isPlaying) return;
 
     const island = ISLAND_CONFIG[index];
     cameraState.mode = "LOCKED";
     cameraState.focusedIsland = index;
+
+    // Save to localStorage
+    localStorage.setItem("lastFocusedIsland", index.toString());
 
     // Start transition animation
     cameraState.isTransitioning = true;
@@ -141,24 +446,8 @@ function main() {
     cameraState.transitionStartDistance = cameraState.distance;
     cameraState.transitionEndDistance = 50;
     cameraState.transitionStartAzimuth = cameraState.azimuth;
-    cameraState.transitionEndAzimuth = 0; // Reset to front view
+    cameraState.transitionEndAzimuth = 0;
 
-    updateUIIndicator();
-  }
-
-  function toggleCameraMode() {
-    if (cameraState.mode === "LOCKED") {
-      // Switch to FREE mode
-      cameraState.mode = "FREE";
-      // Set free camera position to current orbit position
-      const currentPos = calculateOrbitPosition();
-      cameraState.position = currentPos;
-      cameraState.yaw = cameraState.azimuth;
-      cameraState.pitch = -cameraState.elevation;
-    } else {
-      // Switch back to LOCKED mode
-      cameraState.mode = "LOCKED";
-    }
     updateUIIndicator();
   }
 
@@ -173,36 +462,20 @@ function main() {
       cameraState.isTransitioning = false;
     }
 
-    // Smooth easing (ease-in-out)
     const t = easeInOutCubic(cameraState.transitionProgress);
 
-    // Lerp target
-    cameraState.target = [
-      lerp(
-        cameraState.transitionStartTarget[0],
-        cameraState.transitionEndTarget[0],
-        t
-      ),
-      lerp(
-        cameraState.transitionStartTarget[1],
-        cameraState.transitionEndTarget[1],
-        t
-      ),
-      lerp(
-        cameraState.transitionStartTarget[2],
-        cameraState.transitionEndTarget[2],
-        t
-      ),
-    ];
+    cameraState.target = lerpVec3(
+      cameraState.transitionStartTarget,
+      cameraState.transitionEndTarget,
+      t
+    );
 
-    // Lerp distance
     cameraState.distance = lerp(
       cameraState.transitionStartDistance,
       cameraState.transitionEndDistance,
       t
     );
 
-    // Lerp azimuth
     cameraState.azimuth = lerpAngle(
       cameraState.transitionStartAzimuth,
       cameraState.transitionEndAzimuth,
@@ -211,50 +484,18 @@ function main() {
   }
 
   function updateCameraMovement(deltaTime) {
-    const moveSpeed = 30.0 * deltaTime; // Units per second
+    if (introState.isPlaying) return; // Disable movement during intro
+
+    const moveSpeed = 30.0 * deltaTime;
     const panSpeed = 20.0 * deltaTime;
 
     if (cameraState.mode === "LOCKED") {
-      // WASD pan in world space
       if (keys["w"]) cameraState.target[2] -= panSpeed;
       if (keys["s"]) cameraState.target[2] += panSpeed;
       if (keys["a"]) cameraState.target[0] -= panSpeed;
       if (keys["d"]) cameraState.target[0] += panSpeed;
       if (keys["q"]) cameraState.target[1] -= panSpeed;
       if (keys["e"]) cameraState.target[1] += panSpeed;
-    } else {
-      // FREE mode - fly camera
-      const forward = [
-        Math.sin(cameraState.yaw) * Math.cos(cameraState.pitch),
-        Math.sin(cameraState.pitch),
-        Math.cos(cameraState.yaw) * Math.cos(cameraState.pitch),
-      ];
-      const right = [
-        Math.sin(cameraState.yaw + Math.PI / 2),
-        0,
-        Math.cos(cameraState.yaw + Math.PI / 2),
-      ];
-
-      if (keys["w"]) {
-        cameraState.position[0] += forward[0] * moveSpeed;
-        cameraState.position[1] += forward[1] * moveSpeed;
-        cameraState.position[2] += forward[2] * moveSpeed;
-      }
-      if (keys["s"]) {
-        cameraState.position[0] -= forward[0] * moveSpeed;
-        cameraState.position[1] -= forward[1] * moveSpeed;
-        cameraState.position[2] -= forward[2] * moveSpeed;
-      }
-      if (keys["a"]) {
-        cameraState.position[0] -= right[0] * moveSpeed;
-        cameraState.position[2] -= right[2] * moveSpeed;
-      }
-      if (keys["d"]) {
-        cameraState.position[0] += right[0] * moveSpeed;
-        cameraState.position[2] += right[2] * moveSpeed;
-      }
-      if (keys["q"]) cameraState.position[1] -= moveSpeed;
-      if (keys["e"]) cameraState.position[1] += moveSpeed;
     }
   }
 
@@ -276,26 +517,15 @@ function main() {
   }
 
   function updateCamera(viewMatrix) {
-    if (cameraState.mode === "LOCKED") {
-      const cameraPosition = calculateOrbitPosition();
-      mat4.lookAt(viewMatrix, cameraPosition, cameraState.target, [0, 1, 0]);
-      return cameraPosition;
-    } else {
-      // FREE mode
-      const lookTarget = [
-        cameraState.position[0] +
-          Math.sin(cameraState.yaw) * Math.cos(cameraState.pitch),
-        cameraState.position[1] + Math.sin(cameraState.pitch),
-        cameraState.position[2] +
-          Math.cos(cameraState.yaw) * Math.cos(cameraState.pitch),
-      ];
-      mat4.lookAt(viewMatrix, cameraState.position, lookTarget, [0, 1, 0]);
-      return cameraState.position;
-    }
+    const cameraPosition = calculateOrbitPosition();
+    mat4.lookAt(viewMatrix, cameraPosition, cameraState.target, [0, 1, 0]);
+    return cameraPosition;
   }
 
   // ===== UI INDICATOR =====
   function updateUIIndicator() {
+    if (introState.isPlaying) return; // Hide during intro
+
     let indicator = document.getElementById("camera-indicator");
     if (!indicator) {
       indicator = document.createElement("div");
@@ -313,19 +543,13 @@ function main() {
       document.body.appendChild(indicator);
     }
 
-    if (cameraState.mode === "LOCKED") {
-      const island = ISLAND_CONFIG[cameraState.focusedIsland];
-      indicator.innerHTML = `
-        <strong>🌅 WARM LIGHTING MODE</strong><br>
-        Focus: ${island.name} (${island.pokemonName})<br>
-        <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small>
-      `;
-    } else {
-      indicator.innerHTML = `
-        <strong>FREE MODE</strong><br>
-        <small>1/2/3: Lock to Island | F: Back to Locked | WASD/QE: Fly | Drag: Look</small>
-      `;
-    }
+    const island = ISLAND_CONFIG[cameraState.focusedIsland];
+    indicator.innerHTML = `
+      <strong>🌅 WARM LIGHTING MODE</strong><br>
+      Focus: ${island.name} (${island.pokemonName})<br>
+      <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small>
+    `;
+    indicator.style.display = "block";
   }
 
   // ===== HELPER FUNCTIONS =====
@@ -333,8 +557,11 @@ function main() {
     return a + (b - a) * t;
   }
 
+  function lerpVec3(a, b, t) {
+    return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  }
+
   function lerpAngle(a, b, t) {
-    // Handle angle wrapping
     let diff = b - a;
     while (diff > Math.PI) diff -= 2 * Math.PI;
     while (diff < -Math.PI) diff += 2 * Math.PI;
@@ -388,10 +615,8 @@ function main() {
   });
 
   // ===== CREATE POKEMON =====
-  // Structure: { node, animator, islandIndex }
   const pokemons = [];
 
-  // Pokemon 1: Garchomp on Island A
   if (window.createGarchomp) {
     const garchompNode = window.createGarchomp(gl);
     garchompNode.name = "GARCHOMP";
@@ -402,8 +627,8 @@ function main() {
     );
 
     const garchompAnimator = new GarchompAnimator(garchompNode, {
-      startPos: [ISLAND_CONFIG[0].position[0], -2, -5],
-      endPos: [ISLAND_CONFIG[0].position[0], -2, -15],
+      startPos: [ISLAND_CONFIG[0].position[0], -1, 5],
+      endPos: [ISLAND_CONFIG[0].position[0], -1, -5],
       startRotation: Math.PI,
       walkDuration: 3.0,
       pauseDuration: 5.0,
@@ -424,22 +649,19 @@ function main() {
   const viewMatrix = mat4.create();
   let lastTime = 0;
 
-  // Initialize UI
-  updateUIIndicator();
-  switchToIsland(0); // Start at Island A
+  // Start intro system
+  startIntro();
 
   // ===== RENDER LOOP =====
   function render(currentTime) {
     currentTime *= 0.001;
-    const deltaTime = Math.min(currentTime - lastTime, 0.1); // Cap delta for stability
+    const deltaTime = Math.min(currentTime - lastTime, 0.1);
     lastTime = currentTime;
 
-    // Resize handling
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     }
 
-    // Update projection
     mat4.perspective(
       projectionMatrix,
       (50 * Math.PI) / 180,
@@ -448,34 +670,30 @@ function main() {
       500.0
     );
 
-    // Update camera
+    // Update intro or normal camera
+    updateIntro(deltaTime);
     updateCameraTransition(deltaTime);
     updateCameraMovement(deltaTime);
     const cameraPosition = updateCamera(viewMatrix);
 
-    // Skybox rotation
     mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0003, [0, 1, 0]);
 
-    // Clear
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    // Update animations
     pokemons.forEach((pokemon) => {
       if (pokemon.animator) pokemon.animator.update(deltaTime);
     });
 
-    // Render skybox
     gl.depthMask(false);
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
     gl.depthMask(true);
 
     const identityMatrix = mat4.create();
 
-    // Render islands
     islands.forEach((island) => {
       if (island) {
         drawScene(
@@ -490,7 +708,6 @@ function main() {
       }
     });
 
-    // Render pokemons
     pokemons.forEach((pokemon) => {
       if (pokemon.node) {
         drawScene(
@@ -605,12 +822,10 @@ function drawScene(
 
     gl.useProgram(programInfo.program);
 
-    // 🌅 DYNAMIC WARM LIGHT - Follows camera for beautiful golden lighting
-    // Light positioned to create cinematic warm glow from above and side
     const lightPosition = [
-      cameraPosition[0] + 12, // Side-front offset (golden rim lighting)
-      cameraPosition[1] + 25, // High above (soft cascading light)
-      cameraPosition[2] - 8, // Forward (front-lit warmth)
+      cameraPosition[0] + 12,
+      cameraPosition[1] + 25,
+      cameraPosition[2] - 8,
     ];
 
     gl.uniformMatrix4fv(
