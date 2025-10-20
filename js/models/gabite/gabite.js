@@ -9,6 +9,7 @@ function createGabite(gl) {
 
   // Tambahkan torso ke root scene
   root.addChild(body);
+  
 
   // (Nantinya, bagian lain seperti kepala, lengan, kaki akan ditambahkan di sini)
   // const head = createGabiteHead(gl);
