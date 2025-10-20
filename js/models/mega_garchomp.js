@@ -99,6 +99,9 @@ function createMegaGarchompUpperHead(gl) {
     // Mesh untuk penghubung tetap sama
     const connectorMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16));
 
+    // BARU: Mesh untuk hidung
+    const nosePrismMesh = new Mesh(gl, Primitives.createTriangularPrism(0.4, 0.7, 0.2)); // baseWidth, height, depth
+
     // --- NODES & HIERARCHY ---
     const upperHeadRoot = new SceneNode(null);
 
@@ -109,6 +112,10 @@ function createMegaGarchompUpperHead(gl) {
 
     const leftConnectorNode = new SceneNode(connectorMesh, lightBlue);
     const rightConnectorNode = new SceneNode(connectorMesh, lightBlue);
+    
+    // BARU: Node untuk hidung
+    const noseLeftNode = new SceneNode(nosePrismMesh, lightBlue);
+    const noseRightNode = new SceneNode(nosePrismMesh, lightBlue);
 
     // Gabungkan semua
     upperHeadRoot.addChild(centerRugbyNode);
@@ -117,10 +124,14 @@ function createMegaGarchompUpperHead(gl) {
     upperHeadRoot.addChild(leftConnectorNode);
     upperHeadRoot.addChild(rightConnectorNode);
 
+    // BARU: Tambahkan hidung sebagai anak dari rugby tengah
+    centerRugbyNode.addChild(noseLeftNode);
+    centerRugbyNode.addChild(noseRightNode);
+
     // --- TRANSFORMATIONS ---
     // Transformasi GLOBAL untuk seluruh kepala
     mat4.translate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [0, 1.5, 0]);
-    mat4.scale(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [1, 0.7, 1]);
+    mat4.scale(upperHeadRoot.localTransform, upperHeadRoot.localTransform, [1, 0.7, 1.2]);
     
     // Rugby kiri
     mat4.translate(leftRugbyNode.localTransform, leftRugbyNode.localTransform, [-1.7, 0, 0]);
@@ -141,12 +152,31 @@ function createMegaGarchompUpperHead(gl) {
     mat4.rotate(rightConnectorNode.localTransform, rightConnectorNode.localTransform, Math.PI / 2, [0, 0, 1]);
     mat4.scale(rightConnectorNode.localTransform, rightConnectorNode.localTransform, [0.8, 1, 0.25]);
 
+    // BARU: Transformasi untuk "hidung"
+    // Karena hidung adalah anak dari centerRugbyNode, transformasi ini relatif terhadapnya
+    // Hidung Kiri
+    mat4.translate(noseLeftNode.localTransform, noseLeftNode.localTransform, [-0.08, 1, 0.6]); // Geser ke kiri, ke ujung depan, dan ke "bawah" (Z+)
+    mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 50, [0, 1, 0]); // Miringkan untuk membentuk 'V'
+    mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, Math.PI / 2, [1, 0, 0]); // Miringkan ke bawah
+    mat4.rotate(noseLeftNode.localTransform, noseLeftNode.localTransform, 6.07, [0, 0, 1]);
+    mat4.scale(noseLeftNode.localTransform, noseLeftNode.localTransform, [1, 1.1, 0.3]);
+
+    // Hidung Kanan
+    mat4.translate(noseRightNode.localTransform, noseRightNode.localTransform, [0.1, 1, 0.6]); // Geser ke kanan
+    mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, -Math.PI / 50, [0, 1, 0]); // Miringkan ke arah berlawanan
+    mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, Math.PI / 2, [1, 0, 0]); // Miringkan ke bawah
+    mat4.rotate(noseRightNode.localTransform, noseRightNode.localTransform, 6.1, [0, 0, -1]);
+    mat4.scale(noseRightNode.localTransform, noseRightNode.localTransform, [1, 1.1, 0.3]);
+
+
     // Putar seluruh bagian kepala atas agar horizontal
     mat4.rotate(upperHeadRoot.localTransform, upperHeadRoot.localTransform, Math.PI / 2, [1, 0, 0]);
 
 
     return upperHeadRoot;
 }
+
+
 
 // ---------------------------------------------------------
 //  NEW: Start Fresh from the Torso
