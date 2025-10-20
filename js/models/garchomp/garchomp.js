@@ -13,5 +13,7 @@ function createGarchomp(gl) {
   neck.addChild(head);
   torso.addChild(arm);
 
+  window.createGarchomp = createGarchomp;
+
   return root;
 }

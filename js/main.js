@@ -6,31 +6,34 @@ function main() {
     return;
   }
 
+  // rotasi objek via mouse
   let isDragging = false;
-  let lastMouseX = -1;
-  let lastMouseY = -1;
+  let lastMouseX = -1,
+    lastMouseY = -1;
   const modelRotationMatrix = mat4.create();
+  const skyboxRotationMatrix = mat4.create();
 
-  canvas.addEventListener("mousedown", function (event) {
+  canvas.addEventListener("mousedown", (e) => {
     isDragging = true;
-    lastMouseX = event.clientX;
-    lastMouseY = event.clientY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
   });
-  canvas.addEventListener("mouseup", function (event) {
+  canvas.addEventListener("mouseup", () => {
     isDragging = false;
   });
-  canvas.addEventListener("mousemove", function (event) {
+  canvas.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
-    const deltaX = event.clientX - lastMouseX;
-    const deltaY = event.clientY - lastMouseY;
-    lastMouseX = event.clientX;
-    lastMouseY = event.clientY;
-    const newRotation = mat4.create();
-    mat4.rotate(newRotation, newRotation, deltaX * 0.01, [0, 1, 0]);
-    mat4.rotate(newRotation, newRotation, deltaY * 0.01, [1, 0, 0]);
-    mat4.multiply(modelRotationMatrix, newRotation, modelRotationMatrix);
+    const dx = e.clientX - lastMouseX,
+      dy = e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    const R = mat4.create();
+    mat4.rotate(R, R, dx * 0.01, [0, 1, 0]);
+    mat4.rotate(R, R, dy * 0.01, [1, 0, 0]);
+    mat4.multiply(modelRotationMatrix, R, modelRotationMatrix);
   });
 
+  // shader program (punyamu)
   const shaderProgram = initShaderProgram(
     gl,
     vertexShaderSource,
@@ -56,37 +59,47 @@ function main() {
     },
   };
 
-  const garchompNode = createGarchomp(gl);
+  // skybox (global dari skybox.js)
+  const drawSkybox = window.setupSkybox(gl);
 
+  // nodes
+  const garchompNode = window.createGarchomp(gl);
+  garchompNode.name = "GARCHOMP";
+
+  const islandNode = window.createIsland ? window.createIsland(gl) : null;
+  if (islandNode) islandNode.name = "ISLAND";
+
+  // kamera
   const projectionMatrix = mat4.create();
-  mat4.perspective(
-    projectionMatrix,
-    (45 * Math.PI) / 180,
-    gl.canvas.clientWidth / gl.canvas.clientHeight,
-    0.1,
-    100.0
-  );
-
-  const cameraPosition = [0, 0, 40];
+  const cameraPosition = [0, 1, 25];
   const viewMatrix = mat4.create();
   mat4.lookAt(viewMatrix, cameraPosition, [0, 0, 0], [0, 1, 0]);
 
   function render() {
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      mat4.perspective(
-        projectionMatrix,
-        (45 * Math.PI) / 180,
-        gl.canvas.clientWidth / gl.canvas.clientHeight,
-        0.1,
-        100.0
-      );
     }
+
+    mat4.perspective(
+      projectionMatrix,
+      (45 * Math.PI) / 180,
+      gl.canvas.clientWidth / gl.canvas.clientHeight,
+      0.1,
+      100.0
+    );
+
+    // rotasi skybox pelan
+    mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0005, [0, 1, 0]);
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
 
+    // 1) skybox
+    drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
+
+    // 2) garchomp (pakai entityConfig.GARCHOMP)
     drawScene(
       gl,
       programInfo,
@@ -97,10 +110,27 @@ function main() {
       cameraPosition
     );
 
+    // 3) island (opsional)
+    if (islandNode) {
+      drawScene(
+        gl,
+        programInfo,
+        islandNode,
+        projectionMatrix,
+        viewMatrix,
+        modelRotationMatrix,
+        cameraPosition
+      );
+    }
+
     requestAnimationFrame(render);
   }
+
   requestAnimationFrame(render);
 }
+
+// jalankan setelah semua <script> ter‐load
+window.addEventListener("DOMContentLoaded", main);
 
 function drawScene(
   gl,
@@ -111,12 +141,62 @@ function drawScene(
   parentTransform,
   cameraPosition
 ) {
-  const modelMatrix = mat4.create();
-  mat4.multiply(modelMatrix, parentTransform, node.localTransform);
+  // ----- Bangun local transform -----
+  let local = mat4.create();
+  const cfgTable = window.entityConfig || {};
+  const cfg = node.name ? cfgTable[node.name] : null;
 
+  if (cfg) {
+    const p = cfg.position || [0, 0, 0];
+    const s = cfg.scale || [1, 1, 1];
+    const e = cfg.rotationEuler || [0, 0, 0];
+
+    const T = mat4.create();
+    mat4.fromTranslation(T, p);
+    const S = mat4.create();
+    Array.isArray(s) ? mat4.fromScaling(S, s) : mat4.fromScaling(S, [s, s, s]);
+
+    const R = mat4.create();
+    mat4.identity(R);
+    mat4.rotateZ(R, R, e[2] || 0);
+    mat4.rotateY(R, R, e[1] || 0);
+    mat4.rotateX(R, R, e[0] || 0);
+
+    local = mat4.create();
+    mat4.multiply(local, T, R);
+    mat4.multiply(local, local, S);
+  } else if (node.localTransform) {
+    mat4.copy(local, node.localTransform);
+  } else {
+    mat4.identity(local);
+  }
+
+  // ----- Komposisi dengan parent -----
+  let modelMatrix = mat4.create();
+  const worldSpace =
+    (cfg && cfg.worldSpace === true) || node.worldSpace === true;
+
+  if (worldSpace) {
+    // model = T * parent * (R*S)
+    const Tonly = mat4.create();
+    mat4.identity(Tonly);
+    Tonly[12] = local[12];
+    Tonly[13] = local[13];
+    Tonly[14] = local[14];
+
+    const RS = mat4.clone(local);
+    RS[12] = RS[13] = RS[14] = 0;
+
+    const tmp = mat4.create();
+    mat4.multiply(tmp, parentTransform, RS);
+    mat4.multiply(modelMatrix, Tonly, tmp);
+  } else {
+    // default: model = parent * local
+    mat4.multiply(modelMatrix, parentTransform, local);
+  }
+
+  // ----- Draw mesh -----
   if (node.mesh) {
-    // --- BLOK SETUP ATRIBUT MANUAL (CARA WEBGL 1) ---
-    // Setup buffer posisi
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.vertexBuffer);
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexPosition,
@@ -128,7 +208,6 @@ function drawScene(
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-    // Setup buffer normal
     gl.bindBuffer(gl.ARRAY_BUFFER, node.mesh.normalBuffer);
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexNormal,
@@ -139,7 +218,6 @@ function drawScene(
       0
     );
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
-    // --------------------------------------------------
 
     const normalMatrix = mat4.create();
     mat4.invert(normalMatrix, modelMatrix);
@@ -147,7 +225,7 @@ function drawScene(
 
     gl.useProgram(programInfo.program);
 
-    const lightPosition = [5, 10, 30];
+    const lightPosition = [5, 10, 7];
 
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
@@ -173,11 +251,11 @@ function drawScene(
     gl.uniform3fv(programInfo.uniformLocations.lightDirection, lightPosition);
     gl.uniform3fv(programInfo.uniformLocations.viewPosition, cameraPosition);
 
-    // Bind buffer index dan gambar
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, node.mesh.indexBuffer);
     gl.drawElements(gl.TRIANGLES, node.mesh.indicesCount, gl.UNSIGNED_SHORT, 0);
   }
 
+  // ----- Rekursi anak -----
   for (const child of node.children) {
     drawScene(
       gl,

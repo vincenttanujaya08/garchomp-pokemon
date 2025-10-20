@@ -28,6 +28,7 @@ class SceneNode {
     this.color = color;
     this.localTransform = mat4.create();
     this.children = [];
+    window.SceneNode = SceneNode;
   }
 
   addChild(node) {

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Garchomp Simple Model</title>
     <style>
         body {
@@ -14,7 +14,7 @@
             display: block;
             width: 100vw;
             height: 100vh;
-            background-color: #1a1a1a;
+            background: #1a1a1a;
         }
     </style>
 </head>
@@ -22,20 +22,99 @@
 <body>
     <canvas id="glCanvas"></canvas>
 
+    <!-- 1) Lib dulu -->
+    <!-- 1) gl-matrix dulu -->
     <script src="js/lib/gl-matrix.js"></script>
-    <script src="js/config/garchomp_anatomy.js"></script>
+
+    <!-- 2) Polyfill agar API v3 tersedia -->
     <script>
+        // Ambil namespace UMD
         const mat4 = glMatrix.mat4;
         const vec3 = glMatrix.vec3;
+
+        // Tambahkan API yang tidak ada di varian kamu:
+
+        if (!mat4.copy) {
+            mat4.copy = function (out, a) {
+                for (let i = 0; i < 16; i++) out[i] = a[i];
+                return out;
+            };
+        }
+
+        if (!mat4.clone) {
+            mat4.clone = function (a) {
+                const out = mat4.create();
+                for (let i = 0; i < 16; i++) out[i] = a[i];
+                return out;
+            };
+        }
+
+        if (!mat4.fromTranslation) {
+            mat4.fromTranslation = function (out, v) {
+                mat4.identity(out);
+                return mat4.translate(out, out, v); // v2 style
+            };
+        }
+
+        if (!mat4.fromScaling) {
+            mat4.fromScaling = function (out, v) {
+                mat4.identity(out);
+                return mat4.scale(out, out, v); // v2 style
+            };
+        }
+
+        if (!mat4.fromQuat) {
+            // Implementasi sederhana: buat rotasi dari quaternion (opsional—pakai kalau perlu)
+            mat4.fromQuat = function (out, q) {
+                // q = [x,y,z,w]
+                const x = q[0], y = q[1], z = q[2], w = q[3];
+                const x2 = x + x, y2 = y + y, z2 = z + z;
+                const xx = x * x2, xy = x * y2, xz = x * z2;
+                const yy = y * y2, yz = y * z2, zz = z * z2;
+                const wx = w * x2, wy = w * y2, wz = w * z2;
+                out[0] = 1 - (yy + zz); out[1] = xy + wz; out[2] = xz - wy; out[3] = 0;
+                out[4] = xy - wz; out[5] = 1 - (xx + zz); out[6] = yz + wx; out[7] = 0;
+                out[8] = xz + wy; out[9] = yz - wx; out[10] = 1 - (xx + yy); out[11] = 0;
+                out[12] = 0; out[13] = 0; out[14] = 0; out[15] = 1;
+                return out;
+            };
+        }
+
+        if (!mat4.rotateX) {
+            mat4.rotateX = function (out, a, rad) { return mat4.rotate(out, a, rad, [1, 0, 0]); };
+        }
+        if (!mat4.rotateY) {
+            mat4.rotateY = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 1, 0]); };
+        }
+        if (!mat4.rotateZ) {
+            mat4.rotateZ = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 0, 1]); };
+        }
+
+        // (Opsional) ekspose ke global biar konsisten dengan file lain
+        window.mat4 = mat4;
+        window.vec3 = vec3;
     </script>
 
-    <script src="js/shaders.js"></script>
+    <!-- 2) Core engine & util -->
+    <script src="js/core/scene.js"></script>
     <script src="js/geometry/primitives.js"></script>
     <script src="js/geometry/curves.js"></script>
-    <script src="js/core/scene.js"></script>
+    <script src="js/shaders.js"></script>
 
+    <!-- 3) Environment (boleh pakai mat4, jadi taruh setelah gl-matrix) -->
+    <script src="js/environment/skybox.js"></script>
+    <script src="js/environment/island.js"></script>
+    <script src="js/environment/scenery.js"></script>
+
+    <!-- 4) Model parts -->
     <script src="js/models/garchomp/garchomp_parts.js"></script>
     <script src="js/models/garchomp/garchomp.js"></script>
+
+    <!-- 5) Config (entityConfig) -->
+    <script src="js/config/garchomp_anatomy.js"></script> <!-- kalau ini berisi data tulang -->
+    <script src="js/config/config.js"></script> <!-- ini berisi entityConfig -->
+
+    <!-- 6) Entry point -->
     <script src="js/main.js"></script>
 </body>
 

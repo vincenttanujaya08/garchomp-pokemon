@@ -757,4 +757,120 @@ const Primitives = {
       indices: new Uint16Array(indices),
     };
   },
+  createExtrudedShape: function (
+    shapePoints,
+    thickness,
+    scaleTop = 1,
+    scaleBottom = 1
+  ) {
+    // Helper matematika vektor untuk kompatibilitas
+    const vec3_helpers = {
+      subtract: (out, a, b) => {
+        out[0] = a[0] - b[0];
+        out[1] = a[1] - b[1];
+        out[2] = a[2] - b[2];
+        return out;
+      },
+      cross: (out, a, b) => {
+        const ax = a[0],
+          ay = a[1],
+          az = a[2],
+          bx = b[0],
+          by = b[1],
+          bz = b[2];
+        out[0] = ay * bz - az * by;
+        out[1] = az * bx - ax * bz;
+        out[2] = ax * by - ay * bx;
+        return out;
+      },
+      normalize: (out, a) => {
+        const x = a[0],
+          y = a[1],
+          z = a[2];
+        let len = x * x + y * y + z * z;
+        if (len > 0) {
+          len = 1 / Math.sqrt(len);
+        }
+        out[0] = a[0] * len;
+        out[1] = a[1] * len;
+        out[2] = a[2] * len;
+        return out;
+      },
+    };
+
+    const vertices = [];
+    const normals = [];
+    const indices = [];
+    const n = shapePoints.length;
+
+    // --- 1. BUAT SISI ATAS ---
+    let offset = vertices.length / 3;
+    for (const p of shapePoints) {
+      vertices.push(p[0] * scaleTop, 0, p[2] * scaleTop);
+      normals.push(0, 1, 0);
+    }
+    // Buat indices untuk sisi atas
+    for (let i = 1; i < n - 1; i++) {
+      indices.push(offset, offset + i, offset + i + 1);
+    }
+
+    // --- 2. BUAT SISI BAWAH ---
+    offset = vertices.length / 3;
+    for (const p of shapePoints) {
+      vertices.push(p[0] * scaleBottom, -thickness, p[2] * scaleBottom);
+      normals.push(0, -1, 0);
+    }
+    // Buat indices untuk sisi bawah (urutan dibalik)
+    for (let i = 1; i < n - 1; i++) {
+      indices.push(offset, offset + i + 1, offset + i);
+    }
+
+    // --- 3. BUAT DINDING SAMPING ---
+    for (let i = 0; i < n; i++) {
+      const next = (i + 1) % n;
+
+      const pTop1 = [
+        shapePoints[i][0] * scaleTop,
+        0,
+        shapePoints[i][2] * scaleTop,
+      ];
+      const pTop2 = [
+        shapePoints[next][0] * scaleTop,
+        0,
+        shapePoints[next][2] * scaleTop,
+      ];
+      const pBottom1 = [
+        shapePoints[i][0] * scaleBottom,
+        -thickness,
+        shapePoints[i][2] * scaleBottom,
+      ];
+      const pBottom2 = [
+        shapePoints[next][0] * scaleBottom,
+        -thickness,
+        shapePoints[next][2] * scaleBottom,
+      ];
+
+      // Hitung normal untuk dinding ini
+      const v1 = vec3.create();
+      const v2 = vec3.create();
+      vec3_helpers.subtract(v1, pTop2, pTop1);
+      vec3_helpers.subtract(v2, pBottom1, pTop1);
+      const normal = vec3.create();
+      vec3_helpers.cross(normal, v1, v2);
+      vec3_helpers.normalize(normal, normal);
+
+      offset = vertices.length / 3;
+      vertices.push(...pTop1, ...pBottom1, ...pTop2, ...pBottom2);
+      normals.push(...normal, ...normal, ...normal, ...normal);
+
+      indices.push(offset, offset + 1, offset + 2);
+      indices.push(offset + 2, offset + 1, offset + 3);
+    }
+
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 };
