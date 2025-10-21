@@ -296,6 +296,62 @@
     mat4.rotate(rightToothNode2.localTransform, rightToothNode2.localTransform, 2.77, [0, 0, 1]);
     headNode.addChild(rightToothNode2);
 
+    // ============== MATA (patch hitam, iris kuning, pupil vertikal) ==============
+    // Torus sederhana via lathe untuk iris
+    function createTorusGeometry(R, r, segProfile = 48, segRevolve = 48) {
+      const profile = [];
+      for (let i = 0; i <= segProfile; i++) {
+        const a = (i / segProfile) * 2 * Math.PI;
+        profile.push([R + r * Math.cos(a), r * Math.sin(a)]);
+      }
+      return Primitives.createLathe(profile, segRevolve);
+    }
+
+    function createGabiteEye(gl, side = 1) {
+      const eyeRoot = new SceneNode();
+
+      // Patch mata (sclera gelap) berbentuk almond
+      const patchMesh = new Mesh(gl, Primitives.createEllipsoid(0.55, 0.33, 0.08, 24, 24));
+      const patchNode = new SceneNode(patchMesh, cfg.colors.black);
+      mat4.scale(patchNode.localTransform, patchNode.localTransform, [1.0, 1.0, 0.5]);
+      mat4.translate(patchNode.localTransform, patchNode.localTransform, [0, 0, -0.03]); // sedikit masuk agar menempel
+      eyeRoot.addChild(patchNode);
+
+      // Iris cincin kuning
+      const irisGeom = createTorusGeometry(0.18, 0.045, 40, 40);
+      const irisMesh = new Mesh(gl, irisGeom);
+      const irisNode = new SceneNode(irisMesh, cfg.colors.yellow);
+      mat4.rotate(irisNode.localTransform, irisNode.localTransform, Math.PI / 2, [0, 0, 1]);
+      mat4.rotate(irisNode.localTransform, irisNode.localTransform, Math.PI / 2, [1, 0, 0]);
+      mat4.scale(irisNode.localTransform, irisNode.localTransform, [1.0, 1.0, 0.5]);
+      mat4.translate(irisNode.localTransform, irisNode.localTransform, [0, 0, 0.04]);
+      eyeRoot.addChild(irisNode);
+
+      // Pupil vertikal
+      const pupilMesh = new Mesh(gl, Primitives.createEllipsoid(0.06, 0.20, 0.03, 18, 18));
+      const pupilNode = new SceneNode(pupilMesh, cfg.colors.black);
+      mat4.translate(pupilNode.localTransform, pupilNode.localTransform, [0, 0, 0.05]);
+      eyeRoot.addChild(pupilNode);
+
+      // Posisi dan orientasi: miring dan menempel pada ellipsoid kepala
+      // Tempatkan pada sisi ellipsoid (x mendekati radiusX, z di permukaan depan)
+      const yawOut = side * 1.2;          // ~69°: arahkan normal ke samping-depan
+      const pitch = -Math.PI / 18;        // ~10°: sedikit miring ke belakang
+      const roll = -side * (Math.PI / 8); // bentuk almond condong
+      mat4.translate(eyeRoot.localTransform, eyeRoot.localTransform, [side * 0.85, -0.02, -0.80]);
+      // Arahkan +Z mata ke arah normal lokal permukaan kepala
+      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, yawOut, [0, 1, 0]);
+      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, pitch, [1, 0, 0]);
+      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, roll, [0, 0, 1]);
+
+      return eyeRoot;
+    }
+
+    // Pasang mata kiri dan kanan
+    headNode.addChild(createGabiteEye(gl, +1));
+    headNode.addChild(createGabiteEye(gl, -1));
+
+    
     return headRoot;
   }
 
