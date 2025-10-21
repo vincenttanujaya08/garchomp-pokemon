@@ -47,6 +47,7 @@
 
     const tailMesh = new Mesh(gl, Primitives.createTubeFromPath(path, tailBaseRadius, 16, scaleFactors));
     const tailNode = new SceneNode(tailMesh, cfg.colors.darkBlue);
+    mat4.scale(tailNode.localTransform, tailNode.localTransform, [1, 1, 1]);
     bodyRoot.addChild(tailNode);
 
     // --- KAKI LENGKAP ---
@@ -264,6 +265,15 @@
     mat4.rotate(rightStripeNode.localTransform, rightStripeNode.localTransform, Math.PI/2, [1,0,0]);
     mat4.scale(rightStripeNode.localTransform, rightStripeNode.localTransform, [1.7, 1, 1.7]);
     rightFinNode.addChild(rightStripeNode);
+
+    const headMesh2 = new Mesh(gl, Primitives.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
+    const headNode2 = new SceneNode(headMesh2, cfg.colors.red);
+
+    // Posisikan kepala
+    mat4.translate(headNode2.localTransform, headNode2.localTransform, [0, 0.1, -0.1])
+    mat4.scale(headNode2.localTransform, headNode2.localTransform, [0.9, 0.8, 0.7]);
+    mat4.rotate(headNode2.localTransform, headNode2.localTransform, -Math.PI / 15, [1, 0, 0]); // Miringkan sedikit
+    headRoot.addChild(headNode2);
 
     return headRoot;
   }
