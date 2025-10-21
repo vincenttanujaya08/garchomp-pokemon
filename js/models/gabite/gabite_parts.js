@@ -22,11 +22,11 @@
     mat4.rotate(backNode.localTransform, backNode.localTransform, Math.PI / 12, [1, 0, 0]);
     bodyRoot.addChild(backNode);
 
-    const redPatchMesh = new Mesh(gl, Primitives.createTriangularPrism(1.2, 0.8, 0.3));
-    const redPatchNode = new SceneNode(redPatchMesh, cfg.colors.red);
-    mat4.translate(redPatchNode.localTransform, redPatchNode.localTransform, [0, -2.6, -0.8]);
-    mat4.rotate(redPatchNode.localTransform, redPatchNode.localTransform, Math.PI / 12 + Math.PI / 6, [1, 0, 0]);
-    bodyRoot.addChild(redPatchNode);
+    // const redPatchMesh = new Mesh(gl, Primitives.createTriangularPrism(1.2, 0.8, 0.3));
+    // const redPatchNode = new SceneNode(redPatchMesh, cfg.colors.red);
+    // mat4.translate(redPatchNode.localTransform, redPatchNode.localTransform, [0, -2.6, -0.8]);
+    // mat4.rotate(redPatchNode.localTransform, redPatchNode.localTransform, Math.PI / 12 + Math.PI / 6, [1, 0, 0]);
+    // bodyRoot.addChild(redPatchNode);
 
     // --- EKOR DENGAN KURVA BEZIER (lebih kurus & lebih pendek) ---
     const p0 = [0, -2.8, 1.0];
