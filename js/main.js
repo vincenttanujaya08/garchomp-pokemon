@@ -627,8 +627,8 @@ function main() {
     );
 
     const garchompAnimator = new GarchompAnimator(garchompNode, {
-      startPos: [ISLAND_CONFIG[0].position[0], -1, 5],
-      endPos: [ISLAND_CONFIG[0].position[0], -1, -5],
+      startPos: [ISLAND_CONFIG[0].position[0], -2.5, 5],
+      endPos: [ISLAND_CONFIG[0].position[0], -2.5, -5],
       startRotation: Math.PI,
       walkDuration: 3.0,
       pauseDuration: 5.0,
