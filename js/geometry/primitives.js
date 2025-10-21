@@ -65,7 +65,6 @@ const Primitives = {
       return { vertices: new Float32Array(vertices), normals: new Float32Array(normals), indices: new Uint16Array(indices) };
   },
 
-  // ... (sisa fungsi primitif lainnya tetap ada di sini) ...
   createEllipsoid: function (radiusX = 1, radiusY = 1, radiusZ = 1, latitudeBands = 30, longitudeBands = 30) {
     const vertices = []; const normals = []; const indices = [];
     for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
@@ -118,6 +117,91 @@ const Primitives = {
     const w = baseWidth / 2, d = depth / 2; const vertices = [ -w, 0, d,  w, 0, d,  0, height, d, -w, 0,-d,  w, 0,-d,  0, height,-d, ];
     const indices = [ 0,1,2, 3,5,4, 0,3,4, 0,4,1, 0,2,5, 0,5,3, 1,4,5, 1,5,2 ];
     return { vertices: new Float32Array(vertices), normals: new Float32Array(new Array(vertices.length).fill(0)), indices: new Uint16Array(indices) };
+  },
+  
+  /**
+   * Creates a mesh by revolving a 2D profile around the Y-axis.
+   * @param {number[][]} profilePoints - Array of [radius, y] points.
+   * @param {number} segments - Number of revolution segments.
+   * @returns {object} Geometry data (vertices, normals, indices).
+   */
+  createLathe: function(profilePoints, segments = 32) {
+      const vertices = [];
+      const normals = [];
+      const indices = [];
+      
+      const profileLength = profilePoints.length;
+      const profileNormals = [];
+
+      // 1. Calculate 2D normals for each point in the profile (for lighting)
+      for (let j = 0; j < profileLength; j++) {
+          let tangent = [0, 0];
+          const p = profilePoints[j];
+          
+          if (j === 0) { // First point
+              const pNext = profilePoints[j + 1];
+              tangent = [pNext[0] - p[0], pNext[1] - p[1]];
+          } else if (j === profileLength - 1) { // Last point
+              const pPrev = profilePoints[j - 1];
+              tangent = [p[0] - pPrev[0], p[1] - pPrev[1]];
+          } else { // Middle point
+              const pNext = profilePoints[j + 1];
+              const pPrev = profilePoints[j - 1];
+              tangent = [pNext[0] - pPrev[0], pNext[1] - pPrev[1]];
+          }
+
+          // 2D normal is the tangent rotated by 90 degrees
+          let normal = [tangent[1], -tangent[0]];
+          const len = Math.hypot(normal[0], normal[1]);
+          if (len > 1e-6) {
+              normal[0] /= len;
+              normal[1] /= len;
+          } else {
+              normal = [1, 0]; // Default
+          }
+          profileNormals.push(normal);
+      }
+
+      // 2. Revolve the profile to create 3D vertices and normals
+      for (let i = 0; i <= segments; i++) {
+          const phi = (i / segments) * 2 * Math.PI;
+          const cosPhi = Math.cos(phi);
+          const sinPhi = Math.sin(phi);
+
+          for (let j = 0; j < profileLength; j++) {
+              const radius = profilePoints[j][0];
+              const y = profilePoints[j][1];
+
+              // Vertex
+              vertices.push(radius * cosPhi, y, radius * sinPhi);
+
+              // 3D Normal
+              const nx_profile = profileNormals[j][0];
+              const ny_profile = profileNormals[j][1];
+              
+              const nx = nx_profile * cosPhi;
+              const ny = ny_profile;
+              const nz = nx_profile * sinPhi;
+              normals.push(nx, ny, nz);
+          }
+      }
+
+      // 3. Create indices
+      for (let i = 0; i < segments; i++) {
+          for (let j = 0; j < profileLength - 1; j++) {
+              const a = i * profileLength + j;
+              const b = a + 1;
+              const c = (i + 1) * profileLength + j;
+              const d = c + 1;
+              indices.push(a, c, b, b, c, d);
+          }
+      }
+
+      return { 
+          vertices: new Float32Array(vertices), 
+          normals: new Float32Array(normals), 
+          indices: new Uint16Array(indices) 
+      };
   },
 };
 

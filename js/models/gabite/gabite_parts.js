@@ -1,4 +1,4 @@
-  // File: js/models/gabite/gabite_parts.js
+// File: js/models/gabite/gabite_parts.js
 
   /**
    * Membuat badan Gabite yang lengkap, termasuk torso, ekor, kaki, dan tangan.
@@ -69,6 +69,11 @@
     const arm = createGabiteArm(gl);
     bodyRoot.addChild(arm);
 
+    // --- KEPALA LENGKAP ---
+    const head = createGabiteHead(gl);
+    mat4.translate(head.localTransform, head.localTransform, [0, 0.1, 0]); // Posisikan kepala di atas badan
+    bodyRoot.addChild(head);
+
     return bodyRoot;
   }
 
@@ -124,9 +129,6 @@
 
   /**
    * Membuat kedua tangan Gabite mengarah ke depan dengan siku menekuk tajam (mirror kiri-kanan).
-   * - Shoulder: X +π/2 (arah depan), yaw ±, sedikit roll untuk natural
-   * - Elbow: tekuk ~60° (bisa diubah), forearm yaw sedikit ke dalam → siluet patah
-   * - Wrist/fin: roll ringan mengikuti forearm
    */
   function createGabiteArm(gl) {
     const cfg = GabiteAnatomy;
@@ -145,30 +147,22 @@
     // ================== LENGAN KANAN ==================
     const rightUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
     mat4.translate(rightUpper.localTransform, rightUpper.localTransform, [ 1.65, -1.0, 0.40 ]);
-    // === Ubah: arahkan ke samping kanan (+X) → rotasi Z +π/2 ===
     mat4.rotate(rightUpper.localTransform, rightUpper.localTransform,  Math.PI / 2, [0, 0, 1]);
-    // (opsional) bumbu kecil agar tidak kaku
     mat4.rotate(rightUpper.localTransform, rightUpper.localTransform, -shoulderYaw, [0, 1, 0]);
     mat4.rotate(rightUpper.localTransform, rightUpper.localTransform, -shoulderRoll, [0, 0, 1]);
     armRoot.addChild(rightUpper);
 
     const rightFore = new SceneNode(forearmMesh, cfg.colors.darkBlue);
-    // Tempatkan di "siku": sedikit lebih dekat (1.55) supaya kompresi terlihat
     mat4.translate(rightFore.localTransform, rightFore.localTransform, [0, -1.25, -1.3]);
-    // Tekuk siku ke bawah (membuat sudut)
     mat4.rotate(rightFore.localTransform, rightFore.localTransform,  elbowBend, [1, 0, 0]);
-    // Yaw forearm sedikit ke dalam (ke arah badan)
     mat4.rotate(rightFore.localTransform, rightFore.localTransform, +forearmYawIn, [0, 1, 0]);
-    // Roll tipis biar tidak kaku
     mat4.rotate(rightFore.localTransform, rightFore.localTransform, -wristRoll/2, [0, 0, 1]);
     rightUpper.addChild(rightFore);
 
     // ================== LENGAN KIRI (mirror) ==================
     const leftUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
     mat4.translate(leftUpper.localTransform, leftUpper.localTransform, [ -1.65, -1.0, 0.40 ]);
-    // === Ubah: arahkan ke samping kiri (−X) → rotasi Z −π/2 ===
     mat4.rotate(leftUpper.localTransform, leftUpper.localTransform, -Math.PI / 2, [0, 0, 1]);
-    // (opsional) bumbu kecil mirror
     mat4.rotate(leftUpper.localTransform, leftUpper.localTransform,  +shoulderYaw, [0, 1, 0]);
     mat4.rotate(leftUpper.localTransform, leftUpper.localTransform,  +shoulderRoll, [0, 0, 1]);
     armRoot.addChild(leftUpper);
@@ -190,7 +184,6 @@
     // KIRI (anak leftFore)
     const leftFin = new SceneNode(finMesh, cfg.colors.white);
     mat4.translate(leftFin.localTransform, leftFin.localTransform, [-0.1, wristOffset + 0.55, 0]);
-    // Orientasi mengikuti forearm + sedikit roll
     mat4.rotate(leftFin.localTransform, leftFin.localTransform, Math.PI + wristRoll, [0, 0, 1]);
     mat4.scale(leftFin.localTransform, leftFin.localTransform, [0.9, 2.5, 0.9]);
     leftFore.addChild(leftFin);
@@ -211,7 +204,6 @@
     mat4.translate(rightSail.localTransform, rightSail.localTransform, [0.1, -1.2, 0]);
     mat4.rotate(rightSail.localTransform, rightSail.localTransform, Math.PI / 2, [1, 0, 0]);
     mat4.rotate(rightSail.localTransform, rightSail.localTransform, Math.PI / 2, [0, 1, 0]);
-    // Ikuti roll forearm agar menyatu
     mat4.rotate(rightSail.localTransform, rightSail.localTransform, -wristRoll/2, [0, 0, 1]);
     rightFore.addChild(rightSail);
 
@@ -226,3 +218,51 @@
 
     return armRoot;
   }
+
+  /**
+   * Membuat kepala Gabite menggunakan kurva Bezier untuk bentuk yang lebih lancip.
+   * @param {WebGLRenderingContext} gl - Konteks WebGL.
+   * @returns {SceneNode} Node root untuk kepala.
+   */
+  function createGabiteHead(gl) {
+    const cfg = GabiteAnatomy;
+    const headRoot = new SceneNode();
+
+    // --- BENTUK KEPALA UTAMA (Menggunakan Ellipsoid) ---
+    const headMesh = new Mesh(gl, Primitives.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
+    const headNode = new SceneNode(headMesh, cfg.colors.darkBlue);
+    
+    // Posisikan kepala
+    mat4.translate(headNode.localTransform, headNode.localTransform, [0, 0.4, 0.1]);
+    mat4.rotate(headNode.localTransform, headNode.localTransform, -Math.PI / 15, [1, 0, 0]); // Miringkan sedikit
+    headRoot.addChild(headNode);
+    
+    // --- SIRIP SISI (JET) ---
+    const finMesh = new Mesh(gl, Primitives.createEllipsoid(0.5, 0.5, 1.2, 24, 24)); // Lebih pipih dan panjang
+    
+    const leftFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+    mat4.translate(leftFinNode.localTransform, leftFinNode.localTransform, [-1.1, 0.2, 0.1]); 
+    headNode.addChild(leftFinNode);
+    
+    // Garis Putih Sirip Kiri
+    const stripeMesh = new Mesh(gl, Primitives.createCylinder(0.3, 0.25, 16)); 
+    const leftStripeNode = new SceneNode(stripeMesh, cfg.colors.white);
+    mat4.translate(leftStripeNode.localTransform, leftStripeNode.localTransform, [0, 0, 0]); 
+    mat4.rotate(leftStripeNode.localTransform, leftStripeNode.localTransform, Math.PI/2, [1,0,0]);
+    mat4.scale(leftStripeNode.localTransform, leftStripeNode.localTransform, [1.7, 1, 1.7]); 
+    leftFinNode.addChild(leftStripeNode);
+
+    const rightFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+    mat4.translate(rightFinNode.localTransform, rightFinNode.localTransform, [1.1, 0.2, 0.1]);
+    headNode.addChild(rightFinNode);
+    
+    // Garis Putih Sirip Kanan
+    const rightStripeNode = new SceneNode(stripeMesh, cfg.colors.white);
+    mat4.translate(rightStripeNode.localTransform, rightStripeNode.localTransform, [0, 0, 0]);
+    mat4.rotate(rightStripeNode.localTransform, rightStripeNode.localTransform, Math.PI/2, [1,0,0]);
+    mat4.scale(rightStripeNode.localTransform, rightStripeNode.localTransform, [1.7, 1, 1.7]);
+    rightFinNode.addChild(rightStripeNode);
+
+    return headRoot;
+  }
+
