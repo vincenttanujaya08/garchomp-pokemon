@@ -1999,8 +1999,13 @@ function createMegaGarchompLeftLeg(gl) {
     footNode.localTransform,
     [0, -0.5, -0.2]
   ); // ADJUSTED
-  mat4.scale(footNode.localTransform, footNode.localTransform, [1.2, 1, 1]);
-
+  mat4.scale(footNode.localTransform, footNode.localTransform, [1, 1, 1]);
+  mat4.rotate(footNode.localTransform,footNode.localTransform, 5, [1, 0, 0]);
+  mat4.translate(
+    footNode.localTransform,
+    footNode.localTransform,
+    [0, -0.4, 1]
+  );
   // ADJUSTED
 
   // Spike transforms (keep existing)
@@ -2217,8 +2222,13 @@ function createMegaGarchompRightLeg(gl) {
     footNode.localTransform,
     [0, -0.5, -0.2]
   ); // ADJUSTED
-  mat4.scale(footNode.localTransform, footNode.localTransform, [1.2, 1, 1]);
-
+  mat4.scale(footNode.localTransform, footNode.localTransform, [1, 1, 1]);
+  mat4.rotate(footNode.localTransform,footNode.localTransform, 5, [1, 0, 0]);
+  mat4.translate(
+    footNode.localTransform,
+    footNode.localTransform,
+    [0, -0.4, 1]
+  );
   // Spike transforms (mirrored)
   mat4.translate(
     thighSpikeNode.localTransform,
