@@ -893,7 +893,7 @@ function createMegaGarchompHead(gl) {
     mat4.scale(
       centerRugbyNode.localTransform,
       centerRugbyNode.localTransform,
-      [1.3, 1, 1]
+      [1.3, 0.9, 1]
     );
     mat4.translate(
       leftRugbyNode.localTransform,
