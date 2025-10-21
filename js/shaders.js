@@ -1,5 +1,5 @@
 // ============================================================
-// js/shaders.js - WARM GOLDEN LIGHTING SYSTEM
+// js/shaders.js - SUNSET LIGHTING (Purple Sky + Golden Sun)
 // ============================================================
 
 const vertexShaderSource = `
@@ -33,43 +33,43 @@ const fragmentShaderSource = `
     varying highp vec3 v_fragPosition;
 
     void main() {
-      // 🌅 WARM GOLDEN LIGHTING
+      // 🌅 SUNSET LIGHTING - Purple Sky + Golden Sun
       
-      // 1. Ambient - Warm golden glow
-      float ambientStrength = 0.35; // Increased for brighter scene
-      vec3 ambientColor = vec3(1.0, 0.95, 0.85); // Warm golden tone
+      // 1. Ambient - Purple-tinted for sky harmony
+      float ambientStrength = 0.20; // Brighter ambient for sunset atmosphere
+      vec3 ambientColor = vec3(0.85, 0.80, 0.95); // Subtle purple tint from sky
       vec3 ambient = ambientStrength * ambientColor;
 
-      // 2. Diffuse - Main light with golden tint
+      // 2. Diffuse - Warm sunset light from the sun
       vec3 lightDir = normalize(u_lightDirection - v_fragPosition);
       vec3 normal = normalize(v_normal);
       float diff = max(dot(normal, lightDir), 0.0);
       
-      // Golden sunset light color
-      vec3 lightColor = vec3(1.0, 0.92, 0.75); // Warm golden yellow
-      vec3 diffuse = diff * lightColor * 1.2; // Boosted intensity
+      // Intense orange-golden sunset light
+      vec3 lightColor = vec3(1.0, 0.85, 0.60); // Deep orange for sunset sun
+      vec3 diffuse = diff * lightColor * 1.3; // Strong intensity
 
-      // 3. Specular - Subtle golden highlights
-      float specularStrength = 0.5; // Slightly reduced for softer look
+      // 3. Specular - Warm sunset highlights
+      float specularStrength = 0.6; // Stronger for sunset gleam
       vec3 viewDir = normalize(u_viewPosition - v_fragPosition);
       vec3 reflectDir = reflect(-lightDir, normal);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 24.0); // Softer specular
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 28.0); // Softer falloff
       
-      // Golden specular highlights
-      vec3 specularColor = vec3(1.0, 0.95, 0.8);
+      // Warm orange specular highlights
+      vec3 specularColor = vec3(1.0, 0.90, 0.70);
       vec3 specular = specularStrength * spec * specularColor;
       
-      // 4. Rim lighting for depth (optional enhancement)
-      float rimStrength = 0.3;
+      // 4. Rim lighting - Purple-tinted from sky reflection
+      float rimStrength = 0.25;
       float rim = 1.0 - max(dot(viewDir, normal), 0.0);
       rim = pow(rim, 3.0);
-      vec3 rimColor = vec3(1.0, 0.85, 0.6) * rimStrength * rim;
+      vec3 rimColor = vec3(0.70, 0.65, 0.85) * rimStrength * rim; // Purple rim from sky
       
-      // Combine all lighting
+      // Combine all lighting components
       vec3 result = (ambient + diffuse + specular + rimColor) * u_color.rgb;
       
-      // Slight color grading for warmth
-      result *= vec3(1.05, 1.0, 0.95); // Push towards warm tones
+      // Slight color grading for sunset warmth
+      result *= vec3(1.05, 1.0, 0.98); // Push towards warm but keep purple balance
       
       gl_FragColor = vec4(result, u_color.a);
     }
@@ -79,4 +79,4 @@ const fragmentShaderSource = `
 window.vertexShaderSource = vertexShaderSource;
 window.fragmentShaderSource = fragmentShaderSource;
 
-console.log("✅ Shaders loaded - Warm Golden Lighting");
+console.log("✅ Shaders loaded - Sunset Purple Sky Lighting");
