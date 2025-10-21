@@ -275,6 +275,27 @@
     mat4.rotate(headNode2.localTransform, headNode2.localTransform, -Math.PI / 15, [1, 0, 0]); // Miringkan sedikit
     headRoot.addChild(headNode2);
 
+    const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+    const leftToothNode = new SceneNode(toothMesh, cfg.colors.white); 
+    mat4.translate(leftToothNode.localTransform, leftToothNode.localTransform, [0.78, -0.5, -0.7]);
+    mat4.rotate(leftToothNode.localTransform, leftToothNode.localTransform, 2.77, [0, 0, -1]);
+    headNode.addChild(leftToothNode);
+
+    const leftToothNode2 = new SceneNode(toothMesh, cfg.colors.white); 
+    mat4.translate(leftToothNode2.localTransform, leftToothNode2.localTransform, [0.74, -0.5, -0.8]);
+    mat4.rotate(leftToothNode2.localTransform, leftToothNode2.localTransform, 2.77, [0, 0, -1]);
+    headNode.addChild(leftToothNode2);
+
+    const rightToothNode = new SceneNode(toothMesh, cfg.colors.white); 
+    mat4.translate(rightToothNode.localTransform, rightToothNode.localTransform, [-0.78, -0.5, -0.7]);
+    mat4.rotate(rightToothNode.localTransform, rightToothNode.localTransform, 2.77, [0, 0, 1]);
+    headNode.addChild(rightToothNode);
+
+    const rightToothNode2 = new SceneNode(toothMesh, cfg.colors.white); 
+    mat4.translate(rightToothNode2.localTransform, rightToothNode2.localTransform, [-0.74, -0.5, -0.8]);
+    mat4.rotate(rightToothNode2.localTransform, rightToothNode2.localTransform, 2.77, [0, 0, 1]);
+    headNode.addChild(rightToothNode2);
+
     return headRoot;
   }
 
