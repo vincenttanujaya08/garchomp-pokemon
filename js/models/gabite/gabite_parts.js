@@ -369,3 +369,37 @@
   return neckNode;
 }
 
+function createGabiteFin(gl) {
+    const cfg = GabiteAnatomy;
+
+    // Koordinat 2D dari GeoGebra, diinterpretasikan di bidang XZ.
+    const finShapePoints2D = [
+      [2.8, 0.27], [0.68, 1.61], [1.56, 2.55], [2.32, 3.31],
+      [3.04, 3.87], [3.78, 4.39], [4.4, 4.81], 
+      [5.16, 5.13], [6.02, 5.49], [5.66, 4.45], [4.7, 2.57],
+      [3.66, 0.63], [3.06, 0.9], [4.1, 1.9], [3, -0.1]
+    ];
+
+    // Menentukan pusat dan skala agar sesuai dengan model
+    const centerX = 3.35;
+    const centerZ = 2.75;
+    const scale = 0.6;
+
+    // Proses koordinat: ubah ke 3D (XZ), pusatkan, dan skalakan
+    const processedPoints = finShapePoints2D.map(p => [
+        (p[0] - centerX) * scale,
+        0,
+        (p[1] - centerZ) * scale
+    ]);
+
+    // Buat geometri 3D dengan mengekstrusi bentuk 2D
+    const finGeom = Primitives.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95); // Ketebalan 0.25
+    const finMesh = new Mesh(gl, finGeom);
+    
+    const finNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+    mat4.translate(finNode.localTransform, finNode.localTransform, [0.1, -0.4, 2.5]);
+    mat4.rotate(finNode.localTransform, finNode.localTransform, 1.56, [0, 0, -1]);
+    mat4.rotate(finNode.localTransform, finNode.localTransform, 1, [0, -1, 0]);
+    return finNode;
+  }
+
