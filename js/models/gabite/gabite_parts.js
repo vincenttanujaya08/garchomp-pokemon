@@ -10,11 +10,17 @@
     const bodyRoot = new SceneNode();
 
     // --- BENTUK TUBUH ---
-    const mainBodyMesh = new Mesh(gl, Primitives.createEllipsoid(0.95, 1.8, 1.2, 32, 32));
+    const mainBodyMesh = new Mesh(gl, Primitives.createEllipsoid(0.9, 1.8, 1.2, 32, 32));
     const mainBodyNode = new SceneNode(mainBodyMesh, cfg.colors.red);
     mat4.translate(mainBodyNode.localTransform, mainBodyNode.localTransform, [0, -2.0, 0]);
     mat4.rotate(mainBodyNode.localTransform, mainBodyNode.localTransform, Math.PI / 12, [1, 0, 0]);
     bodyRoot.addChild(mainBodyNode);
+
+    const bottomBodyMesh = new Mesh(gl, Primitives.createEllipsoid(0.9, 1, 2.3, 32, 32));
+    const bottomBodyNode = new SceneNode(bottomBodyMesh, cfg.colors.white);
+    mat4.translate(bottomBodyNode.localTransform, bottomBodyNode.localTransform, [0, -2.9, 0.9]);
+
+    bodyRoot.addChild(bottomBodyNode);
 
     const backMesh = new Mesh(gl, Primitives.createEllipsoid(1.1, 1.9, 1, 32, 32));
     const backNode = new SceneNode(backMesh, cfg.colors.darkBlue);
