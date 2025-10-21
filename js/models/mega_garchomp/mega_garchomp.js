@@ -2166,6 +2166,7 @@ function createMegaGarchompRightLeg(gl) {
   footNode.addChild(footSpikeNode3);
 
   // Transformations (mirrored from left leg)
+  // RIGHT (FIXED mirror dari kiri)
   mat4.scale(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -2174,14 +2175,14 @@ function createMegaGarchompRightLeg(gl) {
   mat4.translate(
     thighNode.localTransform,
     thighNode.localTransform,
-    [-0.7, -1.2, 0]
-  );
+    [-1.1, 0, 0]
+  ); // mirror X, tanpa offset Y
   mat4.rotate(
     thighNode.localTransform,
     thighNode.localTransform,
-    Math.PI / 6,
+    Math.PI / 3,
     [-1, 0, -1]
-  );
+  ); // axis sudah benar untuk mirror
 
   mat4.translate(
     shinConnectorNode.localTransform,
@@ -2762,10 +2763,7 @@ function createMegaGarchomp(gl) {
     [0.5, -1.8, 0]
   );
 
-  // ============================================================
-  // ✅ COMPLETE ANIMATION RIG EXPORT
-  // ============================================================
-
+  // ✅ FIXED: Complete Animation Rig Export
   torso.name = "MEGA_GARCHOMP";
   torso.animationRig = {
     // Core body
@@ -2773,19 +2771,19 @@ function createMegaGarchomp(gl) {
     neck: neck,
     head: head,
 
-    // Arms (for attack animation)
+    // ✅ FIX: Export arm ROOTS, bukan child nodes
     leftArm: leftArm,
     rightArm: rightArm,
 
-    // Legs with joints (for prowl animation)
+    // ✅ FIX: Export leg ROOTS + individual joints
     leftLeg: leftLeg,
     rightLeg: rightLeg,
-    leftThigh: leftLeg.joints.thigh,
-    leftShin: leftLeg.joints.shin,
-    leftFoot: leftLeg.joints.foot,
-    rightThigh: rightLeg.joints.thigh,
-    rightShin: rightLeg.joints.shin,
-    rightFoot: rightLeg.joints.foot,
+    leftThigh: leftLeg.joints ? leftLeg.joints.thigh : null,
+    leftShin: leftLeg.joints ? leftLeg.joints.shin : null,
+    leftFoot: leftLeg.joints ? leftLeg.joints.foot : null,
+    rightThigh: rightLeg.joints ? rightLeg.joints.thigh : null,
+    rightShin: rightLeg.joints ? rightLeg.joints.shin : null,
+    rightFoot: rightLeg.joints ? rightLeg.joints.foot : null,
 
     // Tail
     tail: tail,
@@ -2793,7 +2791,7 @@ function createMegaGarchomp(gl) {
     // Dorsal fin
     dorsalFin: DorsalFin,
 
-    // ✅ JAW (CRITICAL for roar!)
+    // ✅ JAW for roar
     jaw: head.children.find((child) => child.name === "LowerJaw"),
   };
 
