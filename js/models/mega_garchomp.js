@@ -18,7 +18,7 @@ function createMegaGarchompNeck(gl) {
   // Menggunakan Hyperboloid of 1 Sheet untuk bentuk leher yang organik
   const neckMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(
+    Prm.createHyperboloidOneSheet(
       0.6, // radiusX di bagian terlebar
       0.6, // radiusZ di bagian terlebar
       0.4, // pinchY (seberapa "ramping" di tengah)
@@ -30,7 +30,7 @@ function createMegaGarchompNeck(gl) {
 
   const neckMesh2 = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(
+    Prm.createHyperboloidOneSheet(
       0.6, // radiusX di bagian terlebar
       0.6, // radiusZ di bagian terlebar
       0.4, // pinchY (seberapa "ramping" di tengah)
@@ -89,15 +89,12 @@ function createMegaGarchompJaw(gl) {
   const black = [0.1, 0.1, 0.1, 1.0]; // Warna untuk bagian dalam mulut
 
   // --- MESH ---
-  const jawBaseMesh = new Mesh(gl, Primitives.createCuboid(1, 1, 1));
-  const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+  const jawBaseMesh = new Mesh(gl, Prm.createCuboid(1, 1, 1));
+  const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
 
   // BARU: Mesh untuk penutup dagu dan bagian dalam mulut
-  const chinCoverMesh = new Mesh(gl, Primitives.createTriangularPrism(1, 1, 1));
-  const innerMouthMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(1, 1, 1, 32, 32)
-  );
+  const chinCoverMesh = new Mesh(gl, Prm.createTriangularPrism(1, 1, 1));
+  const innerMouthMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
 
   // --- NODE ---
   const jawRoot = new SceneNode(null);
@@ -337,7 +334,7 @@ function createMegaGarchompUpperHead(gl) {
 
   for (let i = 0; i <= smoothness; i++) {
     const t = i / smoothness;
-    const pt = Curves.getBezierPoint(t, p0, p1, p2, p3);
+    const pt = Crv.getBezierPoint(t, p0, p1, p2, p3);
     rugbyProfile.push([pt[0], pt[1]]);
   }
 
@@ -350,37 +347,28 @@ function createMegaGarchompUpperHead(gl) {
 
   const rugbyMesh = new Mesh(
     gl,
-    Curves.createSurfaceOfRevolution(rugbyProfile, 32)
+    Crv.createSurfaceOfRevolution(rugbyProfile, 32)
   );
 
   const connectorMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16)
+    Prm.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16)
   );
 
-  const nosePrismMesh = new Mesh(
-    gl,
-    Primitives.createTriangularPrism(0.4, 0.7, 0.2)
-  );
+  const nosePrismMesh = new Mesh(gl, Prm.createTriangularPrism(0.4, 0.7, 0.2));
 
-  const underJawMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(1, 1, 1, 32, 32)
-  );
+  const underJawMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
 
-  const eyeMesh = new Mesh(
-    gl,
-    Primitives.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2)
-  );
+  const eyeMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2));
 
-  const pupilMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const pupilMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 16, 16));
 
   const retinaMesh = pupilMesh;
 
-  const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
+  const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
 
   // BARU: Mesh untuk tanduk depan
-  const hornMesh = new Mesh(gl, Primitives.createCone(0.6, 1, 4));
+  const hornMesh = new Mesh(gl, Prm.createCone(0.6, 1, 4));
 
   // --- NODES & HIERARCHY ---
   const upperHeadRoot = new SceneNode(null);
@@ -803,7 +791,7 @@ function createMegaGarchompHead(gl) {
       p3 = [0.7, 0.0, 0];
     for (let i = 0; i <= smoothness; i++) {
       const t = i / smoothness;
-      rugbyProfile.push(Curves.getBezierPoint(t, p0, p1, p2, p3).slice(0, 2));
+      rugbyProfile.push(Crv.getBezierPoint(t, p0, p1, p2, p3).slice(0, 2));
     }
     for (let i = smoothness - 1; i >= 0; i--) {
       const pt = rugbyProfile[i];
@@ -812,28 +800,25 @@ function createMegaGarchompHead(gl) {
 
     const rugbyMesh = new Mesh(
       gl,
-      Curves.createSurfaceOfRevolution(rugbyProfile, 32)
+      Crv.createSurfaceOfRevolution(rugbyProfile, 32)
     );
     const connectorMesh = new Mesh(
       gl,
-      Primitives.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16)
+      Prm.createHyperboloidOneSheet(0.5, 0.5, 0.4, 1.0, 16, 16)
     );
     const nosePrismMesh = new Mesh(
       gl,
-      Primitives.createTriangularPrism(0.4, 0.7, 0.2)
+      Prm.createTriangularPrism(0.4, 0.7, 0.2)
     );
-    const underJawMesh = new Mesh(
-      gl,
-      Primitives.createEllipsoid(1, 1, 1, 32, 32)
-    );
+    const underJawMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
     const eyeMesh = new Mesh(
       gl,
-      Primitives.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2)
+      Prm.createTrapezoidalPrism(0.5, 0.3, 0.8, 0.2)
     );
-    const pupilMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+    const pupilMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 16, 16));
     const retinaMesh = pupilMesh;
-    const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
-    const hornMesh = new Mesh(gl, Primitives.createCone(0.6, 1, 4));
+    const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
+    const hornMesh = new Mesh(gl, Prm.createCone(0.6, 1, 4));
 
     const upperHeadRoot = new SceneNode(null);
     const centerRugbyNode = new SceneNode(rugbyMesh, darkBlue);
@@ -1194,16 +1179,10 @@ function createMegaGarchompHead(gl) {
     const white = [1.0, 1.0, 1.0, 1.0];
     const black = [0.1, 0.1, 0.1, 1.0];
 
-    const jawBaseMesh = new Mesh(gl, Primitives.createCuboid(1, 1, 1));
-    const toothMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8));
-    const chinCoverMesh = new Mesh(
-      gl,
-      Primitives.createTriangularPrism(1, 1, 1)
-    );
-    const innerMouthMesh = new Mesh(
-      gl,
-      Primitives.createEllipsoid(1, 1, 1, 32, 32)
-    );
+    const jawBaseMesh = new Mesh(gl, Prm.createCuboid(1, 1, 1));
+    const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
+    const chinCoverMesh = new Mesh(gl, Prm.createTriangularPrism(1, 1, 1));
+    const innerMouthMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
 
     const jawRoot = new SceneNode(null);
     const jawCenter = new SceneNode(jawBaseMesh, redOrange);
@@ -1429,40 +1408,31 @@ function createMegaGarchompTorso(gl) {
   // --- MESHES ---
   const upperBodyMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
+    Prm.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
   );
   const lowerBodyMesh = new Mesh(
     gl,
-    Primitives.createEllipsoid(0.81, 0.9, 0.73, 32, 32)
+    Prm.createEllipsoid(0.81, 0.9, 0.73, 32, 32)
   );
   const shoulderMesh = new Mesh(
     gl,
-    Primitives.createEllipticParaboloid(0.8, 0.7, 1.5, 16)
+    Prm.createEllipticParaboloid(0.8, 0.7, 1.5, 16)
   );
   const connectorMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
+    Prm.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
   );
-  const chestPlateMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(1, 1, 1, 32, 32)
-  );
+  const chestPlateMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
   const waistPlateMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
+    Prm.createHyperboloidOneSheet(0.6, 0.5, 0.8, 1.8, 32, 32)
   );
   const stomachPlateMesh1 = new Mesh(
     gl,
-    Primitives.createEllipsoid(1, 1, 1, 2.9, 100)
+    Prm.createEllipsoid(1, 1, 1, 2.9, 100)
   );
-  const stomachPlateMesh2 = new Mesh(
-    gl,
-    Primitives.createEllipsoid(1, 1, 1, 32, 32)
-  );
-  const spikeMesh = new Mesh(
-    gl,
-    Primitives.createTriangularPrism(0.4, 0.6, 0.1)
-  );
+  const stomachPlateMesh2 = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
+  const spikeMesh = new Mesh(gl, Prm.createTriangularPrism(0.4, 0.6, 0.1));
 
   // --- SCENE NODES ---
   const torsoRoot = new SceneNode(null);
@@ -1803,7 +1773,7 @@ function createMegaGarchompTail(gl) {
   const scaleFactors = [];
   for (let i = 0; i <= pathSegments; i++) {
     const t = i / pathSegments;
-    tailPath.push(Curves.getBezierPoint(t, p0, p1, p2, p3));
+    tailPath.push(Crv.getBezierPoint(t, p0, p1, p2, p3));
     scaleFactors.push(1.0 - t); // Meruncing hingga 0
   }
 
@@ -1820,7 +1790,7 @@ function createMegaGarchompTail(gl) {
 
   const tailMesh = new Mesh(
     gl,
-    Curves.createTaperedSweptSurface(tailProfile, tailPath, scaleFactors, true)
+    Crv.createTaperedSweptSurface(tailProfile, tailPath, scaleFactors, true)
   );
   // --- SIRIP SAMPING (BARU) ---
   const finProfile = [
@@ -1841,19 +1811,14 @@ function createMegaGarchompTail(gl) {
   for (let i = 0; i <= 10; i++) {
     const t = i / 10;
     leftFinPath.push(
-      Curves.getBezierPoint(t, leftFin_p0, leftFin_p1, leftFin_p2, leftFin_p3)
+      Crv.getBezierPoint(t, leftFin_p0, leftFin_p1, leftFin_p2, leftFin_p3)
     );
     leftFinScales.push(1.0 - t);
   }
 
   const leftFinMesh = new Mesh(
     gl,
-    Curves.createTaperedSweptSurface(
-      finProfile,
-      leftFinPath,
-      leftFinScales,
-      true
-    )
+    Crv.createTaperedSweptSurface(finProfile, leftFinPath, leftFinScales, true)
   );
   // Sirip Kanan
   const rightFin_p0 = [0, 0, 0];
@@ -1866,19 +1831,13 @@ function createMegaGarchompTail(gl) {
   for (let i = 0; i <= 10; i++) {
     const t = i / 10;
     rightFinPath.push(
-      Curves.getBezierPoint(
-        t,
-        rightFin_p0,
-        rightFin_p1,
-        rightFin_p2,
-        rightFin_p3
-      )
+      Crv.getBezierPoint(t, rightFin_p0, rightFin_p1, rightFin_p2, rightFin_p3)
     );
     rightFinScales.push(1.0 - t);
   }
   const rightFinMesh = new Mesh(
     gl,
-    Curves.createTaperedSweptSurface(
+    Crv.createTaperedSweptSurface(
       finProfile,
       rightFinPath,
       rightFinScales,
@@ -1946,23 +1905,14 @@ function createMegaGarchompLeftLeg(gl) {
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
   // --- MESHES ---
-  const thighMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.5, 0.8, 0.5, 32, 32)
-  ); // Paha
-  const shinMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.5, 0.5, 0.5, 32, 32)
-  ); // Betis/Telapak atas
+  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
+  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32)); // Betis/Telapak atas
   const shinConnectorMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
+    Prm.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
   ); // Sambungan lutut
-  const footMesh = new Mesh(
-    gl,
-    Primitives.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)
-  ); // Telapak bawah
-  const spikeMesh = new Mesh(gl, Primitives.createCone(0.2, 0.8, 16)); // Duri baru
+  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)); // Telapak bawah
+  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16)); // Duri baru
 
   // --- NODES & HIERARCHY ---
   const legRoot = new SceneNode(null);
@@ -2166,23 +2116,14 @@ function createMegaGarchompRightLeg(gl) {
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
   // --- MESHES ---
-  const thighMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.5, 0.8, 0.5, 32, 32)
-  ); // Paha
-  const shinMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.5, 0.5, 0.5, 32, 32)
-  ); // Betis/Telapak atas
+  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
+  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32)); // Betis/Telapak atas
   const shinConnectorMesh = new Mesh(
     gl,
-    Primitives.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
+    Prm.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
   ); // Sambungan lutut
-  const footMesh = new Mesh(
-    gl,
-    Primitives.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)
-  ); // Telapak bawah
-  const spikeMesh = new Mesh(gl, Primitives.createCone(0.2, 0.8, 16)); // Duri
+  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)); // Telapak bawah
+  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16)); // Duri
 
   // --- NODES & HIERARCHY ---
   const legRoot = new SceneNode(null);
@@ -2405,10 +2346,7 @@ function createDorsalFin(gl) {
   ];
 
   // Buat satu mesh dari satu outline utuh
-  const finMesh = new Mesh(
-    gl,
-    Primitives.createExtrudedShape(finShapePoints, 0.2)
-  );
+  const finMesh = new Mesh(gl, Prm.createExtrudedShape(finShapePoints, 0.2));
 
   const dorsalFinRoot = new SceneNode(finMesh, darkBlue);
 
@@ -2466,17 +2404,41 @@ function createMegaGarchompRightArm(gl) {
   const armSegments = 10;
   for (let i = 0; i <= armSegments; i++) {
     const t = i / armSegments;
-    armPath.push(Curves.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
+    armPath.push(Crv.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
   }
-  const upperArmMesh = new Mesh(gl, Curves.createSweptSurface(armProfile, armPath, true));
-  const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
-  const forearmMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
-  const wristJointMesh = new Mesh(gl, Primitives.createEllipsoid(0.26, 0.1, 0.3, 16, 16));
+  const upperArmMesh = new Mesh(
+    gl,
+    Crv.createSweptSurface(armProfile, armPath, true)
+  );
+  const elbowMesh = new Mesh(gl, Prm.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
+  const forearmMesh = new Mesh(
+    gl,
+    Prm.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16)
+  );
+  const wristJointMesh = new Mesh(
+    gl,
+    Prm.createEllipsoid(0.26, 0.1, 0.3, 16, 16)
+  );
 
   // Geometri sirip sama dengan tangan kiri
-  const finW = 0.6, finH = 0.7, topBulge = 0.12, bottomBulge = 0.18, leftBulge = 0.1;
-  const finSegU = 24, finSegV = 10, finT = 0.2;
-  const finGeom = Primitives.createSailCoons3D(finW, finH, topBulge, bottomBulge, leftBulge, finSegU, finSegV, finT);
+  const finW = 0.6,
+    finH = 0.7,
+    topBulge = 0.12,
+    bottomBulge = 0.18,
+    leftBulge = 0.1;
+  const finSegU = 24,
+    finSegV = 10,
+    finT = 0.2;
+  const finGeom = Prm.createSailCoons3D(
+    finW,
+    finH,
+    topBulge,
+    bottomBulge,
+    leftBulge,
+    finSegU,
+    finSegV,
+    finT
+  );
   const finMesh = new Mesh(gl, finGeom);
 
   // --- NODES & HIERARCHY ---
@@ -2497,32 +2459,86 @@ function createMegaGarchompRightArm(gl) {
 
   // --- TRANSFORMATIONS (MIRRORED) ---
   // Lengan atas di-mirror
-  mat4.translate(upperArmNode.localTransform, upperArmNode.localTransform, [1, 1, 0]); // X positif
-  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 3.6, [0, 0, 1]); // Rotasi Z dibalik
-  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 8, [0, 1, 0]); // Rotasi Y dibalik
-  mat4.scale(upperArmNode.localTransform, upperArmNode.localTransform, [0.7, 0.7, 0.7]);
+  mat4.translate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    [1, 1, 0]
+  ); // X positif
+  mat4.rotate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    Math.PI / 3.6,
+    [0, 0, 1]
+  ); // Rotasi Z dibalik
+  mat4.rotate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    Math.PI / 8,
+    [0, 1, 0]
+  ); // Rotasi Y dibalik
+  mat4.scale(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    [0.7, 0.7, 0.7]
+  );
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
   // Lengan bawah di-mirror
-  mat4.translate(rightFore.localTransform, rightFore.localTransform, [0, 0, 0.8]);
-  mat4.rotate(rightFore.localTransform, rightFore.localTransform, -Math.PI / 6, [0, 0, 1]); // Rotasi Z dibalik
-  mat4.rotate(rightFore.localTransform, rightFore.localTransform, -Math.PI / 2, [1, 0, 0]);
+  mat4.translate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    [0, 0, 0.8]
+  );
+  mat4.rotate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    -Math.PI / 6,
+    [0, 0, 1]
+  ); // Rotasi Z dibalik
+  mat4.rotate(
+    rightFore.localTransform,
+    rightFore.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
   mat4.scale(rightFore.localTransform, rightFore.localTransform, [0.8, 2.5, 1]);
 
   // Sendi pergelangan tangan (posisi sama secara lokal)
-  mat4.translate(wristJointNode.localTransform, wristJointNode.localTransform, [0, -0.25, 0]);
+  mat4.translate(
+    wristJointNode.localTransform,
+    wristJointNode.localTransform,
+    [0, -0.25, 0]
+  );
 
   // Sirip luar di-mirror
   mat4.translate(rightFin.localTransform, rightFin.localTransform, [0, 0, 0]);
-  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -4 , [0, 1, 0]); // Rotasi Y dibalik
-  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -2 , [0, 0, -1]); // Rotasi Z dibalik
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -4, [0, 1, 0]); // Rotasi Y dibalik
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -2, [0, 0, -1]); // Rotasi Z dibalik
   mat4.scale(rightFin.localTransform, rightFin.localTransform, [-2.5, 2, 0.9]); // Skala X dinegatifkan untuk mirror sempurna
 
   // Sirip dalam (merah) di-mirror
-  mat4.translate(finInnerNode.localTransform, finInnerNode.localTransform, [0, 0.23, 0]);
-  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, -4 , [0, 1, 0]); // Rotasi Y dibalik
-  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, -2 , [0, 0, -1]); // Rotasi Z dibalik
-  mat4.scale(finInnerNode.localTransform, finInnerNode.localTransform, [-3.2, 3.2, 0.1]); // Skala X dinegatifkan
+  mat4.translate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    [0, 0.23, 0]
+  );
+  mat4.rotate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    -4,
+    [0, 1, 0]
+  ); // Rotasi Y dibalik
+  mat4.rotate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    -2,
+    [0, 0, -1]
+  ); // Rotasi Z dibalik
+  mat4.scale(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    [-3.2, 3.2, 0.1]
+  ); // Skala X dinegatifkan
 
   return armRoot;
 }
@@ -2552,19 +2568,43 @@ function createMegaGarchompLeftArm(gl) {
   const armSegments = 10;
   for (let i = 0; i <= armSegments; i++) {
     const t = i / armSegments;
-    armPath.push(Curves.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
+    armPath.push(Crv.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
   }
-  const upperArmMesh = new Mesh(gl, Curves.createSweptSurface(armProfile, armPath, true));
-  const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
-  const forearmMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
+  const upperArmMesh = new Mesh(
+    gl,
+    Crv.createSweptSurface(armProfile, armPath, true)
+  );
+  const elbowMesh = new Mesh(gl, Prm.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
+  const forearmMesh = new Mesh(
+    gl,
+    Prm.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16)
+  );
 
   // BARU: Mesh untuk sendi pergelangan tangan
-  const wristJointMesh = new Mesh(gl, Primitives.createEllipsoid(0.26, 0.1, 0.3, 16, 16));
+  const wristJointMesh = new Mesh(
+    gl,
+    Prm.createEllipsoid(0.26, 0.1, 0.3, 16, 16)
+  );
 
   // --- Geometri Sirip/Tangan Baru dari Snippet Anda ---
-  const finW = 0.6, finH = 0.7, topBulge = 0.12, bottomBulge = 0.18, leftBulge = 0.1;
-  const finSegU = 24, finSegV = 10, finT = 0.2;
-  const finGeom = Primitives.createSailCoons3D(finW, finH, topBulge, bottomBulge, leftBulge, finSegU, finSegV, finT);
+  const finW = 0.6,
+    finH = 0.7,
+    topBulge = 0.12,
+    bottomBulge = 0.18,
+    leftBulge = 0.1;
+  const finSegU = 24,
+    finSegV = 10,
+    finT = 0.2;
+  const finGeom = Prm.createSailCoons3D(
+    finW,
+    finH,
+    topBulge,
+    bottomBulge,
+    leftBulge,
+    finSegU,
+    finSegV,
+    finT
+  );
   const finMesh = new Mesh(gl, finGeom);
 
   // --- NODES & HIERARCHY ---
@@ -2572,17 +2612,17 @@ function createMegaGarchompLeftArm(gl) {
   const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
   const elbowNode = new SceneNode(elbowMesh, darkBlue);
   const leftFore = new SceneNode(forearmMesh, darkBlue);
-  
+
   // BARU: Node untuk sendi
   const wristJointNode = new SceneNode(wristJointMesh, darkBlue);
-  
+
   const leftFin = new SceneNode(finMesh, darkBlue);
   const finInnerNode = new SceneNode(finMesh, red);
 
   armRoot.addChild(upperArmNode);
   upperArmNode.addChild(elbowNode);
   elbowNode.addChild(leftFore);
-  
+
   // BARU: Hirarki diperbarui untuk menyertakan sendi
   leftFore.addChild(wristJointNode);
   wristJointNode.addChild(leftFin);
@@ -2590,34 +2630,84 @@ function createMegaGarchompLeftArm(gl) {
 
   // --- TRANSFORMATIONS ---
   // Transformasi Lengan Atas & Siku (dipertahankan dari kode lama)
-  mat4.translate(upperArmNode.localTransform, upperArmNode.localTransform, [-1, 1, 0]);
-  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, -Math.PI / 3.6, [0, 0, 1]);
-  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, -Math.PI / 8, [0, 1, 0]);
-  mat4.scale(upperArmNode.localTransform, upperArmNode.localTransform, [0.7, 0.7, 0.7]);
+  mat4.translate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    [-1, 1, 0]
+  );
+  mat4.rotate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    -Math.PI / 3.6,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    -Math.PI / 8,
+    [0, 1, 0]
+  );
+  mat4.scale(
+    upperArmNode.localTransform,
+    upperArmNode.localTransform,
+    [0.7, 0.7, 0.7]
+  );
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
   // Transformasi Lengan Bawah (dipertahankan dari kode lama)
   mat4.translate(leftFore.localTransform, leftFore.localTransform, [0, 0, 0.8]);
-  mat4.rotate(leftFore.localTransform, leftFore.localTransform, Math.PI / 6, [0, 0, 1]);
-  mat4.rotate(leftFore.localTransform, leftFore.localTransform, -Math.PI / 2, [1, 0, 0]);
+  mat4.rotate(
+    leftFore.localTransform,
+    leftFore.localTransform,
+    Math.PI / 6,
+    [0, 0, 1]
+  );
+  mat4.rotate(
+    leftFore.localTransform,
+    leftFore.localTransform,
+    -Math.PI / 2,
+    [1, 0, 0]
+  );
   mat4.scale(leftFore.localTransform, leftFore.localTransform, [0.8, 2.5, 1]);
 
   // BARU: Transformasi untuk sendi pergelangan tangan (ellipsoid)
   // Posisikan di ujung lengan bawah (hyperboloid).
   // Tinggi hyperboloid adalah 0.5, jadi ujung bawahnya di y = -0.25 dalam koordinat lokalnya.
-  mat4.translate(wristJointNode.localTransform, wristJointNode.localTransform, [0, -0.25, 0]);
+  mat4.translate(
+    wristJointNode.localTransform,
+    wristJointNode.localTransform,
+    [0, -0.25, 0]
+  );
 
   // --- Transformasi untuk Fin/Tangan, sekarang relatif terhadap sendi ---
   // Translasi diatur agar sabit muncul sedikit ke depan dari pusat sendi.
   mat4.translate(leftFin.localTransform, leftFin.localTransform, [0, 0, 0]);
-  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 4 , [0, 1, 0]);
-  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 2 , [0, 0, -1]);
+  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 4, [0, 1, 0]);
+  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 2, [0, 0, -1]);
   mat4.scale(leftFin.localTransform, leftFin.localTransform, [2.5, 2, 0.9]);
 
-  mat4.translate(finInnerNode.localTransform, finInnerNode.localTransform, [0, 0.23, 0]);
-  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, 4 , [0, 1, 0]);
-  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, 2 , [0, 0, -1]);
-  mat4.scale(finInnerNode.localTransform, finInnerNode.localTransform, [3.2, 3.2, 0.1]);
+  mat4.translate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    [0, 0.23, 0]
+  );
+  mat4.rotate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    4,
+    [0, 1, 0]
+  );
+  mat4.rotate(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    2,
+    [0, 0, -1]
+  );
+  mat4.scale(
+    finInnerNode.localTransform,
+    finInnerNode.localTransform,
+    [3.2, 3.2, 0.1]
+  );
   return armRoot;
 }
 

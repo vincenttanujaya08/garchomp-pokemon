@@ -1,6 +1,6 @@
 // File: js/geometry/curves.js
 
-const Curves = {
+const Crv = {
   // --- Helper function untuk kalkulasi kurva Bezier ---
   getBezierPoint: function (t, p0, p1, p2, p3) {
     const u = 1 - t;
@@ -100,9 +100,7 @@ const Curves = {
         vertices.push(...pos);
 
         // Normalnya adalah vektor dari pusat jalur ke titik pada profil
-        const normal = vec3.normalize(
-          vec3.subtract(pos, currentPoint)
-        );
+        const normal = vec3.normalize(vec3.subtract(pos, currentPoint));
         normals.push(...normal);
       }
     }
@@ -136,23 +134,32 @@ const Curves = {
       indices: new Uint16Array(indices),
     };
   },
-  
+
   // FUNGSI BARU UNTUK EFEK MERUNCING
-  createTaperedSweptSurface: function (profilePoints, pathPoints, scaleFactors, isProfileClosed = false) {
+  createTaperedSweptSurface: function (
+    profilePoints,
+    pathPoints,
+    scaleFactors,
+    isProfileClosed = false
+  ) {
     const vec3 = {
       subtract: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
       normalize: (v) => {
         const len = Math.hypot(v[0], v[1], v[2]);
         return len > 1e-5 ? [v[0] / len, v[1] / len, v[2] / len] : [0, 0, 0];
       },
-      cross: (a, b) => [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] ],
+      cross: (a, b) => [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+      ],
       add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
       scale: (v, s) => [v[0] * s, v[1] * s, v[2] * s],
     };
 
     if (scaleFactors.length !== pathPoints.length) {
-        console.error("scaleFactors must have the same length as pathPoints.");
-        scaleFactors = Array(pathPoints.length).fill(1.0);
+      console.error("scaleFactors must have the same length as pathPoints.");
+      scaleFactors = Array(pathPoints.length).fill(1.0);
     }
 
     const vertices = [];
@@ -163,48 +170,69 @@ const Curves = {
     let lastUp = [0, 1, 0];
 
     for (let i = 0; i < pathPointCount; i++) {
-        const currentPoint = pathPoints[i];
-        let tangent;
-        if (i < pathPointCount - 1) {
-            tangent = vec3.normalize(vec3.subtract(pathPoints[i + 1], currentPoint));
-        } else {
-            tangent = vec3.normalize(vec3.subtract(currentPoint, pathPoints[i - 1]));
-        }
+      const currentPoint = pathPoints[i];
+      let tangent;
+      if (i < pathPointCount - 1) {
+        tangent = vec3.normalize(
+          vec3.subtract(pathPoints[i + 1], currentPoint)
+        );
+      } else {
+        tangent = vec3.normalize(
+          vec3.subtract(currentPoint, pathPoints[i - 1])
+        );
+      }
 
-        if (Math.abs(tangent[1]) > 0.999) lastUp = [1, 0, 0];
-        
-        const right = vec3.normalize(vec3.cross(tangent, lastUp));
-        const up = vec3.normalize(vec3.cross(right, tangent));
-        lastUp = up;
+      if (Math.abs(tangent[1]) > 0.999) lastUp = [1, 0, 0];
 
-        const currentScale = scaleFactors[i];
+      const right = vec3.normalize(vec3.cross(tangent, lastUp));
+      const up = vec3.normalize(vec3.cross(right, tangent));
+      lastUp = up;
 
-        for (let j = 0; j < profilePointCount; j++) {
-            const profilePoint = profilePoints[j];
-            const scaledProfilePoint = [profilePoint[0] * currentScale, profilePoint[1] * currentScale];
-            
-            const pos = vec3.add(currentPoint, vec3.add(vec3.scale(right, scaledProfilePoint[0]), vec3.scale(up, scaledProfilePoint[1])));
-            vertices.push(...pos);
+      const currentScale = scaleFactors[i];
 
-            const normal = vec3.normalize(vec3.subtract(pos, currentPoint));
-            normals.push(...normal);
-        }
+      for (let j = 0; j < profilePointCount; j++) {
+        const profilePoint = profilePoints[j];
+        const scaledProfilePoint = [
+          profilePoint[0] * currentScale,
+          profilePoint[1] * currentScale,
+        ];
+
+        const pos = vec3.add(
+          currentPoint,
+          vec3.add(
+            vec3.scale(right, scaledProfilePoint[0]),
+            vec3.scale(up, scaledProfilePoint[1])
+          )
+        );
+        vertices.push(...pos);
+
+        const normal = vec3.normalize(vec3.subtract(pos, currentPoint));
+        normals.push(...normal);
+      }
     }
 
     for (let i = 0; i < pathPointCount - 1; i++) {
-        for (let j = 0; j < profilePointCount - 1; j++) {
-            const a = i * profilePointCount + j, b = a + 1;
-            const c = (i + 1) * profilePointCount + j, d = c + 1;
-            indices.push(a, c, b, b, c, d);
-        }
-        if (isProfileClosed) {
-            const a = i * profilePointCount + (profilePointCount - 1), b = i * profilePointCount;
-            const c = (i + 1) * profilePointCount + (profilePointCount - 1), d = (i + 1) * profilePointCount;
-            indices.push(a, c, b, b, c, d);
-        }
+      for (let j = 0; j < profilePointCount - 1; j++) {
+        const a = i * profilePointCount + j,
+          b = a + 1;
+        const c = (i + 1) * profilePointCount + j,
+          d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+      if (isProfileClosed) {
+        const a = i * profilePointCount + (profilePointCount - 1),
+          b = i * profilePointCount;
+        const c = (i + 1) * profilePointCount + (profilePointCount - 1),
+          d = (i + 1) * profilePointCount;
+        indices.push(a, c, b, b, c, d);
+      }
     }
 
-    return { vertices: new Float32Array(vertices), normals: new Float32Array(normals), indices: new Uint16Array(indices) };
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
   },
 
   createSurfaceOfRevolution: function (profilePoints, segments) {
@@ -268,4 +296,3 @@ const Curves = {
     };
   },
 };
-

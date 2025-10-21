@@ -1,4 +1,4 @@
-const Primitives = {
+const Prm = {
   createEllipsoid: function (
     radiusX = 1,
     radiusY = 1,
@@ -607,87 +607,87 @@ const Primitives = {
         v1[0] * v2[1] - v1[1] * v2[0],
       ];
       const len = Math.hypot(...normal);
-    if (len > 0) normal.forEach((val, idx) => (normal[idx] = val / len));
+      if (len > 0) normal.forEach((val, idx) => (normal[idx] = val / len));
 
-    offset = vertices.length / 3;
-    vertices.push(...p1, ...p2, ...p3, ...p4);
-    normals.push(...normal, ...normal, ...normal, ...normal);
+      offset = vertices.length / 3;
+      vertices.push(...p1, ...p2, ...p3, ...p4);
+      normals.push(...normal, ...normal, ...normal, ...normal);
 
-    indices.push(offset, offset + 1, offset + 2);
-    indices.push(offset + 2, offset + 1, offset + 3);
-  }
+      indices.push(offset, offset + 1, offset + 2);
+      indices.push(offset + 2, offset + 1, offset + 3);
+    }
 
-  return {
-    vertices: new Float32Array(vertices),
-    normals: new Float32Array(normals),
-    indices: new Uint16Array(indices),
-  };
-},
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 
-createHyperboloidOneSheet: function (
-  radiusX = 1,
-  radiusZ = 1,
-  pinchY = 1,
-  height = 2,
-  latitudeBands = 30,
-  longitudeBands = 30
-) {
-  const vertices = [];
-  const normals = [];
-  const indices = [];
+  createHyperboloidOneSheet: function (
+    radiusX = 1,
+    radiusZ = 1,
+    pinchY = 1,
+    height = 2,
+    latitudeBands = 30,
+    longitudeBands = 30
+  ) {
+    const vertices = [];
+    const normals = [];
+    const indices = [];
 
-  for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-    const v = -1 + (latNumber / latitudeBands) * 2; // v ranges from -1 to 1
-    const y = (v * height) / 2;
+    for (let latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+      const v = -1 + (latNumber / latitudeBands) * 2; // v ranges from -1 to 1
+      const y = (v * height) / 2;
 
-    // Calculate the radius at this height 'y' based on the hyperboloid equation
-    // x^2/a^2 + z^2/b^2 = 1 + y^2/c^2
-    const radiusScale = Math.sqrt(1 + (y * y) / (pinchY * pinchY));
+      // Calculate the radius at this height 'y' based on the hyperboloid equation
+      // x^2/a^2 + z^2/b^2 = 1 + y^2/c^2
+      const radiusScale = Math.sqrt(1 + (y * y) / (pinchY * pinchY));
 
-    for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-      const u = (longNumber / longitudeBands) * 2 * Math.PI;
-      const cosU = Math.cos(u);
-      const sinU = Math.sin(u);
+      for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+        const u = (longNumber / longitudeBands) * 2 * Math.PI;
+        const cosU = Math.cos(u);
+        const sinU = Math.sin(u);
 
-      const x = radiusX * radiusScale * cosU;
-      const z = radiusZ * radiusScale * sinU;
-      vertices.push(x, y, z);
+        const x = radiusX * radiusScale * cosU;
+        const z = radiusZ * radiusScale * sinU;
+        vertices.push(x, y, z);
 
-      // Normal vector is derived from the gradient of the implicit equation
-      // F(x,y,z) = x^2/a^2 + z^2/b^2 - y^2/c^2 - 1 = 0
-      // grad(F) = (2x/a^2, -2y/c^2, 2z/b^2)
-      const nx = x / (radiusX * radiusX);
-      const ny = -y / (pinchY * pinchY);
-      const nz = z / (radiusZ * radiusZ);
+        // Normal vector is derived from the gradient of the implicit equation
+        // F(x,y,z) = x^2/a^2 + z^2/b^2 - y^2/c^2 - 1 = 0
+        // grad(F) = (2x/a^2, -2y/c^2, 2z/b^2)
+        const nx = x / (radiusX * radiusX);
+        const ny = -y / (pinchY * pinchY);
+        const nz = z / (radiusZ * radiusZ);
 
-      const len = Math.hypot(nx, ny, nz);
-      if (len > 0) {
+        const len = Math.hypot(nx, ny, nz);
+        if (len > 0) {
           normals.push(nx / len, ny / len, nz / len);
-      } else {
+        } else {
           normals.push(0, 1, 0); // Fallback
+        }
       }
     }
-  }
 
-  for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
-    for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
-      const first = latNumber * (longitudeBands + 1) + longNumber;
-      const second = first + longitudeBands + 1;
+    for (let latNumber = 0; latNumber < latitudeBands; latNumber++) {
+      for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+        const first = latNumber * (longitudeBands + 1) + longNumber;
+        const second = first + longitudeBands + 1;
 
-      indices.push(first, second, first + 1);
-      indices.push(second, second + 1, first + 1);
+        indices.push(first, second, first + 1);
+        indices.push(second, second + 1, first + 1);
+      }
     }
-  }
 
-  return {
-    vertices: new Float32Array(vertices),
-    normals: new Float32Array(normals),
-    indices: new Uint16Array(indices),
-  };
-},
+    return {
+      vertices: new Float32Array(vertices),
+      normals: new Float32Array(normals),
+      indices: new Uint16Array(indices),
+    };
+  },
 
-// FUNGSI BARU UNTUK TELAPAK KAKI
-createTrapezoidalPrism: function(bottomWidth, topWidth, height, depth) {
+  // FUNGSI BARU UNTUK TELAPAK KAKI
+  createTrapezoidalPrism: function (bottomWidth, topWidth, height, depth) {
     const halfBottomW = bottomWidth / 2;
     const halfTopW = topWidth / 2;
     const halfH = height / 2;
@@ -695,55 +695,103 @@ createTrapezoidalPrism: function(bottomWidth, topWidth, height, depth) {
 
     // Definisikan 8 titik sudut dari prisma trapesium
     const p = [
-        // Muka depan (z positif)
-        [-halfBottomW, -halfH, halfD], // 0: Kiri bawah
-        [halfBottomW, -halfH, halfD],  // 1: Kanan bawah
-        [halfTopW, halfH, halfD],      // 2: Kanan atas
-        [-halfTopW, halfH, halfD],     // 3: Kiri atas
-        // Muka belakang (z negatif)
-        [-halfBottomW, -halfH, -halfD], // 4: Kiri bawah
-        [halfBottomW, -halfH, -halfD],  // 5: Kanan bawah
-        [halfTopW, halfH, -halfD],      // 6: Kanan atas
-        [-halfTopW, halfH, -halfD]      // 7: Kiri atas
+      // Muka depan (z positif)
+      [-halfBottomW, -halfH, halfD], // 0: Kiri bawah
+      [halfBottomW, -halfH, halfD], // 1: Kanan bawah
+      [halfTopW, halfH, halfD], // 2: Kanan atas
+      [-halfTopW, halfH, halfD], // 3: Kiri atas
+      // Muka belakang (z negatif)
+      [-halfBottomW, -halfH, -halfD], // 4: Kiri bawah
+      [halfBottomW, -halfH, -halfD], // 5: Kanan bawah
+      [halfTopW, halfH, -halfD], // 6: Kanan atas
+      [-halfTopW, halfH, -halfD], // 7: Kiri atas
     ];
 
     const vertices = new Float32Array([
-        ...p[0], ...p[1], ...p[2], ...p[3], // Depan
-        ...p[5], ...p[4], ...p[7], ...p[6], // Belakang
-        ...p[3], ...p[2], ...p[6], ...p[7], // Atas
-        ...p[4], ...p[5], ...p[1], ...p[0], // Bawah
-        ...p[4], ...p[0], ...p[3], ...p[7], // Kiri
-        ...p[1], ...p[5], ...p[6], ...p[2]  // Kanan
+      ...p[0],
+      ...p[1],
+      ...p[2],
+      ...p[3], // Depan
+      ...p[5],
+      ...p[4],
+      ...p[7],
+      ...p[6], // Belakang
+      ...p[3],
+      ...p[2],
+      ...p[6],
+      ...p[7], // Atas
+      ...p[4],
+      ...p[5],
+      ...p[1],
+      ...p[0], // Bawah
+      ...p[4],
+      ...p[0],
+      ...p[3],
+      ...p[7], // Kiri
+      ...p[1],
+      ...p[5],
+      ...p[6],
+      ...p[2], // Kanan
     ]);
 
     const normals = new Float32Array([
-        // Depan
-        0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1,
-        // Belakang
-        0, 0, -1,  0, 0, -1,  0, 0, -1,  0, 0, -1,
-        // Atas
-        0, 1, 0,   0, 1, 0,   0, 1, 0,   0, 1, 0,
-        // Bawah
-        0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,
-        // Kiri
-        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
-        // Kanan
-        1, 0, 0,   1, 0, 0,   1, 0, 0,   1, 0, 0
+      // Depan
+      0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+      // Belakang
+      0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
+      // Atas
+      0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+      // Bawah
+      0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+      // Kiri
+      -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+      // Kanan
+      1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
     ]);
 
     const indices = new Uint16Array([
-        0, 1, 2,   0, 2, 3,    // Depan
-        4, 5, 6,   4, 6, 7,    // Belakang
-        8, 9, 10,  8, 10, 11,   // Atas
-        12, 13, 14, 12, 14, 15,  // Bawah
-        16, 17, 18, 16, 18, 19,  // Kiri
-        20, 21, 22, 20, 22, 23   // Kanan
+      0,
+      1,
+      2,
+      0,
+      2,
+      3, // Depan
+      4,
+      5,
+      6,
+      4,
+      6,
+      7, // Belakang
+      8,
+      9,
+      10,
+      8,
+      10,
+      11, // Atas
+      12,
+      13,
+      14,
+      12,
+      14,
+      15, // Bawah
+      16,
+      17,
+      18,
+      16,
+      18,
+      19, // Kiri
+      20,
+      21,
+      22,
+      20,
+      22,
+      23, // Kanan
     ]);
 
     return { vertices, normals, indices };
-},
-// FUNGSI BARU DARI ANDA: Coons Patch untuk membuat permukaan melengkung
-createSailCoons3D: function (
+  },
+  // FUNGSI BARU DARI ANDA: Coons Patch untuk membuat permukaan melengkung
+  createSailCoons3D: function (
     width = 3,
     height = 2,
     topBulge = 0.35,
@@ -752,7 +800,7 @@ createSailCoons3D: function (
     segU = 32, // Penambahan detail
     segV = 16,
     thickness = 0.12
-) {
+  ) {
     const W = Math.max(1e-6, width);
     const H = Math.max(1e-6, height);
     const U = Math.max(2, segU | 0);
@@ -761,8 +809,8 @@ createSailCoons3D: function (
 
     // Sudut
     const A = [0, 0],
-          B = [0, H],
-          C = [W, 0];
+      B = [0, H],
+      C = [W, 0];
 
     // Helpers
     function bez2(P0, P1, P2, t) {
@@ -778,7 +826,8 @@ createSailCoons3D: function (
     }
 
     // Kontrol kurva batas
-    const vx = C[0] - B[0], vy = C[1] - B[1];
+    const vx = C[0] - B[0],
+      vy = C[1] - B[1];
     const nTop = norm2(+H, +W); // normal chord BC
     var P1_top = [
       0.5 * (B[0] + C[0]) + topBulge * Math.hypot(vx, vy) * nTop[0],
@@ -863,10 +912,20 @@ createSailCoons3D: function (
       for (let k = 0; k < points.length; k++) {
         const [x, y] = points[k];
         vertices.push(x, y, +T, x, y, -T);
-        normals.push(outward2D[0], outward2D[1], 0, outward2D[0], outward2D[1], 0);
+        normals.push(
+          outward2D[0],
+          outward2D[1],
+          0,
+          outward2D[0],
+          outward2D[1],
+          0
+        );
       }
       for (let k = 0; k < points.length - 1; k++) {
-        const a = startIdx + 2 * k, b = a + 1, c = a + 2, d = c + 1;
+        const a = startIdx + 2 * k,
+          b = a + 1,
+          c = a + 2,
+          d = c + 1;
         indices.push(a, c, b, b, c, d);
       }
     }
@@ -892,7 +951,7 @@ createSailCoons3D: function (
       indices: new Uint16Array(indices),
     };
   },
-  
+
   // BARU: FUNGSI UNTUK MEMBUAT BALOK (CUBOID)
   createCuboid: function (width = 1, height = 1, depth = 1) {
     const halfW = width / 2;
@@ -900,44 +959,157 @@ createSailCoons3D: function (
     const halfD = depth / 2;
 
     const p = [
-        [-halfW, -halfH,  halfD], // 0: Depan kiri bawah
-        [ halfW, -halfH,  halfD], // 1: Depan kanan bawah
-        [ halfW,  halfH,  halfD], // 2: Depan kanan atas
-        [-halfW,  halfH,  halfD], // 3: Depan kiri atas
-        [-halfW, -halfH, -halfD], // 4: Belakang kiri bawah
-        [ halfW, -halfH, -halfD], // 5: Belakang kanan bawah
-        [ halfW,  halfH, -halfD], // 6: Belakang kanan atas
-        [-halfW,  halfH, -halfD], // 7: Belakang kiri atas
+      [-halfW, -halfH, halfD], // 0: Depan kiri bawah
+      [halfW, -halfH, halfD], // 1: Depan kanan bawah
+      [halfW, halfH, halfD], // 2: Depan kanan atas
+      [-halfW, halfH, halfD], // 3: Depan kiri atas
+      [-halfW, -halfH, -halfD], // 4: Belakang kiri bawah
+      [halfW, -halfH, -halfD], // 5: Belakang kanan bawah
+      [halfW, halfH, -halfD], // 6: Belakang kanan atas
+      [-halfW, halfH, -halfD], // 7: Belakang kiri atas
     ];
 
     const vertices = new Float32Array([
-        ...p[0], ...p[1], ...p[2], ...p[3], // Depan
-        ...p[5], ...p[4], ...p[7], ...p[6], // Belakang
-        ...p[3], ...p[2], ...p[6], ...p[7], // Atas
-        ...p[4], ...p[5], ...p[1], ...p[0], // Bawah
-        ...p[4], ...p[0], ...p[3], ...p[7], // Kiri
-        ...p[1], ...p[5], ...p[6], ...p[2]  // Kanan
+      ...p[0],
+      ...p[1],
+      ...p[2],
+      ...p[3], // Depan
+      ...p[5],
+      ...p[4],
+      ...p[7],
+      ...p[6], // Belakang
+      ...p[3],
+      ...p[2],
+      ...p[6],
+      ...p[7], // Atas
+      ...p[4],
+      ...p[5],
+      ...p[1],
+      ...p[0], // Bawah
+      ...p[4],
+      ...p[0],
+      ...p[3],
+      ...p[7], // Kiri
+      ...p[1],
+      ...p[5],
+      ...p[6],
+      ...p[2], // Kanan
     ]);
 
     const normals = new Float32Array([
-        0, 0, 1,   0, 0, 1,   0, 0, 1,   0, 0, 1,   // Depan
-        0, 0, -1,  0, 0, -1,  0, 0, -1,  0, 0, -1,  // Belakang
-        0, 1, 0,   0, 1, 0,   0, 1, 0,   0, 1, 0,   // Atas
-        0, -1, 0,  0, -1, 0,  0, -1, 0,  0, -1, 0,  // Bawah
-        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  -1, 0, 0,  // Kiri
-        1, 0, 0,   1, 0, 0,   1, 0, 0,   1, 0, 0    // Kanan
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1, // Depan
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1, // Belakang
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0, // Atas
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0, // Bawah
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      -1,
+      0,
+      0, // Kiri
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0, // Kanan
     ]);
 
     const indices = new Uint16Array([
-        0, 1, 2,   0, 2, 3,    // Depan
-        4, 5, 6,   4, 6, 7,    // Belakang
-        8, 9, 10,  8, 10, 11,   // Atas
-        12, 13, 14, 12, 14, 15,  // Bawah
-        16, 17, 18, 16, 18, 19,  // Kiri
-        20, 21, 22, 20, 22, 23   // Kanan
+      0,
+      1,
+      2,
+      0,
+      2,
+      3, // Depan
+      4,
+      5,
+      6,
+      4,
+      6,
+      7, // Belakang
+      8,
+      9,
+      10,
+      8,
+      10,
+      11, // Atas
+      12,
+      13,
+      14,
+      12,
+      14,
+      15, // Bawah
+      16,
+      17,
+      18,
+      16,
+      18,
+      19, // Kiri
+      20,
+      21,
+      22,
+      20,
+      22,
+      23, // Kanan
     ]);
 
     return { vertices, normals, indices };
-  }
+  },
 };
-
