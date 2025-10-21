@@ -241,7 +241,7 @@
     const finMesh = new Mesh(gl, Primitives.createEllipsoid(0.5, 0.5, 1.2, 24, 24)); // Lebih pipih dan panjang
     
     const leftFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
-    mat4.translate(leftFinNode.localTransform, leftFinNode.localTransform, [-1.1, 0.2, 0.1]); 
+    mat4.translate(leftFinNode.localTransform, leftFinNode.localTransform, [-1.3, 0.2, 0.1]); 
     headNode.addChild(leftFinNode);
     
     // Garis Putih Sirip Kiri
@@ -253,7 +253,7 @@
     leftFinNode.addChild(leftStripeNode);
 
     const rightFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
-    mat4.translate(rightFinNode.localTransform, rightFinNode.localTransform, [1.1, 0.2, 0.1]);
+    mat4.translate(rightFinNode.localTransform, rightFinNode.localTransform, [1.3, 0.2, 0.1]);
     headNode.addChild(rightFinNode);
     
     // Garis Putih Sirip Kanan
