@@ -315,6 +315,7 @@ function createMegaGarchompJaw(gl) {
 // ---------------------------------------------------------
 //  Build Upper Head (gajadi)
 // ---------------------------------------------------------
+
 function createMegaGarchompUpperHead(gl) {
   const darkBlue = [0.25, 0.25, 0.45, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -372,6 +373,7 @@ function createMegaGarchompUpperHead(gl) {
 
   // --- NODES & HIERARCHY ---
   const upperHeadRoot = new SceneNode(null);
+  upperHeadRoot.name = "UpperHead";
 
   const centerRugbyNode = new SceneNode(rugbyMesh, darkBlue);
   const leftRugbyNode = new SceneNode(rugbyMesh, darkBlue);
@@ -774,7 +776,7 @@ function createMegaGarchompUpperHead(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompHead(gl) {
   const headRoot = new SceneNode(null);
-
+  headRoot.name = "HeadRoot";
   // --- UPPER HEAD ---
   const upperHead = (function createMegaGarchompUpperHead(gl) {
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -1185,6 +1187,7 @@ function createMegaGarchompHead(gl) {
     const innerMouthMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
 
     const jawRoot = new SceneNode(null);
+    jawRoot.name = "LowerJaw";
     const jawCenter = new SceneNode(jawBaseMesh, redOrange);
     const leftJawBlock = new SceneNode(jawBaseMesh, redOrange);
     const rightJawBlock = new SceneNode(jawBaseMesh, redOrange);
@@ -1904,42 +1907,51 @@ function createMegaGarchompLeftLeg(gl) {
   const red = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
-  // --- MESHES ---
-  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
-  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32)); // Betis/Telapak atas
+  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32));
+  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32));
   const shinConnectorMesh = new Mesh(
     gl,
     Prm.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
-  ); // Sambungan lutut
-  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)); // Telapak bawah
-  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16)); // Duri baru
+  );
+  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9));
+  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16));
 
-  // --- NODES & HIERARCHY ---
   const legRoot = new SceneNode(null);
+  legRoot.name = "LeftLegRoot"; // ✅ ADD NAME
+
   const thighNode = new SceneNode(thighMesh, darkBlue);
+  thighNode.name = "LeftThigh"; // ✅ ADD NAME
+
   const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
   const shinNode = new SceneNode(shinMesh, darkBlue);
+  shinNode.name = "LeftShin"; // ✅ ADD NAME
+
   const footNode = new SceneNode(footMesh, darkBlue);
+  footNode.name = "LeftFoot"; // ✅ ADD NAME
+
   const thighSpikeNode = new SceneNode(spikeMesh, white);
-  const thighSpikeNode2 = new SceneNode(spikeMesh, white); // Node untuk duri
+  const thighSpikeNode2 = new SceneNode(spikeMesh, white);
   const thighSpikeNode3 = new SceneNode(spikeMesh, redOrange);
   const footSpikeNode = new SceneNode(spikeMesh, white);
   const footSpikeNode2 = new SceneNode(spikeMesh, white);
   const footSpikeNode3 = new SceneNode(spikeMesh, white);
 
+  // ✅ FIX HIERARCHY
   legRoot.addChild(thighNode);
   thighNode.addChild(shinConnectorNode);
   thighNode.addChild(thighSpikeNode);
   thighNode.addChild(thighSpikeNode2);
-  thighNode.addChild(thighSpikeNode3); // Duri menempel di paha
+  thighNode.addChild(thighSpikeNode3);
   shinConnectorNode.addChild(shinNode);
-  legRoot.addChild(footNode);
+
+  // ✅ CRITICAL FIX: Foot must be child of shin, not legRoot!
+  shinNode.addChild(footNode); // ← CHANGED FROM legRoot.addChild(footNode)
+
   footNode.addChild(footSpikeNode);
   footNode.addChild(footSpikeNode2);
   footNode.addChild(footSpikeNode3);
 
-  // --- TRANSFORMATIONS (Anda bisa atur ini) ---
-  // Posisikan paha
+  // Transformations (keep existing)
   mat4.scale(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -1955,9 +1967,8 @@ function createMegaGarchompLeftLeg(gl) {
     thighNode.localTransform,
     Math.PI / 6,
     [-1, 0, 1]
-  ); // Sedikit miring keluar
+  );
 
-  // Posisikan sambungan lutut relatif terhadap paha
   mat4.translate(
     shinConnectorNode.localTransform,
     shinConnectorNode.localTransform,
@@ -1975,7 +1986,6 @@ function createMegaGarchompLeftLeg(gl) {
     [1, 1, 0.75]
   );
 
-  // Posisikan betis relatif terhadap sambungan lutut
   mat4.translate(
     shinNode.localTransform,
     shinNode.localTransform,
@@ -1983,21 +1993,15 @@ function createMegaGarchompLeftLeg(gl) {
   );
   mat4.scale(shinNode.localTransform, shinNode.localTransform, [0.8, 0.4, 1.2]);
 
-  // Posisikan telapak bawah relatif terhadap betis
+  // ✅ FIX: Foot position now relative to shin, not legRoot
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
-    [1.6, -1.7, -0.4]
-  );
+    [0, -0.5, -0.2]
+  ); // ADJUSTED
   mat4.scale(footNode.localTransform, footNode.localTransform, [1.2, 1, 1]);
-  mat4.rotate(
-    footNode.localTransform,
-    footNode.localTransform,
-    -Math.PI / 6,
-    [0, 0, 0]
-  );
 
-  // Transformasi untuk duri paha
+  // Spike transforms (keep existing)
   mat4.translate(
     thighSpikeNode.localTransform,
     thighSpikeNode.localTransform,
@@ -2013,9 +2017,8 @@ function createMegaGarchompLeftLeg(gl) {
     thighSpikeNode.localTransform,
     thighSpikeNode.localTransform,
     [0.4, 0.4, 0.7]
-  ); // Sedikit gepeng
+  );
 
-  // Transformasi untuk duri paha
   mat4.translate(
     thighSpikeNode2.localTransform,
     thighSpikeNode2.localTransform,
@@ -2031,77 +2034,82 @@ function createMegaGarchompLeftLeg(gl) {
     thighSpikeNode2.localTransform,
     thighSpikeNode2.localTransform,
     [0.4, 0.4, 0.7]
-  ); // Sedikit gepeng
+  );
 
-  // Transformasi untuk duri paha
   mat4.translate(
     thighSpikeNode3.localTransform,
     thighSpikeNode3.localTransform,
     [0, -0.93, 0.2]
-  ); // Posisi diatur lebih rendah
+  );
   mat4.rotate(
     thighSpikeNode3.localTransform,
     thighSpikeNode3.localTransform,
     Math.PI / 1.2,
     [1, 0, 0]
-  ); // Diputar 180 derajat agar menghadap ke bawah
+  );
   mat4.scale(
     thighSpikeNode3.localTransform,
     thighSpikeNode3.localTransform,
     [0.7, 0.7, 1]
-  ); // Sedikit gepeng
+  );
 
-  // Transformasi untuk duri kaki
   mat4.translate(
     footSpikeNode.localTransform,
     footSpikeNode.localTransform,
     [0.2, -0.01, 0.8]
-  ); // Posisi disesuaikan agar pas di depan
+  );
   mat4.rotate(
     footSpikeNode.localTransform,
     footSpikeNode.localTransform,
     -Math.PI / 2,
     [-1, 0, 0]
-  ); // Diputar -90 derajat pada sumbu X
+  );
   mat4.scale(
     footSpikeNode.localTransform,
     footSpikeNode.localTransform,
     [0.8, 1, 0.8]
-  ); // Sedikit gepeng
-  // Transformasi untuk duri kaki
+  );
+
   mat4.translate(
     footSpikeNode2.localTransform,
     footSpikeNode2.localTransform,
     [-0.01, -0.01, 0.8]
-  ); // Posisi disesuaikan agar pas di depan
+  );
   mat4.rotate(
     footSpikeNode2.localTransform,
     footSpikeNode2.localTransform,
     -Math.PI / 2,
     [-1, 0, 0]
-  ); // Diputar -90 derajat pada sumbu X
+  );
   mat4.scale(
     footSpikeNode2.localTransform,
     footSpikeNode2.localTransform,
     [0.8, 1, 0.8]
-  ); // Sedikit gepeng
-  // Transformasi untuk duri kaki
+  );
+
   mat4.translate(
     footSpikeNode3.localTransform,
     footSpikeNode3.localTransform,
     [-0.2, -0.01, 0.8]
-  ); // Posisi disesuaikan agar pas di depan
+  );
   mat4.rotate(
     footSpikeNode3.localTransform,
     footSpikeNode3.localTransform,
     -Math.PI / 2,
     [-1, 0, 0]
-  ); // Diputar -90 derajat pada sumbu X
+  );
   mat4.scale(
     footSpikeNode3.localTransform,
     footSpikeNode3.localTransform,
     [0.8, 1, 0.8]
-  ); // Sedikit gepeng
+  );
+
+  // ✅ EXPORT joints for animator
+  legRoot.joints = {
+    thigh: thighNode,
+    shin: shinNode,
+    foot: footNode,
+  };
 
   return legRoot;
 }
@@ -2110,27 +2118,31 @@ function createMegaGarchompLeftLeg(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompRightLeg(gl) {
   const darkBlue = [0.25, 0.25, 0.45, 1.0];
-  const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
-  const red = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
-  // --- MESHES ---
-  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32)); // Paha
-  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32)); // Betis/Telapak atas
+  const thighMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.8, 0.5, 32, 32));
+  const shinMesh = new Mesh(gl, Prm.createEllipsoid(0.5, 0.5, 0.5, 32, 32));
   const shinConnectorMesh = new Mesh(
     gl,
     Prm.createHyperboloidOneSheet(0.3, 0.3, 0.5, 0.4, 16, 16)
-  ); // Sambungan lutut
-  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9)); // Telapak bawah
-  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16)); // Duri
+  );
+  const footMesh = new Mesh(gl, Prm.createTrapezoidalPrism(0.8, 0.6, 0.3, 0.9));
+  const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16));
 
-  // --- NODES & HIERARCHY ---
   const legRoot = new SceneNode(null);
+  legRoot.name = "RightLegRoot"; // ✅ ADD NAME
+
   const thighNode = new SceneNode(thighMesh, darkBlue);
+  thighNode.name = "RightThigh"; // ✅ ADD NAME
+
   const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
   const shinNode = new SceneNode(shinMesh, darkBlue);
+  shinNode.name = "RightShin"; // ✅ ADD NAME
+
   const footNode = new SceneNode(footMesh, darkBlue);
+  footNode.name = "RightFoot"; // ✅ ADD NAME
+
   const thighSpikeNode = new SceneNode(spikeMesh, white);
   const thighSpikeNode2 = new SceneNode(spikeMesh, white);
   const thighSpikeNode3 = new SceneNode(spikeMesh, redOrange);
@@ -2138,19 +2150,22 @@ function createMegaGarchompRightLeg(gl) {
   const footSpikeNode2 = new SceneNode(spikeMesh, white);
   const footSpikeNode3 = new SceneNode(spikeMesh, white);
 
+  // ✅ FIX HIERARCHY
   legRoot.addChild(thighNode);
   thighNode.addChild(shinConnectorNode);
   thighNode.addChild(thighSpikeNode);
   thighNode.addChild(thighSpikeNode2);
   thighNode.addChild(thighSpikeNode3);
   shinConnectorNode.addChild(shinNode);
-  legRoot.addChild(footNode);
+
+  // ✅ CRITICAL FIX
+  shinNode.addChild(footNode); // ← CHANGED FROM legRoot.addChild(footNode)
+
   footNode.addChild(footSpikeNode);
   footNode.addChild(footSpikeNode2);
   footNode.addChild(footSpikeNode3);
 
-  // --- TRANSFORMATIONS ---
-  // Posisikan paha (mirror ke sisi kanan → ubah x jadi negatif)
+  // Transformations (mirrored from left leg)
   mat4.scale(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -2166,9 +2181,8 @@ function createMegaGarchompRightLeg(gl) {
     thighNode.localTransform,
     Math.PI / 6,
     [-1, 0, -1]
-  ); // arah miring dibalik
+  );
 
-  // Posisikan sambungan lutut relatif terhadap paha
   mat4.translate(
     shinConnectorNode.localTransform,
     shinConnectorNode.localTransform,
@@ -2186,7 +2200,6 @@ function createMegaGarchompRightLeg(gl) {
     [1, 1, 0.75]
   );
 
-  // Posisikan betis relatif terhadap sambungan lutut
   mat4.translate(
     shinNode.localTransform,
     shinNode.localTransform,
@@ -2194,21 +2207,15 @@ function createMegaGarchompRightLeg(gl) {
   );
   mat4.scale(shinNode.localTransform, shinNode.localTransform, [0.8, 0.4, 1.2]);
 
-  // Posisikan telapak bawah (mirror pada sumbu X)
+  // ✅ FIX: Foot position now relative to shin
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
-    [-1.1, -3.5, -0.4]
-  );
+    [0, -0.5, -0.2]
+  ); // ADJUSTED
   mat4.scale(footNode.localTransform, footNode.localTransform, [1.2, 1, 1]);
-  mat4.rotate(
-    footNode.localTransform,
-    footNode.localTransform,
-    Math.PI / 6,
-    [0, 0, 0]
-  );
 
-  // Transformasi duri paha (mirror posisi x)
+  // Spike transforms (mirrored)
   mat4.translate(
     thighSpikeNode.localTransform,
     thighSpikeNode.localTransform,
@@ -2260,7 +2267,6 @@ function createMegaGarchompRightLeg(gl) {
     [0.7, 0.7, 1]
   );
 
-  // Duri kaki (mirror posisi x)
   mat4.translate(
     footSpikeNode.localTransform,
     footSpikeNode.localTransform,
@@ -2311,6 +2317,13 @@ function createMegaGarchompRightLeg(gl) {
     footSpikeNode3.localTransform,
     [0.8, 1, 0.8]
   );
+
+  // ✅ EXPORT joints
+  legRoot.joints = {
+    thigh: thighNode,
+    shin: shinNode,
+    foot: footNode,
+  };
 
   return legRoot;
 }
@@ -2717,39 +2730,72 @@ function createMegaGarchompLeftArm(gl) {
 function createMegaGarchomp(gl) {
   const torso = createMegaGarchompTorso(gl);
   const tail = createMegaGarchompTail(gl);
-  const leftLeg = createMegaGarchompLeftLeg(gl); // Buat kaki kiri
+  const leftLeg = createMegaGarchompLeftLeg(gl);
   const rightLeg = createMegaGarchompRightLeg(gl);
   const DorsalFin = createDorsalFin(gl);
-  const rightarm = createMegaGarchompRightArm(gl);
-  const leftarm = createMegaGarchompLeftArm(gl);
+  const rightArm = createMegaGarchompRightArm(gl);
+  const leftArm = createMegaGarchompLeftArm(gl);
   const neck = createMegaGarchompNeck(gl);
-  //   const upperHead = createMegaGarchompUpperHead(gl);
-  //   const jaw = createMegaGarchompJaw(gl);
   const head = createMegaGarchompHead(gl);
-  //   neck.addChild(jaw);
-  //   neck.addChild(upperHead);
+
+  // Build hierarchy
   neck.addChild(head);
   torso.addChild(DorsalFin);
   torso.addChild(tail);
-  torso.addChild(rightarm);
-  torso.addChild(leftarm);
+  torso.addChild(rightArm);
+  torso.addChild(leftArm);
   torso.addChild(neck);
+  torso.addChild(leftLeg);
+  torso.addChild(rightLeg);
+
+  // Transformations
   mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
   mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
-
-  // Tempelkan kaki kiri ke torso
-  torso.addChild(leftLeg);
   mat4.translate(
     leftLeg.localTransform,
     leftLeg.localTransform,
     [-0.5, -1.8, 0]
-  ); // Atur posisi pangkal paha
-  torso.addChild(rightLeg);
+  );
   mat4.translate(
     rightLeg.localTransform,
-    leftLeg.localTransform,
-    [0.5, 1.8, 0]
+    rightLeg.localTransform,
+    [0.5, -1.8, 0]
   );
+
+  // ============================================================
+  // ✅ COMPLETE ANIMATION RIG EXPORT
+  // ============================================================
+
+  torso.name = "MEGA_GARCHOMP";
+  torso.animationRig = {
+    // Core body
+    torso: torso,
+    neck: neck,
+    head: head,
+
+    // Arms (for attack animation)
+    leftArm: leftArm,
+    rightArm: rightArm,
+
+    // Legs with joints (for prowl animation)
+    leftLeg: leftLeg,
+    rightLeg: rightLeg,
+    leftThigh: leftLeg.joints.thigh,
+    leftShin: leftLeg.joints.shin,
+    leftFoot: leftLeg.joints.foot,
+    rightThigh: rightLeg.joints.thigh,
+    rightShin: rightLeg.joints.shin,
+    rightFoot: rightLeg.joints.foot,
+
+    // Tail
+    tail: tail,
+
+    // Dorsal fin
+    dorsalFin: DorsalFin,
+
+    // ✅ JAW (CRITICAL for roar!)
+    jaw: head.children.find((child) => child.name === "LowerJaw"),
+  };
 
   return torso;
 }

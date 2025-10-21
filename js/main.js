@@ -645,35 +645,37 @@ function main() {
   }
 
   if (window.createMegaGarchomp) {
-    const megaGarchompNode = window.createMegaGarchomp(gl);
-    megaGarchompNode.name = "MEGA_GARCHOMP";
+    const megaNode = window.createMegaGarchomp(gl);
+    megaNode.name = "MEGA_GARCHOMP";
 
-    // Posisi di Island C
-    mat4.translate(
-      megaGarchompNode.localTransform,
-      megaGarchompNode.localTransform,
-      [ISLAND_CONFIG[2].position[0] - 20, -6.5, -130]
-    );
+    const megaAnimator = new MegaGarchompAnimator(megaNode, {
+      startPos: [
+        ISLAND_CONFIG[2].position[0],
+        -1,
+        ISLAND_CONFIG[2].position[2] + 5,
+      ],
+      endPos: [
+        ISLAND_CONFIG[2].position[0],
+        -1,
+        ISLAND_CONFIG[2].position[2] - 8,
+      ],
+      startRotation: Math.PI,
 
-    // Scale lebih besar dari Garchomp biasa
-    mat4.scale(
-      megaGarchompNode.localTransform,
-      megaGarchompNode.localTransform,
-      [1.5, 1.5, 1.5]
-    );
+      // Custom timing (slower, more aggressive)
+      prowlDuration: 4.5,
+      idleDuration: 3.0,
+      attackDuration: 2.5,
+      roarDuration: 3.5,
+      turnDuration: 1.2,
+    });
 
-    mat4.rotateY(
-      megaGarchompNode.localTransform,
-      megaGarchompNode.localTransform,
-      Math.PI / 5
-    );
-
-    // Push tanpa animator
     pokemons.push({
-      node: megaGarchompNode,
-      animator: null,
+      node: megaNode,
+      animator: megaAnimator,
       islandIndex: 2,
     });
+
+    console.log("✅ Mega Garchomp loaded on Island C");
   }
 
   // ===== INITIALIZE =====
