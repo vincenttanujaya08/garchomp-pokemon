@@ -71,7 +71,7 @@ function main() {
   // --- PERBAIKAN ---
   // 1. Posisi kamera diatur agar lebih dekat dan sedikit lebih tinggi
   //    Ini memberikan sudut pandang yang lebih baik untuk model torso.
-  const cameraPosition = [0, 2, 10];
+  const cameraPosition = [0, 2, -10];
   const viewMatrix = mat4.create();
   // 2. Kamera melihat sedikit ke bawah (ke arah Y = -1),
   //    yang merupakan pusat dari torso kita.

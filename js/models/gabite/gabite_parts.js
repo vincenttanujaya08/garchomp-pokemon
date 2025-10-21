@@ -50,6 +50,38 @@
     mat4.scale(tailNode.localTransform, tailNode.localTransform, [1, 1, 1]);
     bodyRoot.addChild(tailNode);
 
+    const finShapePoints2D = [
+      [2.8, 0.27], [0.68, 1.61], [1.56, 2.55], [2.32, 3.31],
+      [3.04, 3.87], [3.78, 4.39], [4.4, 4.81], 
+      [5.16, 5.13], [6.02, 5.49], [5.66, 4.45], [4.7, 2.57],
+      [3.66, 0.63], [3.06, 0.9], [4.1, 1.9], [3, -0.1]
+    ];
+
+    // Menentukan pusat dan skala agar sesuai dengan model
+    const centerX = 3.35;
+    const centerZ = 2.75;
+    const scale = 0.6;
+
+    // Proses koordinat: ubah ke 3D (XZ), pusatkan, dan skalakan
+    const processedPoints = finShapePoints2D.map(p => [
+        (p[0] - centerX) * scale,
+        0,
+        (p[1] - centerZ) * scale
+    ]);
+
+    // Buat geometri 3D dengan mengekstrusi bentuk 2D
+    const finGeom = Primitives.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95); // Ketebalan 0.25
+    const finMesh = new Mesh(gl, finGeom);
+    
+    const fintailNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+    mat4.translate(fintailNode.localTransform, fintailNode.localTransform, [0, -2, 3.5]);
+    mat4.rotate(fintailNode.localTransform, fintailNode.localTransform, 1.56, [0, 0, 1]);
+    mat4.rotate(fintailNode.localTransform, fintailNode.localTransform, 1, [0, -1, 0]);
+    // Skala dengan flip horizontal pada sumbu X
+    mat4.scale(fintailNode.localTransform, fintailNode.localTransform, [0.5, 0.5, -0.5]);
+
+    tailNode.addChild(fintailNode);
+
     // --- KAKI LENGKAP ---
     const leftLeg = createGabiteLeg(gl);
     mat4.translate(leftLeg.localTransform, leftLeg.localTransform, [-1.2, -3.2, 0.3]);
@@ -324,7 +356,7 @@
       mat4.rotate(irisNode.localTransform, irisNode.localTransform, Math.PI / 2, [0, 0, 1]);
       mat4.rotate(irisNode.localTransform, irisNode.localTransform, Math.PI / 2, [1, 0, 0]);
       mat4.scale(irisNode.localTransform, irisNode.localTransform, [1.0, 1.0, 0.5]);
-      mat4.translate(irisNode.localTransform, irisNode.localTransform, [0, 0, 0.04]);
+      mat4.translate(irisNode.localTransform, irisNode.localTransform, [0, -0.03, 0]);
       eyeRoot.addChild(irisNode);
 
       // Pupil vertikal
@@ -338,11 +370,11 @@
       const yawOut = side * 1.2;          // ~69°: arahkan normal ke samping-depan
       const pitch = -Math.PI / 18;        // ~10°: sedikit miring ke belakang
       const roll = -side * (Math.PI / 8); // bentuk almond condong
-      mat4.translate(eyeRoot.localTransform, eyeRoot.localTransform, [side * 0.85, -0.02, -0.80]);
+      mat4.translate(eyeRoot.localTransform, eyeRoot.localTransform, [side * 0.81, -0.02, -0.80]);
       // Arahkan +Z mata ke arah normal lokal permukaan kepala
-      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, yawOut, [0, 1, 0]);
+      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, yawOut, [0, -1, 0]);
       mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, pitch, [1, 0, 0]);
-      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, roll, [0, 0, 1]);
+      mat4.rotate(eyeRoot.localTransform, eyeRoot.localTransform, roll, [0, 0, -1]);
 
       return eyeRoot;
     }
