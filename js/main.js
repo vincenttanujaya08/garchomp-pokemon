@@ -651,12 +651,12 @@ function main() {
     const megaAnimator = new MegaGarchompAnimator(megaNode, {
       startPos: [
         ISLAND_CONFIG[2].position[0],
-        -1,
+        -8,
         ISLAND_CONFIG[2].position[2] + 5,
       ],
       endPos: [
         ISLAND_CONFIG[2].position[0],
-        -1,
+        -8,
         ISLAND_CONFIG[2].position[2] - 8,
       ],
       startRotation: Math.PI,
