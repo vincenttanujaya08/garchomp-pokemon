@@ -2445,12 +2445,10 @@ function createDorsalFin(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompRightArm(gl) {
   const darkBlue = [0.25, 0.25, 0.45, 1.0];
-  const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
-  const redOrange = [0.8, 0.15, 0.1, 1.0];
 
   // --- MESHES ---
-  // NEW: Define path and profile for a curved upper arm (mirrored)
+  // Lengan atas melengkung (di-mirror dari lengan kiri)
   const armProfile = [];
   const armRadius = 0.3;
   const armSides = 16;
@@ -2459,180 +2457,72 @@ function createMegaGarchompRightArm(gl) {
     armProfile.push([Math.cos(angle) * armRadius, Math.sin(angle) * armRadius]);
   }
 
+  // Path di-mirror pada sumbu X
   const arm_p0 = [0, 0, 0];
-  const arm_p1 = [-0.1, -0.4, 0]; // Mirrored X
-  const arm_p2 = [-0.1, -1.0, 0]; // Mirrored X
-  const arm_p3 = [-0.2, -1.5, 0]; // Mirrored X
+  const arm_p1 = [-0.1, -0.4, 0]; // X dinegatifkan
+  const arm_p2 = [-0.1, -1.0, 0]; // X dinegatifkan
+  const arm_p3 = [-0.2, -1.5, 0]; // X dinegatifkan
   const armPath = [];
   const armSegments = 10;
   for (let i = 0; i <= armSegments; i++) {
     const t = i / armSegments;
     armPath.push(Curves.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
   }
-  const upperArmMesh = new Mesh(
-    gl,
-    Curves.createSweptSurface(armProfile, armPath, true)
-  );
+  const upperArmMesh = new Mesh(gl, Curves.createSweptSurface(armProfile, armPath, true));
+  const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
+  const forearmMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
+  const wristJointMesh = new Mesh(gl, Primitives.createEllipsoid(0.26, 0.1, 0.3, 16, 16));
 
-  const elbowMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16)
-  );
-  const connectorMesh = new Mesh(
-    gl,
-    Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16)
-  );
-
-  // --- Implementasi Scythe Baru ---
-  // 1. Profil "geprek" (elliptical) untuk bentuk sabit BIRU (DALAM)
-  const innerScytheProfile = [];
-  const profileRadiusX = 0.2; // Lebar penampang
-  const profileRadiusY = 1; // Ketebalan penampang (tipis)
-  const profileSides = 16;
-  for (let i = 0; i <= profileSides; i++) {
-    const angle = (i / profileSides) * 2 * Math.PI;
-    innerScytheProfile.push([
-      Math.cos(angle) * profileRadiusX,
-      Math.sin(angle) * profileRadiusY,
-    ]);
-  }
-
-  // BARU: Profil untuk sabit MERAH (LUAR) yang lebih besar
-  const outerScytheProfile = [];
-  const outerProfileRadiusX = profileRadiusX * 1.2; // Dibuat lebih lebar (dari 1.1 menjadi 1.2)
-  const outerProfileRadiusY = profileRadiusY * 1.2; // Dibuat lebih tebal (dari 1.1 menjadi 1.2)
-  for (let i = 0; i <= profileSides; i++) {
-    const angle = (i / profileSides) * 2 * Math.PI;
-    outerScytheProfile.push([
-      Math.cos(angle) * outerProfileRadiusX,
-      Math.sin(angle) * outerProfileRadiusY,
-    ]);
-  }
-
-  // 2. Jalur kurva Bezier untuk membentuk bulan sabit (digunakan oleh kedua scythe)
-  const scythePath = [];
-  const scytheSegments = 20; // Jumlah segmen untuk kehalusan
-  const p0 = [0, 0, 0]; // Titik awal di pergelangan
-  const p1 = [-1.5, -0.5, 0]; // Titik kontrol 1
-  const p2 = [-2.5, -2.5, 0]; // Titik kontrol 2
-  const p3 = [-1.0, -4.0, 0]; // Titik ujung sabit
-  for (let i = 0; i <= scytheSegments; i++) {
-    const t = i / scytheSegments;
-    scythePath.push(Curves.getBezierPoint(t, p0, p1, p2, p3));
-  }
-
-  // 3. Faktor skala (kecil -> besar -> kecil)
-  const scaleFactors = [];
-  for (let i = 0; i <= scytheSegments; i++) {
-    const t = i / scytheSegments;
-    // Math.sin(t * Math.PI) menghasilkan kurva 0 -> 1 -> 0, sempurna untuk efek ini
-    const bulge = Math.sin(t * Math.PI);
-    // 0.1 adalah skala minimum di ujung, 0.9 adalah seberapa besar puncaknya
-    scaleFactors.push(0.01 + bulge * 0.9);
-  }
-
-  const innerScytheMesh = new Mesh(
-    gl,
-    Curves.createTaperedSweptSurface(
-      innerScytheProfile,
-      scythePath,
-      scaleFactors,
-      true
-    )
-  );
-  const outerScytheMesh = new Mesh(
-    gl,
-    Curves.createTaperedSweptSurface(
-      outerScytheProfile,
-      scythePath,
-      scaleFactors,
-      true
-    )
-  );
+  // Geometri sirip sama dengan tangan kiri
+  const finW = 0.6, finH = 0.7, topBulge = 0.12, bottomBulge = 0.18, leftBulge = 0.1;
+  const finSegU = 24, finSegV = 10, finT = 0.2;
+  const finGeom = Primitives.createSailCoons3D(finW, finH, topBulge, bottomBulge, leftBulge, finSegU, finSegV, finT);
+  const finMesh = new Mesh(gl, finGeom);
 
   // --- NODES & HIERARCHY ---
   const armRoot = new SceneNode(null);
   const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
   const elbowNode = new SceneNode(elbowMesh, darkBlue);
-  const connectorNode = new SceneNode(connectorMesh, darkBlue);
-  const outerScytheNode = new SceneNode(outerScytheMesh, redOrange); // Sabit luar berwarna MERAH
-  const innerScytheNode = new SceneNode(innerScytheMesh, darkBlue); // Sabit dalam berwarna BIRU
+  const rightFore = new SceneNode(forearmMesh, darkBlue);
+  const wristJointNode = new SceneNode(wristJointMesh, darkBlue);
+  const rightFin = new SceneNode(finMesh, darkBlue);
+  const finInnerNode = new SceneNode(finMesh, red);
 
   armRoot.addChild(upperArmNode);
   upperArmNode.addChild(elbowNode);
-  elbowNode.addChild(connectorNode);
-  // connectorNode.addChild(outerScytheNode); // Sambungkan sabit luar ke connector
-  // connectorNode.addChild(innerScytheNode); // Sambungkan sabit dalam ke sabit luar
+  elbowNode.addChild(rightFore);
+  rightFore.addChild(wristJointNode);
+  wristJointNode.addChild(rightFin);
+  wristJointNode.addChild(finInnerNode);
 
-  // --- TRANSFORMATIONS (Mirrored) ---
-  // Upper Arm
-  mat4.translate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    [1, 1, 0]
-  );
-  mat4.rotate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    Math.PI / 3.6,
-    [0, 0, 1]
-  ); // Mirror Z rotation
-  mat4.rotate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    Math.PI / 8,
-    [0, 1, 0]
-  ); // Mirror Y rotation
-  mat4.scale(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    [0.7, 0.7, 0.7]
-  );
-
-  // Elbow is positioned at the end point of the mirrored Bezier curve (p3)
+  // --- TRANSFORMATIONS (MIRRORED) ---
+  // Lengan atas di-mirror
+  mat4.translate(upperArmNode.localTransform, upperArmNode.localTransform, [1, 1, 0]); // X positif
+  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 3.6, [0, 0, 1]); // Rotasi Z dibalik
+  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, Math.PI / 8, [0, 1, 0]); // Rotasi Y dibalik
+  mat4.scale(upperArmNode.localTransform, upperArmNode.localTransform, [0.7, 0.7, 0.7]);
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
-  // Connector
-  mat4.translate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [-0, 0, 0.8]
-  );
-  mat4.rotate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    -Math.PI / 5,
-    [0, 0, 1]
-  );
-  mat4.rotate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    -Math.PI / 2,
-    [1, 0, 0]
-  ); // Mirror Z rotation
-  mat4.scale(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [0.8, 2.5, 1]
-  );
+  // Lengan bawah di-mirror
+  mat4.translate(rightFore.localTransform, rightFore.localTransform, [0, 0, 0.8]);
+  mat4.rotate(rightFore.localTransform, rightFore.localTransform, -Math.PI / 6, [0, 0, 1]); // Rotasi Z dibalik
+  mat4.rotate(rightFore.localTransform, rightFore.localTransform, -Math.PI / 2, [1, 0, 0]);
+  mat4.scale(rightFore.localTransform, rightFore.localTransform, [0.8, 2.5, 1]);
 
-  // // Atur posisi dan orientasi sabit LUAR (MERAH)
-  // mat4.translate(outerScytheNode.localTransform, outerScytheNode.localTransform, [0.2, -0.1, -1.5]);
-  // mat4.rotate(outerScytheNode.localTransform, outerScytheNode.localTransform, -Math.PI / 2.2, [1, 0, 0]);
-  // mat4.rotate(outerScytheNode.localTransform, outerScytheNode.localTransform, Math.PI / 10, [0, -1, 0]);
+  // Sendi pergelangan tangan (posisi sama secara lokal)
+  mat4.translate(wristJointNode.localTransform, wristJointNode.localTransform, [0, -0.25, 0]);
 
-  // // PERBAIKAN: Dibuat geprek ke samping (sumbu X) dan sedikit lebih besar dari sabit biru
-  // mat4.scale(outerScytheNode.localTransform, outerScytheNode.localTransform, [0.3, 1, 1]);
+  // Sirip luar di-mirror
+  mat4.translate(rightFin.localTransform, rightFin.localTransform, [0, 0, 0]);
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -4 , [0, 1, 0]); // Rotasi Y dibalik
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -2 , [0, 0, -1]); // Rotasi Z dibalik
+  mat4.scale(rightFin.localTransform, rightFin.localTransform, [-2.5, 2, 0.9]); // Skala X dinegatifkan untuk mirror sempurna
 
-  // // ====================================================================================================================
-
-  //     // Atur posisi dan orientasi sabit DALAM (BIRU)
-  // mat4.translate(innerScytheNode.localTransform, innerScytheNode.localTransform, [1, 0.2, -0.9]);
-  // mat4.rotate(innerScytheNode.localTransform, innerScytheNode.localTransform, -Math.PI / 2.2, [1, 0, 0]);
-  // mat4.rotate(innerScytheNode.localTransform, innerScytheNode.localTransform, Math.PI / 10, [0, -1, 0]);
-
-  // // Terapkan skala normal untuk sabit BIRU (tidak geprek)
-  // mat4.scale(innerScytheNode.localTransform, innerScytheNode.localTransform, [0.8, 0.8, 0.8]);
+  // Sirip dalam (merah) di-mirror
+  mat4.translate(finInnerNode.localTransform, finInnerNode.localTransform, [0, 0.23, 0]);
+  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, -4 , [0, 1, 0]); // Rotasi Y dibalik
+  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, -2 , [0, 0, -1]); // Rotasi Z dibalik
+  mat4.scale(finInnerNode.localTransform, finInnerNode.localTransform, [-3.2, 3.2, 0.1]); // Skala X dinegatifkan
 
   return armRoot;
 }
@@ -2641,12 +2531,11 @@ function createMegaGarchompRightArm(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompLeftArm(gl) {
   const darkBlue = [0.25, 0.25, 0.45, 1.0];
-  const lightBlue = [0.6, 0.6, 1.0, 1.0];
+  const white = [0.9, 0.9, 0.9, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
-  const redOrange = [0.8, 0.15, 0.1, 1.0];
 
   // --- MESHES ---
-  // Lengan atas melengkung
+  // Lengan atas melengkung (dipertahankan dari kode lama)
   const armProfile = [];
   const armRadius = 0.3;
   const armSides = 16;
@@ -2656,93 +2545,82 @@ function createMegaGarchompLeftArm(gl) {
   }
 
   const arm_p0 = [0, 0, 0];
-  const arm_p1 = [0.1, -0.4, 0]; // Non-mirrored X
-  const arm_p2 = [0.1, -1.0, 0]; // Non-mirrored X
-  const arm_p3 = [0.2, -1.5, 0]; // Non-mirrored X
+  const arm_p1 = [0.1, -0.4, 0];
+  const arm_p2 = [0.1, -1.0, 0];
+  const arm_p3 = [0.2, -1.5, 0];
   const armPath = [];
   const armSegments = 10;
   for (let i = 0; i <= armSegments; i++) {
     const t = i / armSegments;
     armPath.push(Curves.getBezierPoint(t, arm_p0, arm_p1, arm_p2, arm_p3));
   }
-  const upperArmMesh = new Mesh(
-    gl,
-    Curves.createSweptSurface(armProfile, armPath, true)
-  );
+  const upperArmMesh = new Mesh(gl, Curves.createSweptSurface(armProfile, armPath, true));
+  const elbowMesh = new Mesh(gl, Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16));
+  const forearmMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16));
 
-  const elbowMesh = new Mesh(
-    gl,
-    Primitives.createEllipsoid(0.4, 0.25, 0.35, 16, 16)
-  );
-  const connectorMesh = new Mesh(
-    gl,
-    Primitives.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16)
-  );
+  // BARU: Mesh untuk sendi pergelangan tangan
+  const wristJointMesh = new Mesh(gl, Primitives.createEllipsoid(0.26, 0.1, 0.3, 16, 16));
+
+  // --- Geometri Sirip/Tangan Baru dari Snippet Anda ---
+  const finW = 0.6, finH = 0.7, topBulge = 0.12, bottomBulge = 0.18, leftBulge = 0.1;
+  const finSegU = 24, finSegV = 10, finT = 0.2;
+  const finGeom = Primitives.createSailCoons3D(finW, finH, topBulge, bottomBulge, leftBulge, finSegU, finSegV, finT);
+  const finMesh = new Mesh(gl, finGeom);
 
   // --- NODES & HIERARCHY ---
   const armRoot = new SceneNode(null);
   const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
   const elbowNode = new SceneNode(elbowMesh, darkBlue);
-  const connectorNode = new SceneNode(connectorMesh, darkBlue);
+  const leftFore = new SceneNode(forearmMesh, darkBlue);
+  
+  // BARU: Node untuk sendi
+  const wristJointNode = new SceneNode(wristJointMesh, darkBlue);
+  
+  const leftFin = new SceneNode(finMesh, darkBlue);
+  const finInnerNode = new SceneNode(finMesh, red);
 
   armRoot.addChild(upperArmNode);
   upperArmNode.addChild(elbowNode);
-  elbowNode.addChild(connectorNode);
+  elbowNode.addChild(leftFore);
+  
+  // BARU: Hirarki diperbarui untuk menyertakan sendi
+  leftFore.addChild(wristJointNode);
+  wristJointNode.addChild(leftFin);
+  wristJointNode.addChild(finInnerNode);
 
   // --- TRANSFORMATIONS ---
-  // Upper Arm
-  mat4.translate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    [-1, 1, 0]
-  ); // Mirrored translate
-  mat4.rotate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    -Math.PI / 3.6,
-    [0, 0, 1]
-  ); // Mirrored Z rotation
-  mat4.rotate(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    -Math.PI / 8,
-    [0, 1, 0]
-  ); // Mirrored Y rotation
-  mat4.scale(
-    upperArmNode.localTransform,
-    upperArmNode.localTransform,
-    [0.7, 0.7, 0.7]
-  );
-
-  // Elbow
+  // Transformasi Lengan Atas & Siku (dipertahankan dari kode lama)
+  mat4.translate(upperArmNode.localTransform, upperArmNode.localTransform, [-1, 1, 0]);
+  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, -Math.PI / 3.6, [0, 0, 1]);
+  mat4.rotate(upperArmNode.localTransform, upperArmNode.localTransform, -Math.PI / 8, [0, 1, 0]);
+  mat4.scale(upperArmNode.localTransform, upperArmNode.localTransform, [0.7, 0.7, 0.7]);
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
-  // Connector
-  mat4.translate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [0, 0, 0.8]
-  );
-  mat4.rotate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    Math.PI / 6,
-    [0, 0, 1]
-  ); // Mirrored Z rotation
-  mat4.rotate(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    -Math.PI / 2,
-    [1, 0, 0]
-  );
-  mat4.scale(
-    connectorNode.localTransform,
-    connectorNode.localTransform,
-    [0.8, 2.5, 1]
-  );
+  // Transformasi Lengan Bawah (dipertahankan dari kode lama)
+  mat4.translate(leftFore.localTransform, leftFore.localTransform, [0, 0, 0.8]);
+  mat4.rotate(leftFore.localTransform, leftFore.localTransform, Math.PI / 6, [0, 0, 1]);
+  mat4.rotate(leftFore.localTransform, leftFore.localTransform, -Math.PI / 2, [1, 0, 0]);
+  mat4.scale(leftFore.localTransform, leftFore.localTransform, [0.8, 2.5, 1]);
 
+  // BARU: Transformasi untuk sendi pergelangan tangan (ellipsoid)
+  // Posisikan di ujung lengan bawah (hyperboloid).
+  // Tinggi hyperboloid adalah 0.5, jadi ujung bawahnya di y = -0.25 dalam koordinat lokalnya.
+  mat4.translate(wristJointNode.localTransform, wristJointNode.localTransform, [0, -0.25, 0]);
+
+  // --- Transformasi untuk Fin/Tangan, sekarang relatif terhadap sendi ---
+  // Translasi diatur agar sabit muncul sedikit ke depan dari pusat sendi.
+  mat4.translate(leftFin.localTransform, leftFin.localTransform, [0, 0, 0]);
+  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 4 , [0, 1, 0]);
+  mat4.rotate(leftFin.localTransform, leftFin.localTransform, 2 , [0, 0, -1]);
+  mat4.scale(leftFin.localTransform, leftFin.localTransform, [2.5, 2, 0.9]);
+
+  mat4.translate(finInnerNode.localTransform, finInnerNode.localTransform, [0, 0.23, 0]);
+  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, 4 , [0, 1, 0]);
+  mat4.rotate(finInnerNode.localTransform, finInnerNode.localTransform, 2 , [0, 0, -1]);
+  mat4.scale(finInnerNode.localTransform, finInnerNode.localTransform, [3.2, 3.2, 0.1]);
   return armRoot;
 }
+
 // ---------------------------------------------------------
 //  Main Builder
 // ---------------------------------------------------------
