@@ -10,23 +10,18 @@
     const bodyRoot = new SceneNode();
 
     // --- BENTUK TUBUH ---
-    const mainBodyMesh = new Mesh(gl, Primitives.createEllipsoid(1.4, 1.8, 1.2, 32, 32));
+    const mainBodyMesh = new Mesh(gl, Primitives.createEllipsoid(0.95, 1.8, 1.2, 32, 32));
     const mainBodyNode = new SceneNode(mainBodyMesh, cfg.colors.red);
     mat4.translate(mainBodyNode.localTransform, mainBodyNode.localTransform, [0, -2.0, 0]);
     mat4.rotate(mainBodyNode.localTransform, mainBodyNode.localTransform, Math.PI / 12, [1, 0, 0]);
     bodyRoot.addChild(mainBodyNode);
 
-    const backMesh = new Mesh(gl, Primitives.createEllipsoid(1.5, 1.9, 1.4, 32, 32));
+    const backMesh = new Mesh(gl, Primitives.createEllipsoid(1.1, 1.9, 1, 32, 32));
     const backNode = new SceneNode(backMesh, cfg.colors.darkBlue);
     mat4.translate(backNode.localTransform, backNode.localTransform, [0, -2.0, 0.4]);
     mat4.rotate(backNode.localTransform, backNode.localTransform, Math.PI / 12, [1, 0, 0]);
     bodyRoot.addChild(backNode);
 
-    // const redPatchMesh = new Mesh(gl, Primitives.createTriangularPrism(1.2, 0.8, 0.3));
-    // const redPatchNode = new SceneNode(redPatchMesh, cfg.colors.red);
-    // mat4.translate(redPatchNode.localTransform, redPatchNode.localTransform, [0, -2.6, -0.8]);
-    // mat4.rotate(redPatchNode.localTransform, redPatchNode.localTransform, Math.PI / 12 + Math.PI / 6, [1, 0, 0]);
-    // bodyRoot.addChild(redPatchNode);
 
     // --- EKOR DENGAN KURVA BEZIER (lebih kurus & lebih pendek) ---
     const p0 = [0, -2.8, 1.0];
@@ -56,12 +51,12 @@
 
     // --- KAKI LENGKAP ---
     const leftLeg = createGabiteLeg(gl);
-    mat4.translate(leftLeg.localTransform, leftLeg.localTransform, [-1.4, -3.2, 0.3]);
+    mat4.translate(leftLeg.localTransform, leftLeg.localTransform, [-1.2, -3.2, 0.3]);
     mat4.rotate(leftLeg.localTransform, leftLeg.localTransform, Math.PI / 24, [0, 1, 0]);
     bodyRoot.addChild(leftLeg);
 
     const rightLeg = createGabiteLeg(gl);
-    mat4.translate(rightLeg.localTransform, rightLeg.localTransform, [1.4, -3.2, 0.3]);
+    mat4.translate(rightLeg.localTransform, rightLeg.localTransform, [1.2, -3.2, 0.3]);
     mat4.rotate(rightLeg.localTransform, rightLeg.localTransform, -Math.PI / 24, [0, 1, 0]);
     bodyRoot.addChild(rightLeg);
 
@@ -82,23 +77,33 @@
     const cfg = GabiteAnatomy;
     const legRoot = new SceneNode();
 
-    const thighMesh = new Mesh(gl, Primitives.createEllipsoid(0.8, 1.3, 1.0, 32, 32));
+    const thighMesh = new Mesh(gl, Primitives.createEllipsoid(0.7, 1.3, 1.0, 32, 32));
     const thighNode = new SceneNode(thighMesh, cfg.colors.darkBlue);
     mat4.rotate(thighNode.localTransform, thighNode.localTransform, Math.PI / 15, [1, 0, 0]);
     legRoot.addChild(thighNode);
 
-    const spikeMesh = new Mesh(gl, Primitives.createCone(0.3, 0.9, 16));
+    const spikeMesh = new Mesh(gl, Primitives.createCone(0.1, 1, 16));
     const spikeNode = new SceneNode(spikeMesh, cfg.colors.white);
-    mat4.translate(spikeNode.localTransform, spikeNode.localTransform, [0, -0.7, -0.8]);
-    mat4.rotate(spikeNode.localTransform, spikeNode.localTransform, -Math.PI / 10, [1, 0, 0]);
+    mat4.translate(spikeNode.localTransform, spikeNode.localTransform, [0, 0.3, -1]);
+    mat4.rotate(spikeNode.localTransform, spikeNode.localTransform, 1, [-1, 0, 0]);
+    mat4.scale(spikeNode.localTransform, spikeNode.localTransform, [1, 1, 6]);
     thighNode.addChild(spikeNode);
 
-    const shinMesh = new Mesh(gl, Primitives.createCapsule(0.5, 0.8, 32));
+    const spikeMesh2 = new Mesh(gl, Primitives.createCone(0.1, 1, 16));
+    const spikeNode2 = new SceneNode(spikeMesh, cfg.colors.white);
+    mat4.translate(spikeNode2.localTransform, spikeNode2.localTransform, [0, -0.3, -1]);
+    mat4.rotate(spikeNode2.localTransform, spikeNode2.localTransform, 1.3, [-1, 0, 0]);
+    mat4.scale(spikeNode2.localTransform, spikeNode2.localTransform, [0.5, 0.5, 3]);
+    thighNode.addChild(spikeNode2);
+
+    // --- PERUBAHAN: Mengganti Capsule dengan Hyperboloid of One Sheet ---
+    // Memberikan bentuk yang lebih melengkung dan natural pada tulang kering.
+    const shinMesh = new Mesh(gl, Primitives.createHyperboloidOneSheet(0.4, 0.4, 0.6, 0.9, 16, 16));
     const shinNode = new SceneNode(shinMesh, cfg.colors.darkBlue);
     mat4.translate(shinNode.localTransform, shinNode.localTransform, [0, -1.0, -0.3]);
     thighNode.addChild(shinNode);
 
-    const footMesh = new Mesh(gl, Primitives.createEllipsoid(0.7, 0.3, 0.9, 32, 32));
+    const footMesh = new Mesh(gl, Primitives.createEllipsoid(0.6, 0.3, 0.9, 32, 32));
     const footNode = new SceneNode(footMesh, cfg.colors.darkBlue);
     mat4.translate(footNode.localTransform, footNode.localTransform, [0, -0.6, -0.1]);
     shinNode.addChild(footNode);
@@ -108,7 +113,7 @@
 
     const clawNode1 = new SceneNode(clawSideMesh, cfg.colors.white);
     mat4.translate(clawNode1.localTransform, clawNode1.localTransform, [-0.3, 0.2, -0.8]);
-    mat4.rotate(clawNode1.localTransform, clawNode1.localTransform, Math.PI / 9, [0, 1, 0]);
+    mat4.rotate(clawNode1.localTransform, clawNode1.localTransform, 1, [0, 1, 0]);
     footNode.addChild(clawNode1);
 
     const clawNode2 = new SceneNode(clawSideMesh, cfg.colors.white);
@@ -228,7 +233,7 @@
     const headMesh = new Mesh(gl, Primitives.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
     const headNode = new SceneNode(headMesh, cfg.colors.darkBlue);
     
-    mat4.translate(headRoot.localTransform, headRoot.localTransform, [0, 1, 0]);
+    mat4.translate(headRoot.localTransform, headRoot.localTransform, [0, 0.6, -0.5]);
     // Posisikan kepala
     mat4.translate(headNode.localTransform, headNode.localTransform, [0, 0.4, 0.1]);
     mat4.rotate(headNode.localTransform, headNode.localTransform, -Math.PI / 15, [1, 0, 0]); // Miringkan sedikit
@@ -262,4 +267,74 @@
 
     return headRoot;
   }
+
+  function createGabiteNeck(gl) {
+
+  const cfg = GabiteAnatomy;
+  // --- MESH ---
+  // Menggunakan Hyperboloid of 1 Sheet untuk bentuk leher yang organik
+  const neckMesh = new Mesh(
+    gl,
+    Primitives.createHyperboloidOneSheet(
+      0.6, // radiusX di bagian terlebar
+      0.6, // radiusZ di bagian terlebar
+      0.4, // pinchY (seberapa "ramping" di tengah)
+      1.0, // height (panjang leher)
+      16, // latitudeBands (segmen vertikal)
+      16 // longitudeBands (segmen horizontal)
+    )
+  );
+
+  const neckMesh2 = new Mesh(
+    gl,
+    Primitives.createHyperboloidOneSheet(
+      0.6, // radiusX di bagian terlebar
+      0.6, // radiusZ di bagian terlebar
+      0.4, // pinchY (seberapa "ramping" di tengah)
+      1.0, // height (panjang leher)
+      16, // latitudeBands (segmen vertikal)
+      16 // longitudeBands (segmen horizontal)
+    )
+  );
+
+  // --- NODE ---
+  const neckNode = new SceneNode(neckMesh, cfg.colors.darkBlue);
+  const neckNode2 = new SceneNode(neckMesh2, cfg.colors.red);
+
+  neckNode.addChild(neckNode2);
+
+  // --- TRANSFORMASI ---
+  // Sedikit memiringkan leher ke depan
+  mat4.rotate(
+    neckNode.localTransform,
+    neckNode.localTransform,
+    Math.PI / 10,
+    [-1, 0, 0]
+  );
+  mat4.scale(neckNode.localTransform, neckNode.localTransform, [0.75, 1, 0.9]);
+  mat4.translate(
+    neckNode.localTransform,
+    neckNode.localTransform,
+    [0, -0.2, 0.17]
+  );
+
+  mat4.rotate(
+    neckNode2.localTransform,
+    neckNode2.localTransform,
+    Math.PI / 12,
+    [-1, 0, 0]
+  );
+  mat4.scale(
+    neckNode2.localTransform,
+    neckNode2.localTransform,
+    [0.8, 1.1, -0.32]
+  );
+  mat4.translate(
+    neckNode2.localTransform,
+    neckNode2.localTransform,
+    [0, 0.1, 1.4]
+  );
+
+  return neckNode;
+}
 

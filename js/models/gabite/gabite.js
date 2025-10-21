@@ -15,5 +15,8 @@ function createGabite(gl) {
   const head = createGabiteHead(gl);
   root.addChild(head);
 
+  const neck = createGabiteNeck(gl);
+  root.addChild(neck);
+
   return root;
 }
