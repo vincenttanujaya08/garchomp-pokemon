@@ -16,11 +16,22 @@
     mat4.rotate(mainBodyNode.localTransform, mainBodyNode.localTransform, Math.PI / 12, [1, 0, 0]);
     bodyRoot.addChild(mainBodyNode);
 
-    const bottomBodyMesh = new Mesh(gl, Primitives.createEllipsoid(0.9, 1, 2.3, 32, 32));
+    const bottomBodyMesh = new Mesh(gl, Primitives.createEllipticParaboloid(0.9, 2.3, 1.2, 32)); // Params: width, depth, height, segments
     const bottomBodyNode = new SceneNode(bottomBodyMesh, cfg.colors.white);
-    mat4.translate(bottomBodyNode.localTransform, bottomBodyNode.localTransform, [0, -2.9, 0.9]);
+    
+    // 2. Pindahkan (translate) ke posisi di bawah perut. Nilai Y mungkin perlu disesuaikan.
+    mat4.translate(bottomBodyNode.localTransform, bottomBodyNode.localTransform, [0, -4.3, 0.81]);
+    mat4.scale(bottomBodyNode.localTransform, bottomBodyNode.localTransform, [1, 1, 0.9]); // Perkecil di sumbu Z
 
     bodyRoot.addChild(bottomBodyNode);
+
+    const triangleBodyMesh = new Mesh(gl, Primitives.createCone(0.1, 0.3, 8)); // Params: topRadius, height, bottomRadius, segments
+    const triangleBodyNode = new SceneNode(triangleBodyMesh, cfg.colors.white);
+
+    mat4.translate(triangleBodyNode.localTransform, triangleBodyNode.localTransform, [0, -2.9, -1.18 ]);
+    mat4.scale(triangleBodyNode.localTransform, triangleBodyNode.localTransform, [2.5, 3, 1 ]);
+    mat4.rotate(triangleBodyNode.localTransform, triangleBodyNode.localTransform, 1.3, [-1, 0, 0]);
+    bodyRoot.addChild(triangleBodyNode);
 
     const backMesh = new Mesh(gl, Primitives.createEllipsoid(1.1, 1.9, 1, 32, 32));
     const backNode = new SceneNode(backMesh, cfg.colors.darkBlue);
