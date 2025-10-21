@@ -12,8 +12,8 @@ function createGabite(gl) {
   
 
   // (Nantinya, bagian lain seperti kepala, lengan, kaki akan ditambahkan di sini)
-  // const head = createGabiteHead(gl);
-  // root.addChild(head);
+  const head = createGabiteHead(gl);
+  root.addChild(head);
 
   return root;
 }

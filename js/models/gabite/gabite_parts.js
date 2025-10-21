@@ -69,10 +69,6 @@
     const arm = createGabiteArm(gl);
     bodyRoot.addChild(arm);
 
-    // --- KEPALA LENGKAP ---
-    const head = createGabiteHead(gl);
-    mat4.translate(head.localTransform, head.localTransform, [0, 0.1, 0]); // Posisikan kepala di atas badan
-    bodyRoot.addChild(head);
 
     return bodyRoot;
   }
@@ -232,6 +228,7 @@
     const headMesh = new Mesh(gl, Primitives.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
     const headNode = new SceneNode(headMesh, cfg.colors.darkBlue);
     
+    mat4.translate(headRoot.localTransform, headRoot.localTransform, [0, 1, 0]);
     // Posisikan kepala
     mat4.translate(headNode.localTransform, headNode.localTransform, [0, 0.4, 0.1]);
     mat4.rotate(headNode.localTransform, headNode.localTransform, -Math.PI / 15, [1, 0, 0]); // Miringkan sedikit
