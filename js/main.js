@@ -644,6 +644,38 @@ function main() {
     });
   }
 
+  if (window.createMegaGarchomp) {
+    const megaGarchompNode = window.createMegaGarchomp(gl);
+    megaGarchompNode.name = "MEGA_GARCHOMP";
+
+    // Posisi di Island C
+    mat4.translate(
+      megaGarchompNode.localTransform,
+      megaGarchompNode.localTransform,
+      [ISLAND_CONFIG[2].position[0] - 20, -6.5, -130]
+    );
+
+    // Scale lebih besar dari Garchomp biasa
+    mat4.scale(
+      megaGarchompNode.localTransform,
+      megaGarchompNode.localTransform,
+      [1.5, 1.5, 1.5]
+    );
+
+    mat4.rotateY(
+      megaGarchompNode.localTransform,
+      megaGarchompNode.localTransform,
+      Math.PI / 5
+    );
+
+    // Push tanpa animator
+    pokemons.push({
+      node: megaGarchompNode,
+      animator: null,
+      islandIndex: 2,
+    });
+  }
+
   // ===== INITIALIZE =====
   const projectionMatrix = mat4.create();
   const viewMatrix = mat4.create();
