@@ -168,13 +168,13 @@ function createIsland(gl) {
   islandRoot.addChild(rock8);
 
   // --- Dekorasi Awan ---
-  // Posisi awan disesuaikan agar lebih dekat dengan island
+  // Posisi awan dinaikkan agar lebih tinggi di langit
   
   // Awan 1 (tipe sederhana) - kiri depan
   const cloud1 = createCloud1(gl);
   mat4.translate(cloud1.localTransform, cloud1.localTransform, [
     -1.5,
-    0.8,
+    1.8,
     -1.0
   ]);
   mat4.rotate(cloud1.localTransform, cloud1.localTransform, Math.PI / 8, [0, 1, 0]);
@@ -185,7 +185,7 @@ function createIsland(gl) {
   const cloud2 = createCloud2(gl);
   mat4.translate(cloud2.localTransform, cloud2.localTransform, [
     1.2,
-    1.0,
+    2.2,
     -1.5
   ]);
   mat4.rotate(cloud2.localTransform, cloud2.localTransform, -Math.PI / 4, [0, 1, 0]);
@@ -196,7 +196,7 @@ function createIsland(gl) {
   const cloud3 = createCloud1(gl);
   mat4.translate(cloud3.localTransform, cloud3.localTransform, [
     0.8,
-    1.2,
+    2.5,
     0.5
   ]);
   mat4.rotate(cloud3.localTransform, cloud3.localTransform, -Math.PI / 6, [0, 1, 0]);
@@ -207,7 +207,7 @@ function createIsland(gl) {
   const cloud4 = createCloud2(gl);
   mat4.translate(cloud4.localTransform, cloud4.localTransform, [
     -1.0,
-    1.1,
+    2.3,
     -0.8
   ]);
   mat4.rotate(cloud4.localTransform, cloud4.localTransform, Math.PI / 3, [0, 1, 0]);
@@ -218,7 +218,7 @@ function createIsland(gl) {
   const cloud5 = createCloud1(gl);
   mat4.translate(cloud5.localTransform, cloud5.localTransform, [
     -0.3,
-    0.9,
+    2.0,
     -2.0
   ]);
   mat4.rotate(cloud5.localTransform, cloud5.localTransform, Math.PI / 2, [0, 1, 0]);
@@ -229,7 +229,7 @@ function createIsland(gl) {
   const cloud6 = createCloud2(gl);
   mat4.translate(cloud6.localTransform, cloud6.localTransform, [
     1.5,
-    1.3,
+    2.7,
     -0.5
   ]);
   mat4.rotate(cloud6.localTransform, cloud6.localTransform, -Math.PI / 5, [0, 1, 0]);
@@ -240,7 +240,7 @@ function createIsland(gl) {
   const cloud7 = createCloud1(gl);
   mat4.translate(cloud7.localTransform, cloud7.localTransform, [
     -0.8,
-    0.7,
+    1.6,
     0.8
   ]);
   mat4.rotate(cloud7.localTransform, cloud7.localTransform, Math.PI / 4, [0, 1, 0]);
@@ -251,7 +251,7 @@ function createIsland(gl) {
   const cloud8 = createCloud2(gl);
   mat4.translate(cloud8.localTransform, cloud8.localTransform, [
     0.3,
-    1.4,
+    2.8,
     -1.2
   ]);
   mat4.rotate(cloud8.localTransform, cloud8.localTransform, Math.PI / 7, [0, 1, 0]);
