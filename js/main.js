@@ -235,12 +235,12 @@ function main() {
     mat4.scale(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
-      [1.5, 1.5, 1.5]
+      [2, 2, 2]
     );
     mat4.translate(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
-      [-30, -17, -34]
+      [-30, -12, -34]
     );
 
     // === Penting: pastikan HADAP DEPAN DUNIA (-Z) ===
