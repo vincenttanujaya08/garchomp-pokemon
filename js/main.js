@@ -497,10 +497,12 @@ function main() {
   }
 
   function updateCameraMovement(deltaTime) {
-    if (introState.isPlaying) return; // Disable movement during intro
+    // Kecepatan normal dan sprint
+    const normalPanSpeed = 20.0 * deltaTime;
+    const sprintMultiplier = 5; // Atur seberapa cepat sprintnya (misal: 2.5x)
+    const currentPanSpeed = keys['shift'] ? normalPanSpeed * sprintMultiplier : normalPanSpeed;
 
-    const moveSpeed = 30.0 * deltaTime;
-    const panSpeed = 20.0 * deltaTime;
+    // Kecepatan vertikal tetap sama (atau bisa juga ditambahkan multiplier jika mau)
     const verticalPanSpeed = 20.0 * deltaTime;
 
     if (cameraState.mode === "LOCKED") {
@@ -514,33 +516,33 @@ function main() {
       let deltaX = 0;
       let deltaZ = 0;
 
-      // Gerakan maju/mundur relatif terhadap arah pandang
+      // Gunakan currentPanSpeed yang sudah memperhitungkan Shift
       if (keys["w"]) {
-          deltaX -= forwardX * panSpeed;
-          deltaZ -= forwardZ * panSpeed;
+          deltaX -= forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+          deltaZ -= forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
       if (keys["s"]) {
-          deltaX += forwardX * panSpeed;
-          deltaZ += forwardZ * panSpeed;
+          deltaX += forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+          deltaZ += forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
-      // Gerakan kiri/kanan (strafe) relatif terhadap arah pandang
       if (keys["a"]) {
-          deltaX -= rightX * panSpeed;
-          deltaZ -= rightZ * panSpeed;
+          deltaX -= rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+          deltaZ -= rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
       if (keys["d"]) {
-          deltaX += rightX * panSpeed;
-          deltaZ += rightZ * panSpeed;
+          deltaX += rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+          deltaZ += rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
 
       // Terapkan perubahan ke target kamera
       cameraState.target[0] += deltaX;
       cameraState.target[2] += deltaZ;
 
-      // Gerakan naik/turun (Q/E) tetap sama (sumbu Y dunia)
-      if (keys["q"]) cameraState.target[1] -= verticalPanSpeed;
-      if (keys["e"]) cameraState.target[1] += verticalPanSpeed;
+      // Gerakan naik/turun (Q/E) tetap sama (atau bisa juga gunakan currentPanSpeed)
+      if (keys["q"]) cameraState.target[1] -= verticalPanSpeed; // Tetap pakai verticalPanSpeed
+      if (keys["e"]) cameraState.target[1] += verticalPanSpeed; // Tetap pakai verticalPanSpeed
     }
+  
     // if (cameraState.mode === "LOCKED") {
     //   if (keys["w"]) cameraState.target[2] -= panSpeed;
     //   if (keys["s"]) cameraState.target[2] += panSpeed;
@@ -599,7 +601,7 @@ function main() {
     indicator.innerHTML = `
       <strong>🌅 WARM LIGHTING MODE</strong><br>
       Focus: ${island.name} (${island.pokemonName})<br>
-      <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small>
+      <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small> | Shift: Faster Camera
     `;
     indicator.style.display = "block";
   }
