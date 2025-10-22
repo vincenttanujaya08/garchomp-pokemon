@@ -165,14 +165,29 @@ function createGabiteBody(gl) {
   mat4.translate(
     bottomBodyNode.localTransform,
     bottomBodyNode.localTransform,
-    [0, -4.3, 0.81]
+    [0, -3.9, -0.1]
   );
   mat4.scale(
     bottomBodyNode.localTransform,
     bottomBodyNode.localTransform,
-    [1, 1, 0.9]
+    [1, 0.7, 0.5]
   );
-  tailNode.addChild(bottomBodyNode);
+
+  bodyRoot.addChild(bottomBodyNode);
+
+  const bottomBodyNode2 = new SceneNode(bottomBodyMesh, cfg.colors.white);
+  bottomBodyNode2.name = "BottomBody";
+  mat4.translate(
+    bottomBodyNode2.localTransform,
+    bottomBodyNode2.localTransform,
+    [0, -3.9, 1.5]
+  );
+  mat4.scale(
+    bottomBodyNode2.localTransform,
+    bottomBodyNode2.localTransform,
+    [1, 0.7, 0.7]
+  );
+  tailNode.addChild(bottomBodyNode2);
 
   // --- KAKI LENGKAP ---
   const leftLeg = createGabiteLeg(gl, "Left");
