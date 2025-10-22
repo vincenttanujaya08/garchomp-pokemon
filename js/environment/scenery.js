@@ -88,13 +88,13 @@ function createCactus(gl) {
 
   // Lengan kiri - bagian vertikal (silinder)
   const leftArmVertical = new SceneNode(cylinderMesh, green);
-  mat4.translate(leftArmVertical.localTransform, leftArmVertical.localTransform, [-0.6, 1.2, 0]);
-  mat4.scale(leftArmVertical.localTransform, leftArmVertical.localTransform, [0.3, 1.5, 0.3]);
+  mat4.translate(leftArmVertical.localTransform, leftArmVertical.localTransform, [-0.8, 1.2, 0]);
+  mat4.scale(leftArmVertical.localTransform, leftArmVertical.localTransform, [0.3, 1.3, 0.3]);
 
   // Lengan kiri - ujung atas ellipsoid
   const leftArmTop = new SceneNode(ellipsoidMesh, green);
-  mat4.translate(leftArmTop.localTransform, leftArmTop.localTransform, [-0.6, 1.9, 0]);
-  mat4.scale(leftArmTop.localTransform, leftArmTop.localTransform, [0.3, 0.4, 0.3]);
+  mat4.translate(leftArmTop.localTransform, leftArmTop.localTransform, [-0.8, 1.9, 0]);
+  mat4.scale(leftArmTop.localTransform, leftArmTop.localTransform, [0.3, 0.3, 0.3]);
 
   // Lengan kiri - bagian horizontal (penghubung)
   const leftArmHorizontal = new SceneNode(cylinderMesh, green);
@@ -109,12 +109,12 @@ function createCactus(gl) {
 
   // Lengan kanan - bagian vertikal (silinder)
   const rightArmVertical = new SceneNode(cylinderMesh, green);
-  mat4.translate(rightArmVertical.localTransform, rightArmVertical.localTransform, [0.6, 0.8, 0]);
-  mat4.scale(rightArmVertical.localTransform, rightArmVertical.localTransform, [0.3, 1.2, 0.3]);
+  mat4.translate(rightArmVertical.localTransform, rightArmVertical.localTransform, [0.75, 0.8, 0]);
+  mat4.scale(rightArmVertical.localTransform, rightArmVertical.localTransform, [0.3, 1.1, 0.3]);
 
   // Lengan kanan - ujung atas ellipsoid
   const rightArmTop = new SceneNode(ellipsoidMesh, green);
-  mat4.translate(rightArmTop.localTransform, rightArmTop.localTransform, [0.6, 1.4, 0]);
+  mat4.translate(rightArmTop.localTransform, rightArmTop.localTransform, [0.75, 1.4, 0]);
   mat4.scale(rightArmTop.localTransform, rightArmTop.localTransform, [0.3, 0.35, 0.3]);
 
   // Lengan kanan - bagian horizontal (penghubung)
