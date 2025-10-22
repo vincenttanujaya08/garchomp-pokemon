@@ -1856,11 +1856,16 @@ function createMegaGarchompTail(gl) {
 
   // Gabungkan semua ke root ekor
   tailRoot.addChild(mainTailNode);
-  tailRoot.addChild(leftFinNode);
-  tailRoot.addChild(rightFinNode);
+  mainTailNode.addChild(leftFinNode);
+  mainTailNode.addChild(rightFinNode);
 
   // Posisikan sirip-sirip (Anda bisa atur ini nanti)
   // Diberi posisi awal agar terlihat
+  mat4.translate(
+    mainTailNode.localTransform,
+    mainTailNode.localTransform,
+    [0, -1.5, 0]
+  );
   mat4.translate(
     leftFinNode.localTransform,
     leftFinNode.localTransform,
