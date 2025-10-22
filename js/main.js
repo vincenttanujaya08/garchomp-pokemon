@@ -59,6 +59,14 @@ function main() {
   // Memanggil fungsi untuk membuat model Gabite
   const gabiteNode = createGabite(gl);
 
+  // --- BARU: Membuat dan memposisikan Pokeball ---
+  const pokeballNode = createPokeball(gl);
+  // Pindahkan Pokeball ke samping kanan dan sedikit ke bawah agar terlihat
+  mat4.translate(pokeballNode.localTransform, pokeballNode.localTransform, [2.5, -2.5, 0]);
+  // Perkecil ukuran Pokeball
+  mat4.scale(pokeballNode.localTransform, pokeballNode.localTransform, [0.5, 0.5, 0.5]);
+  // ---------------------------------------------
+
   const projectionMatrix = mat4.create();
   mat4.perspective(
     projectionMatrix,
@@ -103,6 +111,18 @@ function main() {
       modelRotationMatrix,
       cameraPosition
     );
+
+    // --- BARU: Menggambar scene dengan node Pokeball ---
+    drawScene(
+      gl,
+      programInfo,
+      pokeballNode,
+      projectionMatrix,
+      viewMatrix,
+      modelRotationMatrix,
+      cameraPosition
+    );
+    // ------------------------------------------------
 
     requestAnimationFrame(render);
   }
