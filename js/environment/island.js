@@ -76,6 +76,97 @@ function createIsland(gl) {
   mat4.scale(cactus2.localTransform, cactus2.localTransform, [0.08, 0.08, 0.08]);
   islandRoot.addChild(cactus2);
 
+  // --- Dekorasi Batu Angular ---
+  // Posisi Y = 0 agar batu benar-benar menyentuh permukaan island
+  
+  // Batu angular 1
+  const rock1 = createAngularRock(gl, 0.3);
+  mat4.translate(rock1.localTransform, rock1.localTransform, [
+    0.5,
+    0,
+    -0.3,
+  ]);
+  mat4.rotate(rock1.localTransform, rock1.localTransform, Math.PI / 6, [0, 1, 0]);
+  mat4.scale(rock1.localTransform, rock1.localTransform, [0.12, 0.12, 0.12]);
+  islandRoot.addChild(rock1);
+
+  // Batu angular 2
+  const rock2 = createAngularRock(gl, 0.7);
+  mat4.translate(rock2.localTransform, rock2.localTransform, [
+    -0.6,
+    0,
+    -0.2,
+  ]);
+  mat4.rotate(rock2.localTransform, rock2.localTransform, -Math.PI / 3, [0, 1, 0]);
+  mat4.scale(rock2.localTransform, rock2.localTransform, [0.09, 0.09, 0.09]);
+  islandRoot.addChild(rock2);
+
+  // Batu sederhana 3
+  const rock3 = createSimpleAngularRock(gl);
+  mat4.translate(rock3.localTransform, rock3.localTransform, [
+    -0.9,
+    0,
+    -0.5,
+  ]);
+  mat4.rotate(rock3.localTransform, rock3.localTransform, Math.PI / 4, [0, 1, 0]);
+  mat4.scale(rock3.localTransform, rock3.localTransform, [0.08, 0.08, 0.08]);
+  islandRoot.addChild(rock3);
+
+  // Batu angular 4
+  const rock4 = createAngularRock(gl, 0.5);
+  mat4.translate(rock4.localTransform, rock4.localTransform, [
+    0.6,
+    0,
+    0.3,
+  ]);
+  mat4.rotate(rock4.localTransform, rock4.localTransform, -Math.PI / 5, [0, 1, 0]);
+  mat4.scale(rock4.localTransform, rock4.localTransform, [0.06, 0.06, 0.06]);
+  islandRoot.addChild(rock4);
+
+  // Batu sederhana 5
+  const rock5 = createSimpleAngularRock(gl);
+  mat4.translate(rock5.localTransform, rock5.localTransform, [
+    0.2,
+    0,
+    -0.6,
+  ]);
+  mat4.rotate(rock5.localTransform, rock5.localTransform, Math.PI / 2, [0, 1, 0]);
+  mat4.scale(rock5.localTransform, rock5.localTransform, [0.07, 0.07, 0.07]);
+  islandRoot.addChild(rock5);
+
+  // Batu angular 6
+  const rock6 = createAngularRock(gl, 0.8);
+  mat4.translate(rock6.localTransform, rock6.localTransform, [
+    -0.2,
+    0,
+    -0.1,
+  ]);
+  mat4.rotate(rock6.localTransform, rock6.localTransform, -Math.PI / 8, [0, 1, 0]);
+  mat4.scale(rock6.localTransform, rock6.localTransform, [0.1, 0.1, 0.1]);
+  islandRoot.addChild(rock6);
+
+  // Batu sederhana 7
+  const rock7 = createSimpleAngularRock(gl);
+  mat4.translate(rock7.localTransform, rock7.localTransform, [
+    -0.3,
+    0,
+    0.5,
+  ]);
+  mat4.rotate(rock7.localTransform, rock7.localTransform, Math.PI / 7, [0, 1, 0]);
+  mat4.scale(rock7.localTransform, rock7.localTransform, [0.05, 0.05, 0.05]);
+  islandRoot.addChild(rock7);
+
+  // Batu angular 8
+  const rock8 = createAngularRock(gl, 0.4);
+  mat4.translate(rock8.localTransform, rock8.localTransform, [
+    -0.8,
+    0,
+    -0.7,
+  ]);
+  mat4.rotate(rock8.localTransform, rock8.localTransform, -Math.PI / 4, [0, 1, 0]);
+  mat4.scale(rock8.localTransform, rock8.localTransform, [0.11, 0.11, 0.11]);
+  islandRoot.addChild(rock8);
+
   // --- Dekorasi Awan ---
   // Posisi awan disesuaikan agar lebih dekat dengan island
   
@@ -166,45 +257,6 @@ function createIsland(gl) {
   mat4.rotate(cloud8.localTransform, cloud8.localTransform, Math.PI / 7, [0, 1, 0]);
   mat4.scale(cloud8.localTransform, cloud8.localTransform, [0.32, 0.32, 0.32]);
   islandRoot.addChild(cloud8);
-
-  // const rock1 = createRock(gl);
-  // mat4.translate(rock1.localTransform, rock1.localTransform, [
-  //   0.4,
-  //   grassThickness,
-  //   -0.2,
-  // ]);
-  // mat4.scale(rock1.localTransform, rock1.localTransform, [0.1, 0.1, 0.1]);
-  // islandRoot.addChild(rock1);
-
-  // const rock2 = createRock(gl);
-  // mat4.translate(rock2.localTransform, rock2.localTransform, [
-  //   -0.6,
-  //   grassThickness,
-  //   -0.1,
-  // ]);
-  // mat4.rotate(
-  //   rock2.localTransform,
-  //   rock2.localTransform,
-  //   Math.PI / 4,
-  //   [0, 1, 0]
-  // );
-  // mat4.scale(rock2.localTransform, rock2.localTransform, [0.1, 0.1, 0.1]);
-  // islandRoot.addChild(rock2);
-
-  // const rock3 = createRock(gl);
-  // mat4.translate(rock3.localTransform, rock3.localTransform, [
-  //   -0.9,
-  //   grassThickness,
-  //   -0.6,
-  // ]);
-  // mat4.rotate(
-  //   rock3.localTransform,
-  //   rock3.localTransform,
-  //   Math.PI / 4,
-  //   [0, 1, 0]
-  // );
-  // mat4.scale(rock3.localTransform, rock3.localTransform, [0.1, 0.1, 0.1]);
-  // islandRoot.addChild(rock3);
 
   // const tree1 = createDeadTree(gl);
   // mat4.translate(tree1.localTransform, tree1.localTransform, [
