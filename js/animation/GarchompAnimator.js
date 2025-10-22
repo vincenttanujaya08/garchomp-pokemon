@@ -1,5 +1,6 @@
 /**
- * Garchomp Walking Animation
+ * Garchomp Walking Animation - FIXED
+ * Start dari belakang, menghadap kamera
  * Extends AnimationController
  */
 
@@ -8,16 +9,15 @@ const GarchompAnimState = {
   WALK_FORWARD: "WALK_FORWARD",
   IDLE_PAUSE: "IDLE_PAUSE",
   TURN_AROUND: "TURN_AROUND",
-  WALK_BACK: "WALK_BACK",
 };
 
 class GarchompAnimator extends AnimationController {
   constructor(garchompNode, config = {}) {
-    // Default config - Garchomp START dari belakang island, jalan maju
+    // Default config - Garchomp START dari belakang, menghadap kamera
     const defaultConfig = {
-      startPos: [0, 1.5, 5], // MULAI DARI BELAKANG (Z positif)
-      endPos: [0, 1.5, -10], // JALAN KE DEPAN (Z negatif)
-      startRotation: Math.PI, // MENGHADAP KE DEPAN (180 derajat)
+      startPos: [0, 1.5, -20], // Start dari JAUH (Z negatif)
+      endPos: [0, 1.5, -10], // End di DEKAT (Z lebih positif = mendekat)
+      startRotation: 0, // FIXED: 0° = menghadap +Z (arah jalan!)
 
       // Durations
       walkDuration: 3.0,
@@ -43,40 +43,56 @@ class GarchompAnimator extends AnimationController {
     // Copy config to instance
     Object.assign(this, this.config);
 
+    // FIXED: Set initial position
+    this.currentPos = [...this.startPos];
+    this.currentRotation = this.startRotation;
+
     // Initialize state machine
     this.states = {
       [GarchompAnimState.WALK_FORWARD]: {
         onEnter: () => {
-          this.currentPos = [...this.startPos];
-          this.targetRotation = Math.PI; // Face forward
+          // Tentukan arah jalan berdasarkan posisi sekarang
+          const distToStart = Math.abs(this.currentPos[2] - this.startPos[2]);
+          const distToEnd = Math.abs(this.currentPos[2] - this.endPos[2]);
+
+          if (distToStart < distToEnd) {
+            // Lebih dekat ke start → jalan ke end
+            this._walkFrom = [...this.startPos];
+            this._walkTo = [...this.endPos];
+          } else {
+            // Lebih dekat ke end → jalan ke start
+            this._walkFrom = [...this.endPos];
+            this._walkTo = [...this.startPos];
+          }
+
+          // Rotation tetap dari TURN sebelumnya
+          this.targetRotation = this.currentRotation;
         },
         onUpdate: (dt) => this.updateWalkForward(dt),
         duration: this.walkDuration,
       },
+
       [GarchompAnimState.IDLE_PAUSE]: {
         onEnter: () => {},
         onUpdate: (dt) => this.updateIdle(dt),
         duration: this.pauseDuration,
       },
+
       [GarchompAnimState.TURN_AROUND]: {
         onEnter: () => {
-          // Determine turn direction
+          // Toggle antara 0° (hadap kamera) dan 180° (hadap belakang)
           this.turnStartRot = this.currentRotation;
-          this.targetRotation =
-            Math.abs(this.currentRotation - Math.PI) < 0.1
-              ? 0 // Turn to face back
-              : Math.PI; // Turn to face forward
+
+          if (Math.abs(this.currentRotation) < 0.5) {
+            // Sekarang ~0° (hadap kamera) → putar ke 180° (hadap belakang)
+            this.targetRotation = Math.PI;
+          } else {
+            // Sekarang ~180° (hadap belakang) → putar ke 0° (hadap kamera)
+            this.targetRotation = 0;
+          }
         },
         onUpdate: (dt) => this.updateTurn(dt),
         duration: this.turnDuration,
-      },
-      [GarchompAnimState.WALK_BACK]: {
-        onEnter: () => {
-          this.currentPos = [...this.endPos];
-          this.targetRotation = 0; // Face backward
-        },
-        onUpdate: (dt) => this.updateWalkBack(dt),
-        duration: this.walkDuration,
       },
     };
 
@@ -112,15 +128,8 @@ class GarchompAnimator extends AnimationController {
         this.transitionTo(GarchompAnimState.TURN_AROUND);
         break;
       case GarchompAnimState.TURN_AROUND:
-        // After turn, check facing direction
-        if (Math.abs(this.currentRotation - Math.PI) < 0.1) {
-          this.transitionTo(GarchompAnimState.WALK_FORWARD);
-        } else {
-          this.transitionTo(GarchompAnimState.WALK_BACK);
-        }
-        break;
-      case GarchompAnimState.WALK_BACK:
-        this.transitionTo(GarchompAnimState.IDLE_PAUSE);
+        // Setelah putar, jalan lagi
+        this.transitionTo(GarchompAnimState.WALK_FORWARD);
         break;
     }
   }
@@ -129,13 +138,7 @@ class GarchompAnimator extends AnimationController {
 
   updateWalkForward(deltaTime) {
     const t = this.stateTime / this.walkDuration;
-    this.currentPos = this.lerpVec3(this.startPos, this.endPos, t);
-    this.updateWalkCycle(this.stateTime);
-  }
-
-  updateWalkBack(deltaTime) {
-    const t = this.stateTime / this.walkDuration;
-    this.currentPos = this.lerpVec3(this.endPos, this.startPos, t);
+    this.currentPos = this.lerpVec3(this._walkFrom, this._walkTo, t);
     this.updateWalkCycle(this.stateTime);
   }
 
@@ -261,9 +264,7 @@ class GarchompAnimator extends AnimationController {
   // ===== BODY MOTION =====
 
   updateBodyMotion() {
-    const isWalking =
-      this.currentState === GarchompAnimState.WALK_FORWARD ||
-      this.currentState === GarchompAnimState.WALK_BACK;
+    const isWalking = this.currentState === GarchompAnimState.WALK_FORWARD;
     const isTurning = this.currentState === GarchompAnimState.TURN_AROUND;
 
     // Head bob
@@ -381,3 +382,7 @@ if (typeof module !== "undefined" && module.exports) {
 }
 
 window.GarchompAnimator = GarchompAnimator;
+
+console.log(
+  "✅ GarchompAnimator FIXED - Start dari belakang, menghadap kamera, toggle rotation"
+);

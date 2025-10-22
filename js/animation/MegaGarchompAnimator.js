@@ -1,5 +1,6 @@
 // /**
 //  * Mega Garchomp Walking + Attack + Roar Animation (Deterministic Flow)
+//  * FIXED: Start menghadap kamera, bukan membelakangi
 //  * Extends AnimationController
 //  */
 
@@ -15,14 +16,14 @@ const MegaGarchompAnimState = {
 class MegaGarchompAnimator extends AnimationController {
   constructor(megaGarchompNode, config = {}) {
     const defaultConfig = {
-      // Pos/rot global (dipakai kalau kamu pakai controller posisi)
-      startPos: [0, -1, 5],
-      endPos: [0, -1, -8],
-      startRotation: Math.PI,
+      // Pos/rot global
+      startPos: [0, -1, -8], // FIXED: Start dari jauh (Z negatif)
+      endPos: [0, -1, 5], // FIXED: End di dekat (Z positif = mendekat kamera)
+      startRotation: 0, // 0° = menghadap -Z (ke arah kamera)
 
       // Durations
       prowlDuration: 4.0,
-      idleDuration: 1.2, // idle sebentar untuk settle kaki
+      idleDuration: 1.2,
       attackDuration: 2.0,
       roarDuration: 3.0,
       turnDuration: 1.2,
@@ -62,7 +63,7 @@ class MegaGarchompAnimator extends AnimationController {
 
     // Runtime
     this.currentPos = [...this.startPos];
-    this.currentRotation = this.startRotation;
+    this.currentRotation = this.startRotation; // Start = 0°
     this.targetRotation = this.startRotation;
     this.comboCount = 0;
 
@@ -74,10 +75,23 @@ class MegaGarchompAnimator extends AnimationController {
     this.states = {
       [MegaGarchompAnimState.PROWL_FORWARD]: {
         onEnter: () => {
-          this.currentPos = [...this.startPos];
-          this.currentRotation = Math.PI;
-          this.targetRotation = Math.PI;
-          this.comboCount = 0;
+          // Tentukan arah jalan berdasarkan posisi sekarang
+          const distToStart = Math.abs(this.currentPos[2] - this.startPos[2]);
+          const distToEnd = Math.abs(this.currentPos[2] - this.endPos[2]);
+
+          if (distToStart < distToEnd) {
+            // Lebih dekat ke start → jalan ke end
+            this._prowlFrom = [...this.startPos];
+            this._prowlTo = [...this.endPos];
+          } else {
+            // Lebih dekat ke end → jalan ke start
+            this._prowlFrom = [...this.endPos];
+            this._prowlTo = [...this.startPos];
+          }
+
+          // FIXED: Rotation tetap dari TURN sebelumnya
+          // Jangan override currentRotation!
+          this.targetRotation = this.currentRotation;
           this.lastLeftAngle = 0;
           this.lastRightAngle = 0;
         },
@@ -87,12 +101,10 @@ class MegaGarchompAnimator extends AnimationController {
 
       [MegaGarchompAnimState.IDLE_STANCE]: {
         onEnter: () => {
-          // Mulai settle dari sudut terakhir ke 0 (bind)
           this.idleSettleTime = 0;
           this.idleStartLeft = this.lastLeftAngle || 0;
           this.idleStartRight = this.lastRightAngle || 0;
-          this._snappedThisIdle = false; // supaya snap bind sekali saja
-          // Paksa shin/foot ke bind segera (mencegah miring saat transisi)
+          this._snappedThisIdle = false;
           this.snapShinFootToBind();
         },
         onUpdate: (dt) => this.updateIdleStance(dt),
@@ -101,7 +113,6 @@ class MegaGarchompAnimator extends AnimationController {
 
       [MegaGarchompAnimState.ATTACK_SLASH]: {
         onEnter: () => {
-          // Pastikan kaki rata sebelum attack
           this.snapLegsToBind();
           this.attackPhase = 0;
           this.attackTime = 0;
@@ -112,7 +123,6 @@ class MegaGarchompAnimator extends AnimationController {
 
       [MegaGarchompAnimState.ROAR]: {
         onEnter: () => {
-          // Kaki tetap di bind saat roar
           this.snapLegsToBind();
         },
         onUpdate: (dt) => this.updateRoar(dt),
@@ -121,11 +131,14 @@ class MegaGarchompAnimator extends AnimationController {
 
       [MegaGarchompAnimState.TURN_AROUND]: {
         onEnter: () => {
-          // Putar balik smooth; kaki tetap bind
           this.snapLegsToBind();
           this.turnStartRot = this.currentRotation;
-          this.targetRotation =
-            Math.abs(this.currentRotation - Math.PI) < 0.1 ? 0 : Math.PI;
+          // Toggle: kalau sekarang ~0° → putar ke 180°, kalau ~180° → putar ke 0°
+          if (Math.abs(this.currentRotation) < 0.5) {
+            this.targetRotation = Math.PI; // 0° → 180°
+          } else {
+            this.targetRotation = 0; // 180° → 0°
+          }
         },
         onUpdate: (dt) => this.updateTurn(dt),
         duration: this.turnDuration,
@@ -134,8 +147,8 @@ class MegaGarchompAnimator extends AnimationController {
       [MegaGarchompAnimState.PROWL_BACK]: {
         onEnter: () => {
           this.currentPos = [...this.endPos];
-          this.currentRotation = 0;
-          this.targetRotation = 0;
+          this.currentRotation = Math.PI; // Tetap membelakangi
+          this.targetRotation = Math.PI;
           this.comboCount = 0;
           this.lastLeftAngle = 0;
           this.lastRightAngle = 0;
@@ -145,8 +158,9 @@ class MegaGarchompAnimator extends AnimationController {
       },
     };
 
-    // Mulai dari jalan maju
-    this.transitionTo(MegaGarchompAnimState.PROWL_FORWARD);
+    // FIXED: Mulai dari IDLE (menghadap kamera), bukan PROWL
+    this.currentRotation = 0; // Start menghadap kamera
+    this.transitionTo(MegaGarchompAnimState.IDLE_STANCE);
   }
 
   // ====== BIND POSE ======
@@ -214,12 +228,12 @@ class MegaGarchompAnimator extends AnimationController {
   handleStateTransition() {
     switch (this.currentState) {
       case MegaGarchompAnimState.PROWL_FORWARD:
-        // Selesai jalan → settle dulu supaya kaki rata
         this.transitionTo(MegaGarchompAnimState.IDLE_STANCE);
         break;
 
       case MegaGarchompAnimState.IDLE_STANCE:
-        // Setelah rata → Attack
+        // Kalau baru pertama kali (comboCount=0), langsung attack
+        // Kalau habis jalan, langsung attack juga
         this.transitionTo(MegaGarchompAnimState.ATTACK_SLASH);
         break;
 
@@ -228,25 +242,17 @@ class MegaGarchompAnimator extends AnimationController {
         break;
 
       case MegaGarchompAnimState.ROAR:
-        this.comboCount += 1;
-        if (this.comboCount < this.comboMax) {
-          this.transitionTo(MegaGarchompAnimState.ATTACK_SLASH);
-        } else {
-          this.transitionTo(MegaGarchompAnimState.TURN_AROUND);
-        }
+        // Selesai roar → langsung putar balik
+        this.transitionTo(MegaGarchompAnimState.TURN_AROUND);
         break;
 
       case MegaGarchompAnimState.TURN_AROUND:
-        // Setelah putar balik, pilih arah jalan baru
-        if (Math.abs(this.currentRotation - Math.PI) < 0.1) {
-          this.transitionTo(MegaGarchompAnimState.PROWL_FORWARD);
-        } else {
-          this.transitionTo(MegaGarchompAnimState.PROWL_BACK);
-        }
+        // Setelah putar → jalan
+        this.transitionTo(MegaGarchompAnimState.PROWL_FORWARD);
         break;
 
       case MegaGarchompAnimState.PROWL_BACK:
-        // Selesai jalan balik → settle dulu juga
+        // Tidak dipakai lagi
         this.transitionTo(MegaGarchompAnimState.IDLE_STANCE);
         break;
     }
@@ -255,7 +261,7 @@ class MegaGarchompAnimator extends AnimationController {
   // ====== PROWL ======
   updateProwlForward(dt) {
     const t = this.stateTime / this.prowlDuration;
-    this.currentPos = this.lerpVec3(this.startPos, this.endPos, t);
+    this.currentPos = this.lerpVec3(this._prowlFrom, this._prowlTo, t);
     this.updateLegCycle(this.stateTime);
   }
   updateProwlBack(dt) {
@@ -292,7 +298,7 @@ class MegaGarchompAnimator extends AnimationController {
       );
     }
 
-    // Reset anak-anaknya ke bind supaya posisi kaki “menapak” stabil
+    // Reset anak-anaknya ke bind
     const shin = thighNode.children?.find((c) => c.name?.includes("Shin"));
     const foot = shin?.children?.find((c) => c.name?.includes("Foot"));
     if (shin) {
@@ -307,7 +313,6 @@ class MegaGarchompAnimator extends AnimationController {
 
   // ====== IDLE + FOOT SETTLE ======
   updateIdleStance(dt) {
-    // Interpolasi paha kembali ke sudut 0 (bind)
     this.idleSettleTime = Math.min(
       this.idleSettleTime + dt,
       this.settleDuration
@@ -323,7 +328,6 @@ class MegaGarchompAnimator extends AnimationController {
     this.lastLeftAngle = lAngle;
     this.lastRightAngle = rAngle;
 
-    // Setelah benar-benar 0°, “snap” sekali untuk menghilangkan sisa akumulasi
     if (
       !this._snappedThisIdle &&
       this.idleSettleTime >= this.settleDuration - 1e-4
@@ -332,7 +336,7 @@ class MegaGarchompAnimator extends AnimationController {
       this._snappedThisIdle = true;
     }
 
-    // Napas ringan di torso (relatif bind, bukan akumulatif)
+    // Napas ringan di torso
     if (this.rig.torso && this.bind?.torso) {
       const breathe = Math.sin(this.stateTime * 2) * 0.02;
       const m = mat4.clone(this.bind.torso);
@@ -430,7 +434,7 @@ class MegaGarchompAnimator extends AnimationController {
       eased
     );
 
-    // Opsional: sedikit lean saat putar (tidak memiringkan pinggul)
+    // Lean saat putar
     if (this.rig.torso && this.bind?.torso) {
       const lean = Math.sin(eased * Math.PI) * 0.06;
       const m = mat4.clone(this.bind.torso);
@@ -451,7 +455,6 @@ class MegaGarchompAnimator extends AnimationController {
       Math.sin(this.totalTime * this.prowlCycleFreq * Math.PI) *
       this.bodySwayAmount;
 
-    // Yaw saja (hindari roll yang bikin pinggul beda tinggi)
     const m = mat4.clone(this.bind.torso);
     mat4.rotateY(m, m, sway);
     mat4.copy(this.rig.torso.localTransform, m);
@@ -474,346 +477,3 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = MegaGarchompAnimator;
 }
 window.MegaGarchompAnimator = MegaGarchompAnimator;
-
-/**
- * Mega Garchomp — Idle → Attack → Roar → Turn (no walking)
- * - Tidak ada gerak maju/mundur.
- * - Putar balik 180° secara halus di setiap siklus.
- * - Kaki selalu diratakan (snap) ke bind di setiap state.
- * - Tidak ada scale di head/neck/jaw (aman dari “membesar”).
- */
-
-// const MegaGarchompAnimState = {
-//   IDLE_STANCE: "IDLE_STANCE",
-//   ATTACK_SLASH: "ATTACK_SLASH",
-//   ROAR: "ROAR",
-//   TURN_AROUND: "TURN_AROUND",
-// };
-
-// class MegaGarchompAnimator extends AnimationController {
-//   constructor(megaGarchompNode, config = {}) {
-//     const defaultConfig = {
-//       // Tetap di tempat
-//       startPos: [0, -1, 0],
-//       startRotation: Math.PI, // menghadap “depan” versi kamu
-
-//       // Durasi per state
-//       idleDuration: 2.0,
-//       attackDuration: 3.0, // ≈3 detik sesuai permintaan
-//       roarDuration: 3.0,
-//       turnDuration: 1.2, // putar balik halus
-
-//       // Efek tubuh ringan
-//       tailDragAmount: 0.04,
-
-//       // Attack
-//       armWindupAngle: Math.PI / 3,
-
-//       // Roar
-//       roarLeanBack: Math.PI / 12,
-//       roarHeadTilt: Math.PI / 8,
-//       jawOpenAngle: Math.PI / 6,
-//     };
-
-//     super(megaGarchompNode, { ...defaultConfig, ...config });
-//     Object.assign(this, this.config);
-
-//     // Ambil rig dari model
-//     this.rig = megaGarchompNode?.animationRig || this.rig;
-
-//     // Simpan bind-pose untuk semua joint yang kita pegang
-//     this.captureBindPose();
-
-//     // World pose (tetap)
-//     this.currentPos = [...this.startPos];
-//     this.currentRotation = this.startRotation;
-//     this.targetRotation = this.startRotation;
-
-//     // State machine
-//     this.states = {
-//       [MegaGarchompAnimState.IDLE_STANCE]: {
-//         onEnter: () => {
-//           this.snapLegsToBind(); // kaki rata
-//           this.resetTorsoFromBind(); // torso ke bind
-//           this.resetNeckFromBind(); // leher ke bind
-//         },
-//         onUpdate: (dt) => this.updateIdle(dt),
-//         duration: this.idleDuration,
-//       },
-
-//       [MegaGarchompAnimState.ATTACK_SLASH]: {
-//         onEnter: () => {
-//           this.snapLegsToBind(); // kunci kaki tetap rata
-//           this.attackTime = 0;
-//         },
-//         onUpdate: (dt) => this.updateAttackSlash(dt),
-//         duration: this.attackDuration,
-//       },
-
-//       [MegaGarchompAnimState.ROAR]: {
-//         onEnter: () => {
-//           this.snapLegsToBind(); // tetap rata
-//         },
-//         onUpdate: (dt) => this.updateRoar(dt),
-//         duration: this.roarDuration,
-//       },
-
-//       [MegaGarchompAnimState.TURN_AROUND]: {
-//         onEnter: () => {
-//           // Target = rotasi 180° dari rotasi sekarang (dibungkus 0..2π)
-//           this.turnStartRot = this.currentRotation;
-//           this.targetRotation = this.normalizeAngle(
-//             this.turnStartRot + Math.PI
-//           );
-//           // Selama turn, kaki & lengan tidak diayun
-//           this.snapLegsToBind();
-//           this.resetLeftUpperArm(); // biar tangan netral saat berputar
-//         },
-//         onUpdate: (dt) => this.updateTurn(dt),
-//         duration: this.turnDuration,
-//       },
-//     };
-
-//     // Mulai dari IDLE
-//     this.transitionTo(MegaGarchompAnimState.IDLE_STANCE);
-//   }
-
-//   /* =================== UTIL BIND & SNAP =================== */
-
-//   captureBindPose() {
-//     this.bind = this.bind || {};
-//     const keys = [
-//       "torso",
-//       "neck",
-//       "jaw",
-//       "leftThigh",
-//       "rightThigh",
-//       "leftShin",
-//       "rightShin",
-//       "leftFoot",
-//       "rightFoot",
-//       "leftArm",
-//       "rightArm",
-//     ];
-//     for (const k of keys) {
-//       const n = this.rig?.[k];
-//       if (n && !this.bind[k]) this.bind[k] = mat4.clone(n.localTransform);
-//     }
-//     // khusus upperArm kiri untuk slash (anak pertama dari leftArm)
-//     if (this.rig?.leftArm?.children?.[0]) {
-//       const upperArm = this.rig.leftArm.children[0];
-//       if (!upperArm._originalTransform) {
-//         upperArm._originalTransform = mat4.clone(upperArm.localTransform);
-//       }
-//     }
-//   }
-
-//   snapLegsToBind() {
-//     // paha
-//     if (this.rig.leftThigh && this.bind.leftThigh)
-//       mat4.copy(this.rig.leftThigh.localTransform, this.bind.leftThigh);
-//     if (this.rig.rightThigh && this.bind.rightThigh)
-//       mat4.copy(this.rig.rightThigh.localTransform, this.bind.rightThigh);
-//     // betis
-//     if (this.rig.leftShin && this.bind.leftShin)
-//       mat4.copy(this.rig.leftShin.localTransform, this.bind.leftShin);
-//     if (this.rig.rightShin && this.bind.rightShin)
-//       mat4.copy(this.rig.rightShin.localTransform, this.bind.rightShin);
-//     // telapak
-//     if (this.rig.leftFoot && this.bind.leftFoot)
-//       mat4.copy(this.rig.leftFoot.localTransform, this.bind.leftFoot);
-//     if (this.rig.rightFoot && this.bind.rightFoot)
-//       mat4.copy(this.rig.rightFoot.localTransform, this.bind.rightFoot);
-//   }
-
-//   resetTorsoFromBind() {
-//     if (this.rig.torso && this.bind.torso)
-//       mat4.copy(this.rig.torso.localTransform, this.bind.torso);
-//   }
-
-//   resetNeckFromBind() {
-//     if (this.rig.neck && this.bind.neck)
-//       mat4.copy(this.rig.neck.localTransform, this.bind.neck);
-//     if (this.rig.jaw && this.bind.jaw)
-//       mat4.copy(this.rig.jaw.localTransform, this.bind.jaw);
-//   }
-
-//   resetLeftUpperArm() {
-//     const upperArm = this.rig?.leftArm?.children?.[0];
-//     if (upperArm && upperArm._originalTransform) {
-//       mat4.copy(upperArm.localTransform, upperArm._originalTransform);
-//     }
-//   }
-
-//   normalizeAngle(a) {
-//     const TWO_PI = Math.PI * 2;
-//     a = a % TWO_PI;
-//     return a < 0 ? a + TWO_PI : a;
-//   }
-
-//   /* =================== UPDATE LOOP =================== */
-
-//   updateStateMachine(deltaTime) {
-//     const state = this.states[this.currentState];
-//     if (!state) return;
-
-//     // Jalankan update state
-//     if (state.onUpdate) state.onUpdate.call(this, deltaTime);
-
-//     // Waktu habis? transisi
-//     if (this.stateTime >= state.duration) {
-//       this.handleTransition();
-//     }
-
-//     // Efek ekor kecil (aman tidak mengubah pose kaki)
-//     this.updateTailDrag();
-//   }
-
-//   handleTransition() {
-//     switch (this.currentState) {
-//       case MegaGarchompAnimState.IDLE_STANCE:
-//         this.transitionTo(MegaGarchompAnimState.ATTACK_SLASH);
-//         break;
-//       case MegaGarchompAnimState.ATTACK_SLASH:
-//         this.transitionTo(MegaGarchompAnimState.ROAR);
-//         break;
-//       case MegaGarchompAnimState.ROAR:
-//         this.transitionTo(MegaGarchompAnimState.TURN_AROUND);
-//         break;
-//       case MegaGarchompAnimState.TURN_AROUND:
-//         this.transitionTo(MegaGarchompAnimState.IDLE_STANCE);
-//         break;
-//     }
-//   }
-
-//   /* =================== STATE UPDATES =================== */
-
-//   updateIdle(dt) {
-//     // Idle ringan: leher/torso balik ke bind (sudah di onEnter),
-//     // tidak ada sway yang bikin pinggul miring.
-//     this.snapLegsToBind(); // jaga-jaga
-//   }
-
-//   updateAttackSlash(dt) {
-//     const t = this.stateTime / this.attackDuration;
-
-//     // 30% windup, 20% hold/slash, 50% recovery
-//     let armAngle = 0;
-//     if (t < 0.3) {
-//       const windupT = t / 0.3;
-//       armAngle = this.easeInOutCubic(windupT) * this.armWindupAngle;
-//     } else if (t < 0.5) {
-//       armAngle = this.armWindupAngle;
-//     } else {
-//       const recoveryT = (t - 0.5) / 0.5;
-//       armAngle = this.lerp(
-//         this.armWindupAngle,
-//         0,
-//         this.easeInOutCubic(recoveryT)
-//       );
-//     }
-
-//     // Rotasi upperArm kiri (anak pertama dari leftArm)
-//     const upperArm = this.rig?.leftArm?.children?.[0];
-//     if (upperArm) {
-//       if (!upperArm._originalTransform) {
-//         upperArm._originalTransform = mat4.clone(upperArm.localTransform);
-//       }
-//       mat4.copy(upperArm.localTransform, upperArm._originalTransform);
-//       mat4.rotate(
-//         upperArm.localTransform,
-//         upperArm.localTransform,
-//         -armAngle,
-//         [0, 0, 1]
-//       );
-//     }
-
-//     // Pastikan kaki tetap rata
-//     this.snapLegsToBind();
-//   }
-
-//   updateRoar(dt) {
-//     const t = this.stateTime / this.roarDuration;
-//     let intensity = 0;
-//     if (t < 0.2) intensity = this.easeInOutCubic(t / 0.2);
-//     else if (t < 0.7) intensity = 1.0;
-//     else intensity = this.easeInOutCubic(1 - (t - 0.7) / 0.3);
-
-//     // Torso lean back (rotate X)
-//     if (this.rig.torso && this.bind.torso) {
-//       mat4.copy(this.rig.torso.localTransform, this.bind.torso);
-//       mat4.rotate(
-//         this.rig.torso.localTransform,
-//         this.rig.torso.localTransform,
-//         -this.roarLeanBack * intensity,
-//         [1, 0, 0]
-//       );
-//     }
-
-//     // Head tilt via neck
-//     if (this.rig.neck && this.bind.neck) {
-//       mat4.copy(this.rig.neck.localTransform, this.bind.neck);
-//       mat4.rotate(
-//         this.rig.neck.localTransform,
-//         this.rig.neck.localTransform,
-//         -this.roarHeadTilt * intensity,
-//         [1, 0, 0]
-//       );
-//     }
-
-//     // Jaw open
-//     if (this.rig.jaw && this.bind.jaw) {
-//       mat4.copy(this.rig.jaw.localTransform, this.bind.jaw);
-//       mat4.rotate(
-//         this.rig.jaw.localTransform,
-//         this.rig.jaw.localTransform,
-//         this.jawOpenAngle * intensity,
-//         [1, 0, 0]
-//       );
-//     }
-
-//     // Kaki tetap rata
-//     this.snapLegsToBind();
-//   }
-
-//   updateTurn(dt) {
-//     const t = Math.min(this.stateTime / this.turnDuration, 1.0);
-//     const eased = this.easeInOutCubic(t);
-
-//     // Interpolasi rotasi halus (shortest arc)
-//     const start = this.normalizeAngle(this.turnStartRot);
-//     const end = this.normalizeAngle(this.targetRotation);
-
-//     // pilih arah rotasi terpendek
-//     let delta = end - start;
-//     if (delta > Math.PI) delta -= Math.PI * 2;
-//     if (delta < -Math.PI) delta += Math.PI * 2;
-
-//     this.currentRotation = this.normalizeAngle(start + delta * eased);
-
-//     // Selama turn: kaki & lengan netral
-//     this.snapLegsToBind();
-//     this.resetLeftUpperArm();
-//     this.resetNeckFromBind();
-//     this.resetTorsoFromBind();
-//   }
-
-//   /* =================== SMALL FX =================== */
-
-//   updateTailDrag() {
-//     if (!this.rig.tail) return;
-//     const drag = Math.sin(this.totalTime * 0.8) * this.tailDragAmount;
-//     mat4.identity(this.rig.tail.localTransform);
-//     mat4.translate(this.rig.tail.localTransform, this.rig.tail.localTransform, [
-//       0,
-//       drag,
-//       0,
-//     ]);
-//   }
-// }
-
-// /* ===== Exports ===== */
-// if (typeof module !== "undefined" && module.exports) {
-//   module.exports = MegaGarchompAnimator;
-// }
-// window.MegaGarchompAnimator = MegaGarchompAnimator;

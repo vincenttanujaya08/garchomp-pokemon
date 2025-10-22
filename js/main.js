@@ -207,8 +207,8 @@ function main() {
     wrap.addChild(g);
 
     const anim = new GarchompAnimator(g, {
-      startPos: [30, -2.5, -15],
-      endPos: [30, -2.5, -25],
+      startPos: [30, -2.5, -25],
+      endPos: [30, -2.5, -15],
       walkDuration: 3.0,
       pauseDuration: 5.0,
       turnDuration: 1.0,

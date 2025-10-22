@@ -1,11 +1,11 @@
 /**
  * Gabite Animator — Idle Look + Tail Sway + Hop (Stay Put)
- * Tambahan: CENTER_HEAD (leher balik ke tengah secara smooth sebelum lompat)
+ * FIXED VERSION - Smooth 2x hop tanpa snap/jitter
  */
 
 const GabiteAnimState = {
   LOOK_AROUND: "LOOK_AROUND",
-  CENTER_HEAD: "CENTER_HEAD", // NEW: halusin balik ke tengah
+  CENTER_HEAD: "CENTER_HEAD",
   HOP_EXCITED: "HOP_EXCITED",
 };
 
@@ -13,11 +13,11 @@ class GabiteAnimator extends AnimationController {
   constructor(gabiteNode, config = {}) {
     const defaults = {
       // Look
-      lookDuration: 2.0, // 1s kiri, 1s kanan
-      neckTurnAngle: Math.PI / 4, // 45°
+      lookDuration: 2.0,
+      neckTurnAngle: Math.PI / 4,
 
-      // Center (baru)
-      centerDuration: 0.4, // durasi balik ke tengah (smooth)
+      // Center
+      centerDuration: 0.4,
 
       // Hop
       hopDuration: 2.0,
@@ -47,15 +47,12 @@ class GabiteAnimator extends AnimationController {
 
     this.states = {
       [GabiteAnimState.LOOK_AROUND]: {
-        onEnter: () => {
-          /* mulai dari angle terakhir */
-        },
+        onEnter: () => {},
         onUpdate: (dt) => this.updateLookAround(dt),
         duration: this.lookDuration,
       },
       [GabiteAnimState.CENTER_HEAD]: {
         onEnter: () => {
-          // simpan dari mana mau balik → 0
           this._centerStart = this.currentNeckRotation || 0;
           this._centerTarget = 0;
         },
@@ -64,7 +61,11 @@ class GabiteAnimator extends AnimationController {
       },
       [GabiteAnimState.HOP_EXCITED]: {
         onEnter: () => {
-          /* neck tetap netral saat hop */
+          // PENTING: Reset ke bind pose dulu sebelum hop
+          this.resetToBind("leftThigh");
+          this.resetToBind("rightThigh");
+          this.resetToBind("leftArm");
+          this.resetToBind("rightArm");
         },
         onUpdate: (dt) => this.updateHop(dt),
         duration: this.hopDuration,
@@ -95,6 +96,7 @@ class GabiteAnimator extends AnimationController {
         this.bindPoses[k] = mat4.clone(this.rig[k].localTransform);
     });
   }
+
   resetToBind(k) {
     if (this.bindPoses[k] && this.rig[k])
       mat4.copy(this.rig[k].localTransform, this.bindPoses[k]);
@@ -116,7 +118,6 @@ class GabiteAnimator extends AnimationController {
   handleStateTransition() {
     switch (this.currentState) {
       case GabiteAnimState.LOOK_AROUND:
-        // habis noleh → smoothe ke tengah dulu
         this.transitionTo(GabiteAnimState.CENTER_HEAD);
         break;
       case GabiteAnimState.CENTER_HEAD:
@@ -134,20 +135,16 @@ class GabiteAnimator extends AnimationController {
     let target = 0;
 
     if (this.stateTime < half) {
-      // ke kiri
       const t = this.stateTime / half;
       target = this.easeInOutCubic(t) * this.neckTurnAngle;
     } else {
-      // ke kanan
       const t = (this.stateTime - half) / half;
       target =
         this.neckTurnAngle - this.easeInOutCubic(t) * this.neckTurnAngle * 2;
     }
 
-    // lerp halus
     this.currentNeckRotation += (target - this.currentNeckRotation) * 8.0 * dt;
 
-    // apply ke neck
     if (this.rig.neck && this.bindPoses.neck) {
       mat4.copy(this.rig.neck.localTransform, this.bindPoses.neck);
       mat4.rotate(
@@ -158,7 +155,6 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // bob ringan
     if (this.rig.body && this.bindPoses.body) {
       const bob =
         Math.abs(Math.sin(this.totalTime * Math.PI * 2)) *
@@ -172,17 +168,16 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // netralin kaki/arm saat look
     this.resetToBind("leftThigh");
     this.resetToBind("rightThigh");
     this.resetToBind("leftArm");
     this.resetToBind("rightArm");
   }
 
-  // ===== CENTER HEAD (baru) — ease balik ke tengah sebelum hop =====
+  // ===== CENTER HEAD =====
   updateCenterHead(dt) {
     const t = Math.min(this.stateTime / Math.max(this.centerDuration, 1e-4), 1);
-    const eased = this.easeOutCubic(t); // cepat di awal, halus di akhir
+    const eased = this.easeOutCubic(t);
 
     const neck =
       this._centerStart + (this._centerTarget - this._centerStart) * eased;
@@ -198,7 +193,6 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // bob kecil supaya tidak “mati”
     if (this.rig.body && this.bindPoses.body) {
       const bob =
         Math.abs(Math.sin(this.totalTime * Math.PI * 2)) *
@@ -212,89 +206,110 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // anggota badan kembali netral
     this.resetToBind("leftThigh");
     this.resetToBind("rightThigh");
     this.resetToBind("leftArm");
     this.resetToBind("rightArm");
   }
 
-  // ===== HOP (2x) =====
+  // ===== HOP (SIMPLE & SMOOTH - NO GLITCHY LEG) =====
   updateHop(dt) {
-    const single = this.hopDuration / this.hopCount;
-    const hopTime = this.stateTime % single;
-    const t = hopTime / single;
+    const totalT = this.stateTime / this.hopDuration;
+    const hopProgress = (totalT * this.hopCount) % 1.0;
 
-    let v = 0,
-      leg = 0,
-      arm = 0;
-    if (t < 0.3) {
-      const e = this.easeInOutQuad(t / 0.3);
-      v = -e * this.squatAmount;
-      leg = e * (Math.PI / 6);
-    } else if (t < 0.7) {
-      const jt = (t - 0.3) / 0.4;
-      const parabola = 4 * jt * (1 - jt);
-      v = parabola * this.hopHeight;
-      arm = parabola * this.armSwingAngle;
-      leg = 0;
+    let bodyY = 0;
+    let legAngle = 0;
+    let armAngle = 0;
+
+    if (hopProgress < 0.25) {
+      // Phase 1: Squat (0% → 25%)
+      const t = hopProgress / 0.25;
+      const eased = this.easeInOutQuad(t);
+      bodyY = -eased * this.squatAmount;
+      legAngle = eased * (Math.PI / 8); // Bengkok sedang (22.5°)
+    } else if (hopProgress < 0.75) {
+      // Phase 2: Jump (25% → 75%)
+      const t = (hopProgress - 0.25) / 0.5;
+
+      // Body: smooth parabolic jump
+      const arc = Math.sin(t * Math.PI);
+      bodyY = arc * this.hopHeight;
+
+      // Arms: swing
+      armAngle = Math.sin(t * Math.PI) * this.armSwingAngle;
+
+      // Legs: LURUS selama di udara
+      legAngle = 0;
     } else {
-      const e = this.easeOutCubic((t - 0.7) / 0.3);
-      v = (1 - e) * this.squatAmount * 0.5;
-      leg = (1 - e) * (Math.PI / 8);
+      // Phase 3: Landing (75% → 100%)
+      const t = (hopProgress - 0.75) / 0.25;
+      const eased = this.easeOutQuad(t);
+
+      // Body: turun smooth
+      bodyY = (1 - eased) * this.hopHeight * Math.sin(0) * 0.1; // Minimal bounce
+
+      // Legs: TETAP LURUS! Ga usah bengkok lagi
+      legAngle = 0;
+
+      // Arms: settle
+      armAngle = 0;
     }
 
-    // body naik-turun
+    // ===== APPLY TRANSFORMS (SMOOTH) =====
+
+    // Body Y movement
     if (this.rig.body && this.bindPoses.body) {
       mat4.copy(this.rig.body.localTransform, this.bindPoses.body);
       mat4.translate(
         this.rig.body.localTransform,
         this.rig.body.localTransform,
-        [0, v, 0]
+        [0, bodyY, 0]
       );
     }
 
-    // legs
+    // Leg rotations (both legs move together symmetrically)
     if (this.rig.leftThigh && this.bindPoses.leftThigh) {
       mat4.copy(this.rig.leftThigh.localTransform, this.bindPoses.leftThigh);
       mat4.rotate(
         this.rig.leftThigh.localTransform,
         this.rig.leftThigh.localTransform,
-        leg,
+        legAngle,
         [1, 0, 0]
       );
     }
+
     if (this.rig.rightThigh && this.bindPoses.rightThigh) {
       mat4.copy(this.rig.rightThigh.localTransform, this.bindPoses.rightThigh);
       mat4.rotate(
         this.rig.rightThigh.localTransform,
         this.rig.rightThigh.localTransform,
-        leg,
+        legAngle,
         [1, 0, 0]
       );
     }
 
-    // arms
+    // Arm swing
     if (this.rig.leftArm && this.bindPoses.leftArm) {
       mat4.copy(this.rig.leftArm.localTransform, this.bindPoses.leftArm);
       mat4.rotate(
         this.rig.leftArm.localTransform,
         this.rig.leftArm.localTransform,
-        -arm,
+        -armAngle,
         [1, 0, 0]
       );
     }
+
     if (this.rig.rightArm && this.bindPoses.rightArm) {
       mat4.copy(this.rig.rightArm.localTransform, this.bindPoses.rightArm);
       mat4.rotate(
         this.rig.rightArm.localTransform,
         this.rig.rightArm.localTransform,
-        -arm,
+        -armAngle,
         [1, 0, 0]
       );
     }
 
-    // neck tetap netral selama hop
+    // Neck stays neutral during hop
     this.resetToBind("neck");
   }
 
@@ -323,18 +338,32 @@ class GabiteAnimator extends AnimationController {
     );
   }
 
-  // tetapkan statis (no root motion)
+  // Stay put (no root motion)
   applyTransforms() {}
 
-  // ===== Easing =====
+  // ===== Easing Functions =====
   easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
+
   easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
   }
+
+  easeInCubic(t) {
+    return t * t * t;
+  }
+
   easeInOutQuad(t) {
     return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  easeInQuad(t) {
+    return t * t;
+  }
+
+  easeOutQuad(t) {
+    return 1 - (1 - t) * (1 - t);
   }
 }
 
@@ -342,6 +371,4 @@ if (typeof module !== "undefined" && module.exports)
   module.exports = GabiteAnimator;
 window.GabiteAnimator = GabiteAnimator;
 
-console.log(
-  "✅ GabiteAnimator (Idle) loaded — look-around → center (smooth) → hop"
-);
+console.log("✅ GabiteAnimator FIXED - Smooth 2x hop without snap/jitter");
