@@ -29,114 +29,55 @@ function main() {
   }
 
   // ===== ISLAND CONFIGURATION =====
+  // ===== ISLAND CONFIGURATION =====
   const ISLAND_CONFIG = [
-    { name: "ISLAND_A", position: [-80, 0, 20], pokemonName: "Garchomp" },
-    { name: "ISLAND_B", position: [80, 0, 20], pokemonName: "Gabite" },
-    { name: "ISLAND_C", position: [0, 0, -100], pokemonName: "Mega Garchomp" },
+    {
+      name: "ISLAND_A",
+      position: [30, -5, -20],
+      scale: 2.0,
+      pokemonName: "Garchomp",
+    }, // Kanan depan
+    {
+      name: "ISLAND_B",
+      position: [-30, -5, -20],
+      scale: 2.0,
+      pokemonName: "Gabite",
+    }, // Kiri depan
+    {
+      name: "ISLAND_C",
+      position: [0, 0, -40],
+      scale: 2.5,
+      pokemonName: "Mega Garchomp",
+    }, // Tengah belakang
   ];
 
   // ===== INTRO SYSTEM =====
+  // ===== INTRO SYSTEM =====
   const introState = {
     isPlaying: false,
-    type: null, // "CINEMATIC" or "QUICK"
-    progress: 0,
-    duration: 0,
-    isSkippable: true,
-
-    // Cinematic waypoints
-    cinematicPath: [
-      {
-        target: [0, 0, -20],
-        distance: 150,
-        azimuth: 0,
-        elevation: 0.8,
-        duration: 1.5,
-      },
-      {
-        target: [0, 0, -20],
-        distance: 120,
-        azimuth: Math.PI * 0.5,
-        elevation: 0.6,
-        duration: 1.5,
-      },
-      {
-        target: [0, 0, -20],
-        distance: 100,
-        azimuth: Math.PI,
-        elevation: 0.5,
-        duration: 1.0,
-      },
-      {
-        target: [-80, -6, 8],
-        distance: 50,
-        azimuth: 0,
-        elevation: 0.4,
-        duration: 1.0,
-      },
-    ],
-    currentWaypoint: 0,
-    waypointProgress: 0,
-
-    // Quick zoom params
-    quickZoomStart: {
-      target: [0, 0, 0],
-      distance: 80,
-      azimuth: 0,
-      elevation: 0.5,
-    },
-    quickZoomEnd: {
-      target: [0, 0, 0],
-      distance: 50,
-      azimuth: 0,
-      elevation: 0.4,
-    },
+    isSkippable: false,
   };
 
   // ===== CAMERA STATE =====
+  // ===== CAMERA STATE =====
+  // ===== CAMERA STATE (SIMPLIFIED - NO POKEMON LOCK) =====
   const cameraState = {
-    mode: "LOCKED",
-    focusedIsland: 0,
-
-    target: [0, -6, -12],
-    distance: 50,
+    target: [0, -5, -30],
+    distance: 80,
     azimuth: 0,
-    elevation: 0.4,
+    elevation: 0.5,
     minElevation: -Math.PI / 3,
     maxElevation: Math.PI / 2.5,
-
-    position: [0, 5, 40],
-    yaw: -Math.PI / 2,
-    pitch: 0,
-
-    isTransitioning: false,
-    transitionProgress: 0,
-    transitionDuration: 1.5,
-    transitionStartTarget: [0, 0, 0],
-    transitionEndTarget: [0, 0, 0],
-    transitionStartDistance: 50,
-    transitionEndDistance: 50,
-    transitionStartAzimuth: 0,
-    transitionEndAzimuth: 0,
   };
 
   // ===== KEYBOARD STATE =====
   const keys = {};
-
   function handleKeyDown(e) {
     keys[e.key.toLowerCase()] = true;
 
-    // Skip intro
-    if (introState.isPlaying && introState.isSkippable) {
-      skipIntro();
-      return;
-    }
-
-    // Island focus switching
-    if (e.key === "1") switchToIsland(0);
-    if (e.key === "2") switchToIsland(1);
-    if (e.key === "3") switchToIsland(2);
+    // HAPUS semua switch camera (1/2/3)
+    // Tidak ada lagi lock/unlock Pokemon
   }
-
   function handleKeyUp(e) {
     keys[e.key.toLowerCase()] = false;
   }
@@ -164,12 +105,6 @@ function main() {
   const skyboxRotationMatrix = mat4.create();
 
   function handleMouseDown(e) {
-    // Skip intro on click
-    if (introState.isPlaying && introState.isSkippable) {
-      skipIntro();
-      return;
-    }
-
     isDragging = true;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
@@ -180,31 +115,30 @@ function main() {
   }
 
   function handleMouseMove(e) {
-    if (!isDragging || introState.isPlaying) return;
+    if (!isDragging) return;
 
     const dx = e.clientX - lastMouseX;
     const dy = e.clientY - lastMouseY;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
 
-    if (cameraState.mode === "LOCKED") {
-      cameraState.azimuth -= dx * 0.01;
-      cameraState.elevation -= dy * 0.01;
-      cameraState.elevation = Math.max(
-        cameraState.minElevation,
-        Math.min(cameraState.maxElevation, cameraState.elevation)
-      );
-    }
+    // FIX: Orbit tetap jalan baik locked maupun free
+    cameraState.azimuth -= dx * 0.01;
+    cameraState.elevation -= dy * 0.01;
+    cameraState.elevation = Math.max(
+      cameraState.minElevation,
+      Math.min(cameraState.maxElevation, cameraState.elevation)
+    );
+
+    // Drag mouse TIDAK unlock dari Pokemon
   }
 
   function handleWheel(e) {
-    if (introState.isPlaying) return;
-
     e.preventDefault();
-    if (cameraState.mode === "LOCKED") {
-      cameraState.distance += e.deltaY * 0.05;
-      cameraState.distance = Math.max(20, Math.min(100, cameraState.distance));
-    }
+
+    // Zoom in/out - selalu jalan (locked atau free)
+    cameraState.distance += e.deltaY * 0.05;
+    cameraState.distance = Math.max(20, Math.min(150, cameraState.distance));
   }
 
   canvas.addEventListener("mousedown", handleMouseDown);
@@ -213,22 +147,19 @@ function main() {
   canvas.addEventListener("wheel", handleWheel);
 
   // ===== INTRO FUNCTIONS =====
-
   function startIntro() {
-    const hasSeenIntro = localStorage.getItem("hasSeenIntro");
-    const lastIsland = parseInt(
-      localStorage.getItem("lastFocusedIsland") || "0"
-    );
+    // Direct to free mode - no intro
+    introState.isPlaying = false;
 
-    if (!hasSeenIntro) {
-      // First time - Full cinematic
-      startCinematicIntro();
-    } else {
-      // Return visit - Quick zoom
-      startQuickIntro(lastIsland);
-    }
+    // Set initial camera position (overview dari depan atas)
+    cameraState.target = [0, -5, -30];
+    cameraState.distance = 80;
+    cameraState.azimuth = 0;
+    cameraState.elevation = 0.5;
+
+    updateUIIndicator(); // <-- Panggil sekali
+    console.log("✅ Started in FREE MODE");
   }
-
   function startCinematicIntro() {
     console.log("🎬 Starting cinematic intro...");
     introState.isPlaying = true;
@@ -244,42 +175,6 @@ function main() {
     cameraState.distance = firstWaypoint.distance;
     cameraState.azimuth = firstWaypoint.azimuth;
     cameraState.elevation = firstWaypoint.elevation;
-
-    showSkipUI();
-  }
-
-  function startQuickIntro(islandIndex) {
-    console.log(`⚡ Quick intro to Island ${islandIndex}...`);
-    introState.isPlaying = true;
-    introState.type = "QUICK";
-    introState.progress = 0;
-    introState.duration = 1.5;
-    introState.isSkippable = true;
-
-    const island = ISLAND_CONFIG[islandIndex];
-
-    // Zoom out position
-    introState.quickZoomStart = {
-      target: [island.position[0], -6, island.position[2] - 12],
-      distance: 80,
-      azimuth: 0,
-      elevation: 0.5,
-    };
-
-    // Final position
-    introState.quickZoomEnd = {
-      target: [island.position[0], -6, island.position[2] - 12],
-      distance: 50,
-      azimuth: 0,
-      elevation: 0.4,
-    };
-
-    // Set camera to start position
-    cameraState.target = [...introState.quickZoomStart.target];
-    cameraState.distance = introState.quickZoomStart.distance;
-    cameraState.azimuth = introState.quickZoomStart.azimuth;
-    cameraState.elevation = introState.quickZoomStart.elevation;
-    cameraState.focusedIsland = islandIndex;
 
     showSkipUI();
   }
@@ -347,50 +242,41 @@ function main() {
     }
   }
 
-  function updateQuickIntro(deltaTime) {
-    introState.progress += deltaTime / introState.duration;
-
-    if (introState.progress >= 1.0) {
-      finishIntro();
-      return;
-    }
-
-    const t = easeInOutCubic(introState.progress);
-    const start = introState.quickZoomStart;
-    const end = introState.quickZoomEnd;
-
-    cameraState.target = lerpVec3(start.target, end.target, t);
-    cameraState.distance = lerp(start.distance, end.distance, t);
-    cameraState.azimuth = lerpAngle(start.azimuth, end.azimuth, t);
-    cameraState.elevation = lerp(start.elevation, end.elevation, t);
-  }
-
   function skipIntro() {
     console.log("⏭️ Intro skipped!");
-    finishIntro();
+
+    // Keep current camera position (don't snap)
+    introState.isPlaying = false;
+
+    // Set to free mode (not locked to any Pokemon)
+    cameraState.mode = "LOCKED";
+    cameraState.lockedToPokemon = false;
+    cameraState.targetPokemon = null;
+
+    hideSkipUI();
+    updateUIIndicator();
   }
 
   function finishIntro() {
     introState.isPlaying = false;
 
-    // Mark intro as seen
-    localStorage.setItem("hasSeenIntro", "true");
+    // End at final overview position (depan atas)
+    const finalWaypoint =
+      introState.cinematicPath[introState.cinematicPath.length - 1];
+    cameraState.target = [...finalWaypoint.target];
+    cameraState.distance = finalWaypoint.distance;
+    cameraState.azimuth = finalWaypoint.azimuth;
+    cameraState.elevation = finalWaypoint.elevation;
 
-    // Set camera to Island A (or last focused island for quick intro)
-    const targetIsland =
-      introState.type === "QUICK" ? cameraState.focusedIsland : 0;
-    const island = ISLAND_CONFIG[targetIsland];
-
-    cameraState.target = [island.position[0], -6, island.position[2] - 12];
-    cameraState.distance = 50;
-    cameraState.azimuth = 0;
-    cameraState.elevation = 0.4;
-    cameraState.focusedIsland = targetIsland;
+    // Free mode (not locked)
+    cameraState.mode = "LOCKED";
+    cameraState.lockedToPokemon = false;
+    cameraState.targetPokemon = null;
 
     hideSkipUI();
     updateUIIndicator();
 
-    console.log("✅ Intro finished!");
+    console.log("✅ Intro finished - Free camera mode");
   }
 
   function showSkipUI() {
@@ -436,123 +322,176 @@ function main() {
 
   // ===== CAMERA FUNCTIONS =====
 
-  function switchToIsland(index) {
-    if (index < 0 || index >= ISLAND_CONFIG.length) return;
-    if (cameraState.isTransitioning || introState.isPlaying) return;
+  // function switchToIsland(index) {
+  //   if (index < 0 || index >= ISLAND_CONFIG.length) return;
 
-    const island = ISLAND_CONFIG[index];
-    cameraState.mode = "LOCKED";
-    cameraState.focusedIsland = index;
+  //   // FIX: Boleh switch meskipun sedang transition (cancel transition lama)
+  //   // if (cameraState.isTransitioning) return; // <-- HAPUS INI
 
-    // Save to localStorage
-    localStorage.setItem("lastFocusedIsland", index.toString());
+  //   const island = ISLAND_CONFIG[index];
+  //   cameraState.focusedIsland = index;
 
-    // Start transition animation
-    cameraState.isTransitioning = true;
-    cameraState.transitionProgress = 0;
-    cameraState.transitionStartTarget = [...cameraState.target];
-    cameraState.transitionEndTarget = [
-      island.position[0],
-      -6,
-      island.position[2] - 12,
-    ];
-    cameraState.transitionStartDistance = cameraState.distance;
-    cameraState.transitionEndDistance = 50;
-    cameraState.transitionStartAzimuth = cameraState.azimuth;
-    cameraState.transitionEndAzimuth = 0;
+  //   // Save to localStorage
+  //   localStorage.setItem("lastFocusedIsland", index.toString());
 
-    updateUIIndicator();
-  }
+  //   // Lock camera to Pokemon
+  //   const targetPokemon = pokemons.find((p) => p.islandIndex === index);
+  //   if (targetPokemon) {
+  //     cameraState.lockedToPokemon = true;
+  //     cameraState.targetPokemon = targetPokemon;
+  //     console.log(`🔒 Camera locked to ${targetPokemon.node.name}`);
+  //   }
 
-  function updateCameraTransition(deltaTime) {
-    if (!cameraState.isTransitioning) return;
+  //   // Get Pokemon position
+  //   let targetPos = [0, 0, 0];
+  //   if (targetPokemon && targetPokemon.animator) {
+  //     targetPos = [...targetPokemon.animator.currentPos];
+  //   } else if (targetPokemon) {
+  //     targetPos = [
+  //       targetPokemon.node.localTransform[12],
+  //       targetPokemon.node.localTransform[13],
+  //       targetPokemon.node.localTransform[14],
+  //     ];
+  //   }
 
-    cameraState.transitionProgress +=
-      deltaTime / cameraState.transitionDuration;
+  //   // Start smooth transition - DARI POSISI SEKARANG
+  //   cameraState.isTransitioning = true;
+  //   cameraState.transitionProgress = 0;
 
-    if (cameraState.transitionProgress >= 1.0) {
-      cameraState.transitionProgress = 1.0;
-      cameraState.isTransitioning = false;
-    }
+  //   cameraState.transitionStartTarget = [...cameraState.target];
+  //   cameraState.transitionStartDistance = cameraState.distance;
+  //   cameraState.transitionStartAzimuth = cameraState.azimuth;
+  //   cameraState.transitionStartElevation = cameraState.elevation;
 
-    const t = easeInOutCubic(cameraState.transitionProgress);
+  //   cameraState.transitionEndTarget = targetPos;
+  //   cameraState.transitionEndDistance = 40;
+  //   cameraState.transitionEndAzimuth = 0; // Reset ke depan
+  //   cameraState.transitionEndElevation = 0.4; // Reset angle
 
-    cameraState.target = lerpVec3(
-      cameraState.transitionStartTarget,
-      cameraState.transitionEndTarget,
-      t
-    );
+  //   updateUIIndicator();
+  // }
 
-    cameraState.distance = lerp(
-      cameraState.transitionStartDistance,
-      cameraState.transitionEndDistance,
-      t
-    );
+  // function updateCameraTransition(deltaTime) {
+  //   if (!cameraState.isTransitioning) return;
 
-    cameraState.azimuth = lerpAngle(
-      cameraState.transitionStartAzimuth,
-      cameraState.transitionEndAzimuth,
-      t
-    );
-  }
+  //   cameraState.transitionProgress +=
+  //     deltaTime / cameraState.transitionDuration;
+
+  //   if (cameraState.transitionProgress >= 1.0) {
+  //     cameraState.transitionProgress = 1.0;
+  //     cameraState.isTransitioning = false;
+  //   }
+
+  //   const t = easeInOutCubic(cameraState.transitionProgress);
+
+  //   // Smooth interpolation dari posisi sekarang ke target
+  //   cameraState.target = lerpVec3(
+  //     cameraState.transitionStartTarget,
+  //     cameraState.transitionEndTarget,
+  //     t
+  //   );
+
+  //   cameraState.distance = lerp(
+  //     cameraState.transitionStartDistance,
+  //     cameraState.transitionEndDistance,
+  //     t
+  //   );
+
+  //   cameraState.azimuth = lerpAngle(
+  //     cameraState.transitionStartAzimuth,
+  //     cameraState.transitionEndAzimuth,
+  //     t
+  //   );
+
+  //   // NEW: Interpolate elevation juga
+  //   cameraState.elevation = lerp(
+  //     cameraState.transitionStartElevation,
+  //     cameraState.transitionEndElevation,
+  //     t
+  //   );
+  // }
+
+  // function updatePokemonTracking(deltaTime) {
+  //   if (!cameraState.lockedToPokemon || !cameraState.targetPokemon) return;
+
+  //   const pokemon = cameraState.targetPokemon;
+  //   let targetPos = [0, 0, 0];
+
+  //   // Get Pokemon position
+  //   if (pokemon.animator) {
+  //     // Animated Pokemon
+  //     targetPos = [...pokemon.animator.currentPos];
+  //   } else {
+  //     // Static Pokemon
+  //     targetPos = [
+  //       pokemon.node.localTransform[12],
+  //       pokemon.node.localTransform[13],
+  //       pokemon.node.localTransform[14],
+  //     ];
+  //   }
+
+  //   // FIX: Hanya smooth interpolate TARGET position (pusat orbit)
+  //   // JANGAN touch azimuth/elevation - biar user bebas orbit!
+  //   const lerpFactor = 0.1;
+
+  //   cameraState.target[0] +=
+  //     (targetPos[0] - cameraState.target[0]) * lerpFactor;
+  //   cameraState.target[1] +=
+  //     (targetPos[1] - cameraState.target[1]) * lerpFactor;
+  //   cameraState.target[2] +=
+  //     (targetPos[2] - cameraState.target[2]) * lerpFactor;
+
+  //   // HAPUS semua code tentang azimuth rotation!
+  //   // User bebas orbit manual dengan drag mouse
+  // }
 
   function updateCameraMovement(deltaTime) {
-    // Kecepatan normal dan sprint
-    const normalPanSpeed = 20.0 * deltaTime;
-    const sprintMultiplier = 5; // Atur seberapa cepat sprintnya (misal: 2.5x)
+    // PERCEPAT: Ubah dari 20.0 → 50.0 (2.5x lebih cepat)
+    const normalPanSpeed = 50.0 * deltaTime; // <-- UBAH INI
+    const sprintMultiplier = 2.5; // Sprint jadi 125 total
     const currentPanSpeed = keys["shift"]
       ? normalPanSpeed * sprintMultiplier
       : normalPanSpeed;
 
-    // Kecepatan vertikal tetap sama (atau bisa juga ditambahkan multiplier jika mau)
-    const verticalPanSpeed = 20.0 * deltaTime;
+    const verticalPanSpeed = 50.0 * deltaTime; // <-- UBAH INI JUGA
 
-    if (cameraState.mode === "LOCKED") {
-      // Hitung vektor arah berdasarkan azimuth kamera
-      const forwardX = Math.sin(cameraState.azimuth);
-      const forwardZ = Math.cos(cameraState.azimuth);
-      // Vektor kanan adalah rotasi 90 derajat dari vektor maju di bidang XZ
-      const rightX = Math.cos(cameraState.azimuth);
-      const rightZ = -Math.sin(cameraState.azimuth);
+    // Hitung vektor arah berdasarkan azimuth kamera
+    const forwardX = Math.sin(cameraState.azimuth);
+    const forwardZ = Math.cos(cameraState.azimuth);
+    const rightX = Math.cos(cameraState.azimuth);
+    const rightZ = -Math.sin(cameraState.azimuth);
 
-      let deltaX = 0;
-      let deltaZ = 0;
+    let deltaX = 0;
+    let deltaZ = 0;
+    let deltaY = 0;
 
-      // Gunakan currentPanSpeed yang sudah memperhitungkan Shift
-      if (keys["w"]) {
-        deltaX -= forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-        deltaZ -= forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-      }
-      if (keys["s"]) {
-        deltaX += forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-        deltaZ += forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-      }
-      if (keys["a"]) {
-        deltaX -= rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-        deltaZ -= rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-      }
-      if (keys["d"]) {
-        deltaX += rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-        deltaZ += rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-      }
-
-      // Terapkan perubahan ke target kamera
-      cameraState.target[0] += deltaX;
-      cameraState.target[2] += deltaZ;
-
-      // Gerakan naik/turun (Q/E) tetap sama (atau bisa juga gunakan currentPanSpeed)
-      if (keys["q"]) cameraState.target[1] -= verticalPanSpeed; // Tetap pakai verticalPanSpeed
-      if (keys["e"]) cameraState.target[1] += verticalPanSpeed; // Tetap pakai verticalPanSpeed
+    if (keys["w"]) {
+      deltaX -= forwardX * currentPanSpeed;
+      deltaZ -= forwardZ * currentPanSpeed;
+    }
+    if (keys["s"]) {
+      deltaX += forwardX * currentPanSpeed;
+      deltaZ += forwardZ * currentPanSpeed;
+    }
+    if (keys["a"]) {
+      deltaX -= rightX * currentPanSpeed;
+      deltaZ -= rightZ * currentPanSpeed;
+    }
+    if (keys["d"]) {
+      deltaX += rightX * currentPanSpeed;
+      deltaZ += rightZ * currentPanSpeed;
+    }
+    if (keys["q"]) {
+      deltaY -= verticalPanSpeed;
+    }
+    if (keys["e"]) {
+      deltaY += verticalPanSpeed;
     }
 
-    // if (cameraState.mode === "LOCKED") {
-    //   if (keys["w"]) cameraState.target[2] -= panSpeed;
-    //   if (keys["s"]) cameraState.target[2] += panSpeed;
-    //   if (keys["a"]) cameraState.target[0] -= panSpeed;
-    //   if (keys["d"]) cameraState.target[0] += panSpeed;
-    //   if (keys["q"]) cameraState.target[1] -= panSpeed;
-    //   if (keys["e"]) cameraState.target[1] += panSpeed;
-    // }
+    // Apply movement
+    cameraState.target[0] += deltaX;
+    cameraState.target[1] += deltaY;
+    cameraState.target[2] += deltaZ;
   }
 
   function calculateOrbitPosition() {
@@ -580,8 +519,6 @@ function main() {
 
   // ===== UI INDICATOR =====
   function updateUIIndicator() {
-    if (introState.isPlaying) return; // Hide during intro
-
     let indicator = document.getElementById("camera-indicator");
     if (!indicator) {
       indicator = document.createElement("div");
@@ -599,15 +536,12 @@ function main() {
       document.body.appendChild(indicator);
     }
 
-    const island = ISLAND_CONFIG[cameraState.focusedIsland];
     indicator.innerHTML = `
-      <strong>🌅 WARM LIGHTING MODE</strong><br>
-      Focus: ${island.name} (${island.pokemonName})<br>
-      <small>1/2/3: Switch Island | WASD/QE: Pan | Drag: Orbit | Wheel: Zoom</small> | Shift: Faster Camera
+      <strong>🌅 FREE CAMERA MODE</strong><br>
+      <small>WASD/QE: Move (Shift: Sprint) | Drag: Rotate | Wheel: Zoom</small>
     `;
     indicator.style.display = "block";
   }
-
   // ===== HELPER FUNCTIONS =====
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -658,6 +592,7 @@ function main() {
   const drawSkybox = window.setupSkybox(gl);
 
   // ===== CREATE ISLANDS =====
+  // ===== CREATE ISLANDS =====
   const islands = [];
   ISLAND_CONFIG.forEach((config, i) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
@@ -665,27 +600,44 @@ function main() {
       island.name = config.name;
       const pos = mat4.create();
       mat4.translate(pos, pos, config.position);
+
+      // NEW: Apply scale dari config
+      const scaleValue = config.scale || 1.0;
+      const scaleMat = mat4.create();
+      mat4.scale(scaleMat, scaleMat, [scaleValue, scaleValue, scaleValue]);
+
       mat4.multiply(island.localTransform, pos, island.localTransform);
+      mat4.multiply(island.localTransform, scaleMat, island.localTransform);
+
       islands.push(island);
     }
   });
 
+  // ===== CREATE POKEMON =====
   // ===== CREATE POKEMON =====
   const pokemons = [];
 
   if (window.createGarchomp) {
     const garchompNode = window.createGarchomp(gl);
     garchompNode.name = "GARCHOMP";
+
+    const garchompWrapper = new SceneNode();
+    garchompWrapper.name = "GARCHOMP_WRAPPER";
     mat4.scale(
-      garchompNode.localTransform,
-      garchompNode.localTransform,
-      [1.2, 1.2, 1.2]
+      garchompWrapper.localTransform,
+      garchompWrapper.localTransform,
+      [2.0, 2.0, 2.0]
     );
+    mat4.translate(
+      garchompWrapper.localTransform,
+      garchompWrapper.localTransform,
+      [0, -5, -11]
+    );
+    garchompWrapper.addChild(garchompNode);
 
     const garchompAnimator = new GarchompAnimator(garchompNode, {
-      startPos: [ISLAND_CONFIG[0].position[0], -2.5, 5],
-      endPos: [ISLAND_CONFIG[0].position[0], -2.5, -5],
-      startRotation: Math.PI,
+      startPos: [30, -2.5, -15],
+      endPos: [30, -2.5, -25],
       walkDuration: 3.0,
       pauseDuration: 5.0,
       turnDuration: 1.0,
@@ -694,30 +646,76 @@ function main() {
     });
 
     pokemons.push({
-      node: garchompNode,
+      node: garchompWrapper,
+      pokemonNode: garchompNode, // NEW: reference ke node asli
       animator: garchompAnimator,
       islandIndex: 0,
     });
+  }
+
+  // ===== GABITE =====
+  if (window.createGabite) {
+    const gabiteNode = window.createGabite(gl);
+    gabiteNode.name = "GABITE";
+
+    const gabiteWrapper = new SceneNode();
+    gabiteWrapper.name = "GABITE_WRAPPER";
+
+    mat4.scale(
+      gabiteWrapper.localTransform,
+      gabiteWrapper.localTransform,
+      [1.5, 1.5, 1.5]
+    );
+
+    mat4.translate(
+      gabiteWrapper.localTransform,
+      gabiteWrapper.localTransform,
+      [-30, -18, -40]
+    );
+
+    mat4.rotate(
+      gabiteWrapper.localTransform,
+      gabiteWrapper.localTransform,
+      Math.PI - Math.PI / 6,
+      [0, 1, 0]
+    );
+
+    gabiteWrapper.addChild(gabiteNode);
+
+    pokemons.push({
+      node: gabiteWrapper,
+      pokemonNode: gabiteNode, // NEW: reference ke node asli
+      animator: null,
+      islandIndex: 1,
+    });
+
+    console.log("✅ Gabite loaded on Island B");
   }
 
   if (window.createMegaGarchomp) {
     const megaNode = window.createMegaGarchomp(gl);
     megaNode.name = "MEGA_GARCHOMP";
 
+    const megaWrapper = new SceneNode();
+    megaWrapper.name = "MEGA_GARCHOMP_WRAPPER";
+    mat4.scale(
+      megaWrapper.localTransform,
+      megaWrapper.localTransform,
+      [4, 4, 4]
+    );
+
+    mat4.translate(
+      megaWrapper.localTransform,
+      megaWrapper.localTransform,
+      [-2, 4, 30]
+    );
+    megaWrapper.addChild(megaNode);
+
     const megaAnimator = new MegaGarchompAnimator(megaNode, {
-      startPos: [
-        ISLAND_CONFIG[2].position[0],
-        -8,
-        ISLAND_CONFIG[2].position[2] + 5,
-      ],
-      endPos: [
-        ISLAND_CONFIG[2].position[0],
-        -8,
-        ISLAND_CONFIG[2].position[2] - 8,
-      ],
+      startPos: [0, -8, -55],
+      endPos: [0, -8, -65],
       startRotation: Math.PI,
 
-      // Custom timing (slower, more aggressive)
       prowlDuration: 4.5,
       idleDuration: 3.0,
       attackDuration: 2.5,
@@ -726,17 +724,14 @@ function main() {
     });
 
     pokemons.push({
-      node: megaNode,
+      node: megaWrapper,
+      pokemonNode: megaNode, // NEW: reference ke node asli
       animator: megaAnimator,
       islandIndex: 2,
     });
 
     console.log("✅ Mega Garchomp loaded on Island C");
   }
-
-  if (window.createGabite) {
-  }
-
   // ===== INITIALIZE =====
   const projectionMatrix = mat4.create();
   const viewMatrix = mat4.create();
@@ -764,8 +759,9 @@ function main() {
     );
 
     // Update intro or normal camera
-    updateIntro(deltaTime);
-    updateCameraTransition(deltaTime);
+    // updateIntro(deltaTime);
+    // updateCameraTransition(deltaTime);
+    // updatePokemonTracking(deltaTime);
     updateCameraMovement(deltaTime);
     const cameraPosition = updateCamera(viewMatrix);
 
