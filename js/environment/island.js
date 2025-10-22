@@ -50,8 +50,8 @@ function createIsland(gl) {
   islandRoot.addChild(sandNode);
   islandRoot.addChild(earthNode);
   islandRoot.addChild(baseRockNode);
-
-  // // --- Dekorasi ---\
+  
+  // --- Dekorasi Kaktus ---
   const cactus1 = createCactus(gl);
   mat4.translate(cactus1.localTransform, cactus1.localTransform, [
     0.3,
@@ -75,6 +75,98 @@ function createIsland(gl) {
   );
   mat4.scale(cactus2.localTransform, cactus2.localTransform, [0.08, 0.08, 0.08]);
   islandRoot.addChild(cactus2);
+
+  // --- Dekorasi Awan ---
+  // Posisi awan disesuaikan agar lebih dekat dengan island
+  
+  // Awan 1 (tipe sederhana) - kiri depan
+  const cloud1 = createCloud1(gl);
+  mat4.translate(cloud1.localTransform, cloud1.localTransform, [
+    -1.5,
+    0.8,
+    -1.0
+  ]);
+  mat4.rotate(cloud1.localTransform, cloud1.localTransform, Math.PI / 8, [0, 1, 0]);
+  mat4.scale(cloud1.localTransform, cloud1.localTransform, [0.3, 0.3, 0.3]);
+  islandRoot.addChild(cloud1);
+
+  // Awan 2 (tipe kompleks) - kanan belakang
+  const cloud2 = createCloud2(gl);
+  mat4.translate(cloud2.localTransform, cloud2.localTransform, [
+    1.2,
+    1.0,
+    -1.5
+  ]);
+  mat4.rotate(cloud2.localTransform, cloud2.localTransform, -Math.PI / 4, [0, 1, 0]);
+  mat4.scale(cloud2.localTransform, cloud2.localTransform, [0.25, 0.25, 0.25]);
+  islandRoot.addChild(cloud2);
+
+  // Awan 3 (tipe sederhana) - kanan depan atas
+  const cloud3 = createCloud1(gl);
+  mat4.translate(cloud3.localTransform, cloud3.localTransform, [
+    0.8,
+    1.2,
+    0.5
+  ]);
+  mat4.rotate(cloud3.localTransform, cloud3.localTransform, -Math.PI / 6, [0, 1, 0]);
+  mat4.scale(cloud3.localTransform, cloud3.localTransform, [0.2, 0.2, 0.2]);
+  islandRoot.addChild(cloud3);
+
+  // Awan 4 (tipe kompleks) - kiri belakang
+  const cloud4 = createCloud2(gl);
+  mat4.translate(cloud4.localTransform, cloud4.localTransform, [
+    -1.0,
+    1.1,
+    -0.8
+  ]);
+  mat4.rotate(cloud4.localTransform, cloud4.localTransform, Math.PI / 3, [0, 1, 0]);
+  mat4.scale(cloud4.localTransform, cloud4.localTransform, [0.28, 0.28, 0.28]);
+  islandRoot.addChild(cloud4);
+
+  // Awan 5 (tipe sederhana) - tengah jauh
+  const cloud5 = createCloud1(gl);
+  mat4.translate(cloud5.localTransform, cloud5.localTransform, [
+    -0.3,
+    0.9,
+    -2.0
+  ]);
+  mat4.rotate(cloud5.localTransform, cloud5.localTransform, Math.PI / 2, [0, 1, 0]);
+  mat4.scale(cloud5.localTransform, cloud5.localTransform, [0.35, 0.35, 0.35]);
+  islandRoot.addChild(cloud5);
+
+  // Awan 6 (tipe kompleks) - kanan jauh tinggi
+  const cloud6 = createCloud2(gl);
+  mat4.translate(cloud6.localTransform, cloud6.localTransform, [
+    1.5,
+    1.3,
+    -0.5
+  ]);
+  mat4.rotate(cloud6.localTransform, cloud6.localTransform, -Math.PI / 5, [0, 1, 0]);
+  mat4.scale(cloud6.localTransform, cloud6.localTransform, [0.22, 0.22, 0.22]);
+  islandRoot.addChild(cloud6);
+
+  // Awan 7 (tipe sederhana) - depan kiri
+  const cloud7 = createCloud1(gl);
+  mat4.translate(cloud7.localTransform, cloud7.localTransform, [
+    -0.8,
+    0.7,
+    0.8
+  ]);
+  mat4.rotate(cloud7.localTransform, cloud7.localTransform, Math.PI / 4, [0, 1, 0]);
+  mat4.scale(cloud7.localTransform, cloud7.localTransform, [0.18, 0.18, 0.18]);
+  islandRoot.addChild(cloud7);
+
+  // Awan 8 (tipe kompleks) - tengah atas
+  const cloud8 = createCloud2(gl);
+  mat4.translate(cloud8.localTransform, cloud8.localTransform, [
+    0.3,
+    1.4,
+    -1.2
+  ]);
+  mat4.rotate(cloud8.localTransform, cloud8.localTransform, Math.PI / 7, [0, 1, 0]);
+  mat4.scale(cloud8.localTransform, cloud8.localTransform, [0.32, 0.32, 0.32]);
+  islandRoot.addChild(cloud8);
+
   // const rock1 = createRock(gl);
   // mat4.translate(rock1.localTransform, rock1.localTransform, [
   //   0.4,

@@ -141,3 +141,113 @@ function createCactus(gl) {
 
   return cactusRoot;
 }
+
+/**
+ * Membuat awan tipe 1 - bentuk smooth dengan ellipsoid
+ * @param {WebGLRenderingContext} gl
+ * @returns {SceneNode}
+ */
+function createCloud1(gl) {
+  const cloudWhite = [0.95, 0.95, 0.98, 1.0];
+  const cloudShadow = [0.75, 0.78, 0.85, 1.0];
+  const cloudRoot = new SceneNode();
+
+  // Gumpalan utama (tengah, paling besar)
+  const mainClump = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const mainNode = new SceneNode(mainClump, cloudWhite);
+  mat4.scale(mainNode.localTransform, mainNode.localTransform, [1.5, 0.6, 0.8]);
+  cloudRoot.addChild(mainNode);
+
+  // Gumpalan kiri depan
+  const leftClump = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const leftNode = new SceneNode(leftClump, cloudWhite);
+  mat4.translate(leftNode.localTransform, leftNode.localTransform, [-1.0, 0.1, 0.3]);
+  mat4.scale(leftNode.localTransform, leftNode.localTransform, [0.7, 0.5, 0.6]);
+  cloudRoot.addChild(leftNode);
+
+  // Gumpalan kanan belakang (shadow)
+  const rightClump = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const rightNode = new SceneNode(rightClump, cloudShadow);
+  mat4.translate(rightNode.localTransform, rightNode.localTransform, [0.9, -0.15, -0.2]);
+  mat4.scale(rightNode.localTransform, rightNode.localTransform, [0.8, 0.6, 0.6]);
+  cloudRoot.addChild(rightNode);
+
+  // Gumpalan atas (highlight)
+  const topClump = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const topNode = new SceneNode(topClump, cloudWhite);
+  mat4.translate(topNode.localTransform, topNode.localTransform, [-0.2, 0.5, 0.1]);
+  mat4.scale(topNode.localTransform, topNode.localTransform, [0.9, 0.5, 0.7]);
+  cloudRoot.addChild(topNode);
+
+  return cloudRoot;
+}
+
+/**
+ * Membuat awan tipe 2 - bentuk kompleks dengan banyak gumpalan smooth
+ * @param {WebGLRenderingContext} gl
+ * @returns {SceneNode}
+ */
+function createCloud2(gl) {
+  const cloudWhite = [0.95, 0.95, 0.98, 1.0];
+  const cloudLight = [0.88, 0.90, 0.95, 1.0];
+  const cloudShadow = [0.75, 0.78, 0.85, 1.0];
+  const cloudRoot = new SceneNode();
+
+  // Gumpalan kiri (shadow)
+  const leftClump = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const leftNode = new SceneNode(leftClump, cloudShadow);
+  mat4.translate(leftNode.localTransform, leftNode.localTransform, [-1.4, -0.1, 0]);
+  mat4.scale(leftNode.localTransform, leftNode.localTransform, [0.6, 0.5, 0.5]);
+  cloudRoot.addChild(leftNode);
+
+  // Gumpalan tengah bawah (bagian utama)
+  const centerBottom = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const centerBottomNode = new SceneNode(centerBottom, cloudWhite);
+  mat4.translate(centerBottomNode.localTransform, centerBottomNode.localTransform, [-0.2, -0.15, 0.1]);
+  mat4.scale(centerBottomNode.localTransform, centerBottomNode.localTransform, [1.8, 0.7, 0.9]);
+  cloudRoot.addChild(centerBottomNode);
+
+  // Gumpalan tengah atas (highlight)
+  const centerTop = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const centerTopNode = new SceneNode(centerTop, cloudWhite);
+  mat4.translate(centerTopNode.localTransform, centerTopNode.localTransform, [-0.4, 0.4, 0.15]);
+  mat4.scale(centerTopNode.localTransform, centerTopNode.localTransform, [1.2, 0.6, 0.8]);
+  cloudRoot.addChild(centerTopNode);
+
+  // Gumpalan kanan depan (terang)
+  const rightFront = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const rightFrontNode = new SceneNode(rightFront, cloudLight);
+  mat4.translate(rightFrontNode.localTransform, rightFrontNode.localTransform, [1.1, 0.0, 0.3]);
+  mat4.scale(rightFrontNode.localTransform, rightFrontNode.localTransform, [0.9, 0.65, 0.7]);
+  cloudRoot.addChild(rightFrontNode);
+
+  // Gumpalan kanan belakang (shadow)
+  const rightBack = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const rightBackNode = new SceneNode(rightBack, cloudShadow);
+  mat4.translate(rightBackNode.localTransform, rightBackNode.localTransform, [1.5, -0.1, -0.2]);
+  mat4.scale(rightBackNode.localTransform, rightBackNode.localTransform, [0.75, 0.6, 0.6]);
+  cloudRoot.addChild(rightBackNode);
+
+  // Gumpalan kecil kiri atas
+  const smallLeft = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const smallLeftNode = new SceneNode(smallLeft, cloudWhite);
+  mat4.translate(smallLeftNode.localTransform, smallLeftNode.localTransform, [-1.0, 0.35, 0.1]);
+  mat4.scale(smallLeftNode.localTransform, smallLeftNode.localTransform, [0.6, 0.45, 0.55]);
+  cloudRoot.addChild(smallLeftNode);
+
+  // Gumpalan kecil kanan atas
+  const smallRight = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const smallRightNode = new SceneNode(smallRight, cloudLight);
+  mat4.translate(smallRightNode.localTransform, smallRightNode.localTransform, [0.7, 0.5, 0.2]);
+  mat4.scale(smallRightNode.localTransform, smallRightNode.localTransform, [0.7, 0.5, 0.6]);
+  cloudRoot.addChild(smallRightNode);
+
+  // Gumpalan tengah kecil (transisi)
+  const middleSmall = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
+  const middleSmallNode = new SceneNode(middleSmall, cloudLight);
+  mat4.translate(middleSmallNode.localTransform, middleSmallNode.localTransform, [0.3, 0.2, 0.05]);
+  mat4.scale(middleSmallNode.localTransform, middleSmallNode.localTransform, [0.8, 0.55, 0.65]);
+  cloudRoot.addChild(middleSmallNode);
+
+  return cloudRoot;
+}
