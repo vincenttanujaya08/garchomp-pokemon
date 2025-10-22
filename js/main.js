@@ -1,23 +1,6 @@
 /**
  * Main Application Entry Point
- * Multi-Island Setup with Cinematic Intro & Warm Golden Lighting
- *
- * INTRO SYSTEM:
- * =============
- * FIRST VISIT: 4-5 second cinematic flyover of all 3 islands
- * RETURN VISITS: 1-2 second quick zoom animation from last island
- * - Press ANY KEY or CLICK to skip intro
- * - localStorage tracks: hasSeenIntro, lastFocusedIsland
- *
- * CONTROLS:
- * =========
- * - Press 1/2/3: Focus on Island A/B/C with smooth transition
- * - Mouse Drag: Orbit around focused island
- * - Mouse Wheel: Zoom in/out
- * - WASD/QE: Pan camera
- *
- * LAYOUT: Triangle Formation
- * 🏝️ Island A (Left)  🏝️ Island B (Right)  🏝️ Island C (Center Back)
+ * Multi-Island Setup with FREE CAMERA & Animated Pokemon
  */
 
 function main() {
@@ -29,38 +12,28 @@ function main() {
   }
 
   // ===== ISLAND CONFIGURATION =====
-  // ===== ISLAND CONFIGURATION =====
   const ISLAND_CONFIG = [
     {
       name: "ISLAND_A",
       position: [30, -5, -20],
       scale: 2.0,
       pokemonName: "Garchomp",
-    }, // Kanan depan
+    },
     {
       name: "ISLAND_B",
       position: [-30, -5, -20],
       scale: 2.0,
       pokemonName: "Gabite",
-    }, // Kiri depan
+    },
     {
       name: "ISLAND_C",
       position: [0, 0, -40],
       scale: 2.5,
       pokemonName: "Mega Garchomp",
-    }, // Tengah belakang
+    },
   ];
 
-  // ===== INTRO SYSTEM =====
-  // ===== INTRO SYSTEM =====
-  const introState = {
-    isPlaying: false,
-    isSkippable: false,
-  };
-
   // ===== CAMERA STATE =====
-  // ===== CAMERA STATE =====
-  // ===== CAMERA STATE (SIMPLIFIED - NO POKEMON LOCK) =====
   const cameraState = {
     target: [0, -5, -30],
     distance: 80,
@@ -70,430 +43,88 @@ function main() {
     maxElevation: Math.PI / 2.5,
   };
 
-  // ===== KEYBOARD STATE =====
+  // ===== INPUT =====
   const keys = {};
-  function handleKeyDown(e) {
-    keys[e.key.toLowerCase()] = true;
+  window.addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
+  window.addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
+  window.addEventListener("blur", () => {
+    for (const k in keys) keys[k] = false;
+  });
 
-    // HAPUS semua switch camera (1/2/3)
-    // Tidak ada lagi lock/unlock Pokemon
-  }
-  function handleKeyUp(e) {
-    keys[e.key.toLowerCase()] = false;
-  }
-
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
-
-  // ===== BLUR EVENT (Reset Keys on Focus Loss) =====
-  function handleBlur() {
-    // Reset semua state tombol ketika jendela kehilangan fokus
-    for (const key in keys) {
-      if (keys.hasOwnProperty(key)) {
-        keys[key] = false;
-      }
-    }
-    console.log("Window lost focus, keys reset."); // Optional: for debugging
-  }
-
-  // Tambahkan event listener untuk blur
-  window.addEventListener("blur", handleBlur);
-  // ===== MOUSE INTERACTION =====
-  let isDragging = false;
-  let lastMouseX = -1;
-  let lastMouseY = -1;
+  // ===== MOUSE / SKYBOX =====
+  let isDragging = false,
+    lastMouseX = -1,
+    lastMouseY = -1;
   const skyboxRotationMatrix = mat4.create();
 
-  function handleMouseDown(e) {
+  const canvasEl = document.querySelector("#glCanvas");
+  canvasEl.addEventListener("mousedown", (e) => {
     isDragging = true;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
-  }
-
-  function handleMouseUp() {
+  });
+  canvasEl.addEventListener("mouseup", () => {
     isDragging = false;
-  }
-
-  function handleMouseMove(e) {
+  });
+  canvasEl.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
-
     const dx = e.clientX - lastMouseX;
     const dy = e.clientY - lastMouseY;
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
 
-    // FIX: Orbit tetap jalan baik locked maupun free
     cameraState.azimuth -= dx * 0.01;
     cameraState.elevation -= dy * 0.01;
     cameraState.elevation = Math.max(
       cameraState.minElevation,
       Math.min(cameraState.maxElevation, cameraState.elevation)
     );
-
-    // Drag mouse TIDAK unlock dari Pokemon
-  }
-
-  function handleWheel(e) {
+  });
+  canvasEl.addEventListener("wheel", (e) => {
     e.preventDefault();
-
-    // Zoom in/out - selalu jalan (locked atau free)
     cameraState.distance += e.deltaY * 0.05;
     cameraState.distance = Math.max(20, Math.min(150, cameraState.distance));
-  }
+  });
 
-  canvas.addEventListener("mousedown", handleMouseDown);
-  canvas.addEventListener("mouseup", handleMouseUp);
-  canvas.addEventListener("mousemove", handleMouseMove);
-  canvas.addEventListener("wheel", handleWheel);
+  // ===== CAMERA HELPERS =====
+  function updateCameraMovement(dt) {
+    const speed = (keys["shift"] ? 125 : 50) * dt;
+    const vSpeed = 50 * dt;
+    const fX = Math.sin(cameraState.azimuth),
+      fZ = Math.cos(cameraState.azimuth);
+    const rX = Math.cos(cameraState.azimuth),
+      rZ = -Math.sin(cameraState.azimuth);
 
-  // ===== INTRO FUNCTIONS =====
-  function startIntro() {
-    // Direct to free mode - no intro
-    introState.isPlaying = false;
-
-    // Set initial camera position (overview dari depan atas)
-    cameraState.target = [0, -5, -30];
-    cameraState.distance = 80;
-    cameraState.azimuth = 0;
-    cameraState.elevation = 0.5;
-
-    updateUIIndicator(); // <-- Panggil sekali
-    console.log("✅ Started in FREE MODE");
-  }
-  function startCinematicIntro() {
-    console.log("🎬 Starting cinematic intro...");
-    introState.isPlaying = true;
-    introState.type = "CINEMATIC";
-    introState.progress = 0;
-    introState.currentWaypoint = 0;
-    introState.waypointProgress = 0;
-    introState.isSkippable = true;
-
-    // Start from first waypoint
-    const firstWaypoint = introState.cinematicPath[0];
-    cameraState.target = [...firstWaypoint.target];
-    cameraState.distance = firstWaypoint.distance;
-    cameraState.azimuth = firstWaypoint.azimuth;
-    cameraState.elevation = firstWaypoint.elevation;
-
-    showSkipUI();
-  }
-
-  function updateIntro(deltaTime) {
-    if (!introState.isPlaying) return;
-
-    if (introState.type === "CINEMATIC") {
-      updateCinematicIntro(deltaTime);
-    } else if (introState.type === "QUICK") {
-      updateQuickIntro(deltaTime);
-    }
-  }
-
-  function updateCinematicIntro(deltaTime) {
-    const waypoints = introState.cinematicPath;
-    const currentIdx = introState.currentWaypoint;
-
-    if (currentIdx >= waypoints.length) {
-      finishIntro();
-      return;
-    }
-
-    const currentWaypoint = waypoints[currentIdx];
-    introState.waypointProgress += deltaTime / currentWaypoint.duration;
-
-    if (introState.waypointProgress >= 1.0) {
-      // Move to next waypoint
-      introState.currentWaypoint++;
-      introState.waypointProgress = 0;
-
-      if (introState.currentWaypoint >= waypoints.length) {
-        finishIntro();
-        return;
-      }
-    }
-
-    // Interpolate to current waypoint
-    const t = easeInOutCubic(introState.waypointProgress);
-    const nextIdx = introState.currentWaypoint;
-    const nextWaypoint = waypoints[nextIdx];
-
-    if (currentIdx > 0) {
-      const prevWaypoint = waypoints[currentIdx - 1];
-      cameraState.target = lerpVec3(
-        prevWaypoint.target,
-        currentWaypoint.target,
-        t
-      );
-      cameraState.distance = lerp(
-        prevWaypoint.distance,
-        currentWaypoint.distance,
-        t
-      );
-      cameraState.azimuth = lerpAngle(
-        prevWaypoint.azimuth,
-        currentWaypoint.azimuth,
-        t
-      );
-      cameraState.elevation = lerp(
-        prevWaypoint.elevation,
-        currentWaypoint.elevation,
-        t
-      );
-    }
-  }
-
-  function skipIntro() {
-    console.log("⏭️ Intro skipped!");
-
-    // Keep current camera position (don't snap)
-    introState.isPlaying = false;
-
-    // Set to free mode (not locked to any Pokemon)
-    cameraState.mode = "LOCKED";
-    cameraState.lockedToPokemon = false;
-    cameraState.targetPokemon = null;
-
-    hideSkipUI();
-    updateUIIndicator();
-  }
-
-  function finishIntro() {
-    introState.isPlaying = false;
-
-    // End at final overview position (depan atas)
-    const finalWaypoint =
-      introState.cinematicPath[introState.cinematicPath.length - 1];
-    cameraState.target = [...finalWaypoint.target];
-    cameraState.distance = finalWaypoint.distance;
-    cameraState.azimuth = finalWaypoint.azimuth;
-    cameraState.elevation = finalWaypoint.elevation;
-
-    // Free mode (not locked)
-    cameraState.mode = "LOCKED";
-    cameraState.lockedToPokemon = false;
-    cameraState.targetPokemon = null;
-
-    hideSkipUI();
-    updateUIIndicator();
-
-    console.log("✅ Intro finished - Free camera mode");
-  }
-
-  function showSkipUI() {
-    let skipUI = document.getElementById("skip-intro-ui");
-    if (!skipUI) {
-      skipUI = document.createElement("div");
-      skipUI.id = "skip-intro-ui";
-      skipUI.style.position = "fixed";
-      skipUI.style.bottom = "30px";
-      skipUI.style.left = "50%";
-      skipUI.style.transform = "translateX(-50%)";
-      skipUI.style.padding = "12px 20px";
-      skipUI.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-      skipUI.style.color = "white";
-      skipUI.style.fontFamily = "monospace";
-      skipUI.style.fontSize = "14px";
-      skipUI.style.borderRadius = "8px";
-      skipUI.style.border = "2px solid rgba(255, 255, 255, 0.3)";
-      skipUI.style.zIndex = "2000";
-      skipUI.style.animation = "pulse 2s ease-in-out infinite";
-      skipUI.innerHTML = "⏭️ Press any key or click to skip";
-      document.body.appendChild(skipUI);
-
-      // Add pulse animation
-      const style = document.createElement("style");
-      style.textContent = `
-        @keyframes pulse {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 1; }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-    skipUI.style.display = "block";
-  }
-
-  function hideSkipUI() {
-    const skipUI = document.getElementById("skip-intro-ui");
-    if (skipUI) {
-      skipUI.style.display = "none";
-    }
-  }
-
-  // ===== CAMERA FUNCTIONS =====
-
-  // function switchToIsland(index) {
-  //   if (index < 0 || index >= ISLAND_CONFIG.length) return;
-
-  //   // FIX: Boleh switch meskipun sedang transition (cancel transition lama)
-  //   // if (cameraState.isTransitioning) return; // <-- HAPUS INI
-
-  //   const island = ISLAND_CONFIG[index];
-  //   cameraState.focusedIsland = index;
-
-  //   // Save to localStorage
-  //   localStorage.setItem("lastFocusedIsland", index.toString());
-
-  //   // Lock camera to Pokemon
-  //   const targetPokemon = pokemons.find((p) => p.islandIndex === index);
-  //   if (targetPokemon) {
-  //     cameraState.lockedToPokemon = true;
-  //     cameraState.targetPokemon = targetPokemon;
-  //     console.log(`🔒 Camera locked to ${targetPokemon.node.name}`);
-  //   }
-
-  //   // Get Pokemon position
-  //   let targetPos = [0, 0, 0];
-  //   if (targetPokemon && targetPokemon.animator) {
-  //     targetPos = [...targetPokemon.animator.currentPos];
-  //   } else if (targetPokemon) {
-  //     targetPos = [
-  //       targetPokemon.node.localTransform[12],
-  //       targetPokemon.node.localTransform[13],
-  //       targetPokemon.node.localTransform[14],
-  //     ];
-  //   }
-
-  //   // Start smooth transition - DARI POSISI SEKARANG
-  //   cameraState.isTransitioning = true;
-  //   cameraState.transitionProgress = 0;
-
-  //   cameraState.transitionStartTarget = [...cameraState.target];
-  //   cameraState.transitionStartDistance = cameraState.distance;
-  //   cameraState.transitionStartAzimuth = cameraState.azimuth;
-  //   cameraState.transitionStartElevation = cameraState.elevation;
-
-  //   cameraState.transitionEndTarget = targetPos;
-  //   cameraState.transitionEndDistance = 40;
-  //   cameraState.transitionEndAzimuth = 0; // Reset ke depan
-  //   cameraState.transitionEndElevation = 0.4; // Reset angle
-
-  //   updateUIIndicator();
-  // }
-
-  // function updateCameraTransition(deltaTime) {
-  //   if (!cameraState.isTransitioning) return;
-
-  //   cameraState.transitionProgress +=
-  //     deltaTime / cameraState.transitionDuration;
-
-  //   if (cameraState.transitionProgress >= 1.0) {
-  //     cameraState.transitionProgress = 1.0;
-  //     cameraState.isTransitioning = false;
-  //   }
-
-  //   const t = easeInOutCubic(cameraState.transitionProgress);
-
-  //   // Smooth interpolation dari posisi sekarang ke target
-  //   cameraState.target = lerpVec3(
-  //     cameraState.transitionStartTarget,
-  //     cameraState.transitionEndTarget,
-  //     t
-  //   );
-
-  //   cameraState.distance = lerp(
-  //     cameraState.transitionStartDistance,
-  //     cameraState.transitionEndDistance,
-  //     t
-  //   );
-
-  //   cameraState.azimuth = lerpAngle(
-  //     cameraState.transitionStartAzimuth,
-  //     cameraState.transitionEndAzimuth,
-  //     t
-  //   );
-
-  //   // NEW: Interpolate elevation juga
-  //   cameraState.elevation = lerp(
-  //     cameraState.transitionStartElevation,
-  //     cameraState.transitionEndElevation,
-  //     t
-  //   );
-  // }
-
-  // function updatePokemonTracking(deltaTime) {
-  //   if (!cameraState.lockedToPokemon || !cameraState.targetPokemon) return;
-
-  //   const pokemon = cameraState.targetPokemon;
-  //   let targetPos = [0, 0, 0];
-
-  //   // Get Pokemon position
-  //   if (pokemon.animator) {
-  //     // Animated Pokemon
-  //     targetPos = [...pokemon.animator.currentPos];
-  //   } else {
-  //     // Static Pokemon
-  //     targetPos = [
-  //       pokemon.node.localTransform[12],
-  //       pokemon.node.localTransform[13],
-  //       pokemon.node.localTransform[14],
-  //     ];
-  //   }
-
-  //   // FIX: Hanya smooth interpolate TARGET position (pusat orbit)
-  //   // JANGAN touch azimuth/elevation - biar user bebas orbit!
-  //   const lerpFactor = 0.1;
-
-  //   cameraState.target[0] +=
-  //     (targetPos[0] - cameraState.target[0]) * lerpFactor;
-  //   cameraState.target[1] +=
-  //     (targetPos[1] - cameraState.target[1]) * lerpFactor;
-  //   cameraState.target[2] +=
-  //     (targetPos[2] - cameraState.target[2]) * lerpFactor;
-
-  //   // HAPUS semua code tentang azimuth rotation!
-  //   // User bebas orbit manual dengan drag mouse
-  // }
-
-  function updateCameraMovement(deltaTime) {
-    // PERCEPAT: Ubah dari 20.0 → 50.0 (2.5x lebih cepat)
-    const normalPanSpeed = 50.0 * deltaTime; // <-- UBAH INI
-    const sprintMultiplier = 2.5; // Sprint jadi 125 total
-    const currentPanSpeed = keys["shift"]
-      ? normalPanSpeed * sprintMultiplier
-      : normalPanSpeed;
-
-    const verticalPanSpeed = 50.0 * deltaTime; // <-- UBAH INI JUGA
-
-    // Hitung vektor arah berdasarkan azimuth kamera
-    const forwardX = Math.sin(cameraState.azimuth);
-    const forwardZ = Math.cos(cameraState.azimuth);
-    const rightX = Math.cos(cameraState.azimuth);
-    const rightZ = -Math.sin(cameraState.azimuth);
-
-    let deltaX = 0;
-    let deltaZ = 0;
-    let deltaY = 0;
-
+    let dx = 0,
+      dy = 0,
+      dz = 0;
     if (keys["w"]) {
-      deltaX -= forwardX * currentPanSpeed;
-      deltaZ -= forwardZ * currentPanSpeed;
+      dx -= fX * speed;
+      dz -= fZ * speed;
     }
     if (keys["s"]) {
-      deltaX += forwardX * currentPanSpeed;
-      deltaZ += forwardZ * currentPanSpeed;
+      dx += fX * speed;
+      dz += fZ * speed;
     }
     if (keys["a"]) {
-      deltaX -= rightX * currentPanSpeed;
-      deltaZ -= rightZ * currentPanSpeed;
+      dx -= rX * speed;
+      dz -= rZ * speed;
     }
     if (keys["d"]) {
-      deltaX += rightX * currentPanSpeed;
-      deltaZ += rightZ * currentPanSpeed;
+      dx += rX * speed;
+      dz += rZ * speed;
     }
     if (keys["q"]) {
-      deltaY -= verticalPanSpeed;
+      dy -= vSpeed;
     }
     if (keys["e"]) {
-      deltaY += verticalPanSpeed;
+      dy += vSpeed;
     }
 
-    // Apply movement
-    cameraState.target[0] += deltaX;
-    cameraState.target[1] += deltaY;
-    cameraState.target[2] += deltaZ;
+    cameraState.target[0] += dx;
+    cameraState.target[1] += dy;
+    cameraState.target[2] += dz;
   }
-
   function calculateOrbitPosition() {
     const camX =
       cameraState.target[0] +
@@ -510,59 +141,13 @@ function main() {
         Math.cos(cameraState.azimuth);
     return [camX, camY, camZ];
   }
-
   function updateCamera(viewMatrix) {
     const cameraPosition = calculateOrbitPosition();
     mat4.lookAt(viewMatrix, cameraPosition, cameraState.target, [0, 1, 0]);
     return cameraPosition;
   }
 
-  // ===== UI INDICATOR =====
-  function updateUIIndicator() {
-    let indicator = document.getElementById("camera-indicator");
-    if (!indicator) {
-      indicator = document.createElement("div");
-      indicator.id = "camera-indicator";
-      indicator.style.position = "fixed";
-      indicator.style.top = "10px";
-      indicator.style.left = "10px";
-      indicator.style.padding = "10px 15px";
-      indicator.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-      indicator.style.color = "white";
-      indicator.style.fontFamily = "monospace";
-      indicator.style.fontSize = "14px";
-      indicator.style.borderRadius = "5px";
-      indicator.style.zIndex = "1000";
-      document.body.appendChild(indicator);
-    }
-
-    indicator.innerHTML = `
-      <strong>🌅 FREE CAMERA MODE</strong><br>
-      <small>WASD/QE: Move (Shift: Sprint) | Drag: Rotate | Wheel: Zoom</small>
-    `;
-    indicator.style.display = "block";
-  }
-  // ===== HELPER FUNCTIONS =====
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-
-  function lerpVec3(a, b, t) {
-    return [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
-  }
-
-  function lerpAngle(a, b, t) {
-    let diff = b - a;
-    while (diff > Math.PI) diff -= 2 * Math.PI;
-    while (diff < -Math.PI) diff += 2 * Math.PI;
-    return a + diff * t;
-  }
-
-  function easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
-
-  // ===== SHADER SETUP =====
+  // ===== SHADER =====
   const shaderProgram = initShaderProgram(
     gl,
     vertexShaderSource,
@@ -591,51 +176,37 @@ function main() {
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
 
-  // ===== CREATE ISLANDS =====
-  // ===== CREATE ISLANDS =====
+  // ===== ISLANDS =====
   const islands = [];
-  ISLAND_CONFIG.forEach((config, i) => {
+  ISLAND_CONFIG.forEach((cfg) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
-    if (island) {
-      island.name = config.name;
-      const pos = mat4.create();
-      mat4.translate(pos, pos, config.position);
+    if (!island) return;
+    island.name = cfg.name;
 
-      // NEW: Apply scale dari config
-      const scaleValue = config.scale || 1.0;
-      const scaleMat = mat4.create();
-      mat4.scale(scaleMat, scaleMat, [scaleValue, scaleValue, scaleValue]);
+    const T = mat4.create();
+    mat4.translate(T, T, cfg.position);
+    const S = mat4.create();
+    mat4.scale(S, S, [cfg.scale || 1, cfg.scale || 1, cfg.scale || 1]);
 
-      mat4.multiply(island.localTransform, pos, island.localTransform);
-      mat4.multiply(island.localTransform, scaleMat, island.localTransform);
-
-      islands.push(island);
-    }
+    mat4.multiply(island.localTransform, T, island.localTransform);
+    mat4.multiply(island.localTransform, S, island.localTransform);
+    islands.push(island);
   });
 
-  // ===== CREATE POKEMON =====
-  // ===== CREATE POKEMON =====
+  // ===== POKEMONS =====
   const pokemons = [];
 
+  // GARCHOMP (biarkan sesuai punyamu; fokus kita Gabite)
   if (window.createGarchomp) {
-    const garchompNode = window.createGarchomp(gl);
-    garchompNode.name = "GARCHOMP";
+    const g = window.createGarchomp(gl);
+    g.name = "GARCHOMP";
+    const wrap = new SceneNode();
+    wrap.name = "GARCHOMP_WRAPPER";
+    mat4.scale(wrap.localTransform, wrap.localTransform, [2, 2, 2]);
+    mat4.translate(wrap.localTransform, wrap.localTransform, [0, -5, -11]);
+    wrap.addChild(g);
 
-    const garchompWrapper = new SceneNode();
-    garchompWrapper.name = "GARCHOMP_WRAPPER";
-    mat4.scale(
-      garchompWrapper.localTransform,
-      garchompWrapper.localTransform,
-      [2.0, 2.0, 2.0]
-    );
-    mat4.translate(
-      garchompWrapper.localTransform,
-      garchompWrapper.localTransform,
-      [0, -5, -11]
-    );
-    garchompWrapper.addChild(garchompNode);
-
-    const garchompAnimator = new GarchompAnimator(garchompNode, {
+    const anim = new GarchompAnimator(g, {
       startPos: [30, -2.5, -15],
       endPos: [30, -2.5, -25],
       walkDuration: 3.0,
@@ -646,76 +217,86 @@ function main() {
     });
 
     pokemons.push({
-      node: garchompWrapper,
-      pokemonNode: garchompNode, // NEW: reference ke node asli
-      animator: garchompAnimator,
+      node: wrap,
+      pokemonNode: g,
+      animator: anim,
       islandIndex: 0,
     });
   }
 
-  // ===== GABITE =====
+  // ===== GABITE — STAY PUT & FACE WORLD -Z =====
   if (window.createGabite) {
     const gabiteNode = window.createGabite(gl);
     gabiteNode.name = "GABITE";
-
     const gabiteWrapper = new SceneNode();
     gabiteWrapper.name = "GABITE_WRAPPER";
 
+    // Scale & place on Island B
     mat4.scale(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
       [1.5, 1.5, 1.5]
     );
-
     mat4.translate(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
-      [-30, -18, -40]
+      [-30, -17, -34]
     );
 
-    mat4.rotate(
-      gabiteWrapper.localTransform,
-      gabiteWrapper.localTransform,
-      Math.PI - Math.PI / 6,
-      [0, 1, 0]
-    );
+    // === Penting: pastikan HADAP DEPAN DUNIA (-Z) ===
+    // Jika MODEL LOCAL forward kamu adalah +Z (umum), set true untuk putar 180°.
+    const MODEL_LOCAL_FORWARD_IS_POS_Z = true; // ubah ke false kalau modelmu sudah menghadap -Z
+    if (MODEL_LOCAL_FORWARD_IS_POS_Z) {
+      mat4.rotateY(
+        gabiteWrapper.localTransform,
+        gabiteWrapper.localTransform,
+        Math.PI
+      );
+    }
+    // Setelah ini, “depan” gabite = world -Z. Tidak akan mengikuti kamera.
 
     gabiteWrapper.addChild(gabiteNode);
 
-    pokemons.push({
-      node: gabiteWrapper,
-      pokemonNode: gabiteNode, // NEW: reference ke node asli
-      animator: null,
-      islandIndex: 1,
+    // Animator idle-look + hop (tanpa root motion)
+    const gabiteAnimator = new GabiteAnimator(gabiteNode, {
+      lookDuration: 2.0,
+      neckTurnAngle: Math.PI / 4,
+      hopDuration: 2.0,
+      hopCount: 2,
+      hopHeight: 1.0,
+      squatAmount: 0.15,
+      tailSwayAmount: 0.25,
+      tailSwayFreq: 2.0,
+      bodyBobAmount: 0.06,
+      armSwingAngle: Math.PI / 10,
     });
 
-    console.log("✅ Gabite loaded on Island B");
+    // currentRotation diabaikan oleh animator (stay put), tapi kita set 0 untuk konsistensi
+    gabiteAnimator.currentRotation = 0;
+
+    // Gabite tidak butuh tick (tidak ada root motion / follow camera)
+    pokemons.push({
+      node: gabiteWrapper,
+      pokemonNode: gabiteNode,
+      animator: gabiteAnimator,
+      islandIndex: 1,
+    });
   }
 
+  // MEGA GARCHOMP (biarkan apa adanya)
   if (window.createMegaGarchomp) {
-    const megaNode = window.createMegaGarchomp(gl);
-    megaNode.name = "MEGA_GARCHOMP";
+    const m = window.createMegaGarchomp(gl);
+    m.name = "MEGA_GARCHOMP";
+    const wrap = new SceneNode();
+    wrap.name = "MEGA_GARCHOMP_WRAPPER";
+    mat4.scale(wrap.localTransform, wrap.localTransform, [4, 4, 4]);
+    mat4.translate(wrap.localTransform, wrap.localTransform, [-2, 4, 30]);
+    wrap.addChild(m);
 
-    const megaWrapper = new SceneNode();
-    megaWrapper.name = "MEGA_GARCHOMP_WRAPPER";
-    mat4.scale(
-      megaWrapper.localTransform,
-      megaWrapper.localTransform,
-      [4, 4, 4]
-    );
-
-    mat4.translate(
-      megaWrapper.localTransform,
-      megaWrapper.localTransform,
-      [-2, 4, 30]
-    );
-    megaWrapper.addChild(megaNode);
-
-    const megaAnimator = new MegaGarchompAnimator(megaNode, {
+    const anim = new MegaGarchompAnimator(m, {
       startPos: [0, -8, -55],
       endPos: [0, -8, -65],
       startRotation: Math.PI,
-
       prowlDuration: 4.5,
       idleDuration: 3.0,
       attackDuration: 2.5,
@@ -724,27 +305,23 @@ function main() {
     });
 
     pokemons.push({
-      node: megaWrapper,
-      pokemonNode: megaNode, // NEW: reference ke node asli
-      animator: megaAnimator,
+      node: wrap,
+      pokemonNode: m,
+      animator: anim,
       islandIndex: 2,
     });
-
-    console.log("✅ Mega Garchomp loaded on Island C");
   }
-  // ===== INITIALIZE =====
+
+  // ===== PROJECTION / VIEW =====
   const projectionMatrix = mat4.create();
   const viewMatrix = mat4.create();
-  let lastTime = 0;
-
-  // Start intro system
-  startIntro();
 
   // ===== RENDER LOOP =====
-  function render(currentTime) {
-    currentTime *= 0.001;
-    const deltaTime = Math.min(currentTime - lastTime, 0.1);
-    lastTime = currentTime;
+  let lastTime = 0;
+  function animate(nowMs) {
+    const t = nowMs * 0.001;
+    const dt = Math.min(Math.max(t - lastTime, 0), 0.1);
+    lastTime = t;
 
     if (resizeCanvasToDisplaySize(gl.canvas)) {
       gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -758,66 +335,61 @@ function main() {
       500.0
     );
 
-    // Update intro or normal camera
-    // updateIntro(deltaTime);
-    // updateCameraTransition(deltaTime);
-    // updatePokemonTracking(deltaTime);
-    updateCameraMovement(deltaTime);
+    updateCameraMovement(dt);
     const cameraPosition = updateCamera(viewMatrix);
 
     mat4.rotate(skyboxRotationMatrix, skyboxRotationMatrix, 0.0003, [0, 1, 0]);
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.1, 0.1, 0.15, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    pokemons.forEach((pokemon) => {
-      if (pokemon.animator) pokemon.animator.update(deltaTime);
+    // 1) Update pose animator (Gabite: neck look + hop; NO root motion)
+    pokemons.forEach((p) => {
+      if (p.animator) p.animator.update(dt);
     });
 
+    // (Tidak ada tick untuk Gabite—dia statis dan tidak follow camera)
+
+    // 2) Skybox
     gl.depthMask(false);
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
     gl.depthMask(true);
 
-    const identityMatrix = mat4.create();
-
+    // 3) Draw
+    const I = mat4.create();
     islands.forEach((island) => {
-      if (island) {
+      if (island)
         drawScene(
           gl,
           programInfo,
           island,
           projectionMatrix,
           viewMatrix,
-          identityMatrix,
+          I,
           cameraPosition
         );
-      }
     });
-
-    pokemons.forEach((pokemon) => {
-      if (pokemon.node) {
+    pokemons.forEach((p) => {
+      if (p.node)
         drawScene(
           gl,
           programInfo,
-          pokemon.node,
+          p.node,
           projectionMatrix,
           viewMatrix,
-          identityMatrix,
+          I,
           cameraPosition
         );
-      }
     });
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(animate);
   }
-
-  requestAnimationFrame(render);
+  requestAnimationFrame(animate);
 }
 
-// ===== DRAW SCENE FUNCTION =====
+// ===== DRAW SCENE / HELPERS =====
 function drawScene(
   gl,
   programInfo,
@@ -831,10 +403,13 @@ function drawScene(
   const cfgTable = window.entityConfig || {};
   const cfg = node.name ? cfgTable[node.name] : null;
 
-  const isAnimated =
-    node.name === "GARCHOMP" ||
-    node.name === "PIKACHU" ||
-    node.name === "CHARIZARD";
+  const isAnimated = [
+    "GARCHOMP",
+    "GABITE",
+    "MEGA_GARCHOMP",
+    "PIKACHU",
+    "CHARIZARD",
+  ].includes(node.name);
 
   if (cfg && !isAnimated) {
     const p = cfg.position || [0, 0, 0];
@@ -845,7 +420,6 @@ function drawScene(
     mat4.fromTranslation(T, p);
     const S = mat4.create();
     Array.isArray(s) ? mat4.fromScaling(S, s) : mat4.fromScaling(S, [s, s, s]);
-
     const R = mat4.create();
     mat4.identity(R);
     mat4.rotateZ(R, R, e[2] || 0);
@@ -871,10 +445,8 @@ function drawScene(
     Tonly[12] = local[12];
     Tonly[13] = local[13];
     Tonly[14] = local[14];
-
     const RS = mat4.clone(local);
     RS[12] = RS[13] = RS[14] = 0;
-
     const tmp = mat4.create();
     mat4.multiply(tmp, parentTransform, RS);
     mat4.multiply(modelMatrix, Tonly, tmp);
@@ -958,43 +530,39 @@ function drawScene(
   }
 }
 
-// ===== HELPER FUNCTIONS =====
-
 function initShaderProgram(gl, vsSource, fsSource) {
-  const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-  const shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertexShader);
-  gl.attachShader(shaderProgram, fragmentShader);
-  gl.linkProgram(shaderProgram);
-  if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert("Gagal link shader: " + gl.getProgramInfoLog(shaderProgram));
+  const vs = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+  const fs = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    alert("Gagal link shader: " + gl.getProgramInfoLog(prog));
     return null;
   }
-  return shaderProgram;
+  return prog;
 }
-
 function resizeCanvasToDisplaySize(canvas) {
-  const displayWidth = canvas.clientWidth;
-  const displayHeight = canvas.clientHeight;
-  if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
+  const w = canvas.clientWidth,
+    h = canvas.clientHeight;
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
     return true;
   }
   return false;
 }
-
 function loadShader(gl, type, source) {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert("Gagal kompilasi shader: " + gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, source);
+  gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+    alert("Gagal kompilasi shader: " + gl.getShaderInfoLog(sh));
+    gl.deleteShader(sh);
     return null;
   }
-  return shader;
+  return sh;
 }
 
 // ===== START APP =====

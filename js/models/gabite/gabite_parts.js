@@ -1,4 +1,6 @@
-// File: js/models/gabite/gabite_parts.js
+// ============================================================
+// GABITE PARTS - FIXED WITH ANIMATION RIG SUPPORT
+// ============================================================
 
 /**
  * Membuat badan Gabite yang lengkap, termasuk torso, ekor, kaki, dan tangan.
@@ -8,10 +10,12 @@
 function createGabiteBody(gl) {
   const cfg = GabiteAnatomy;
   const bodyRoot = new SceneNode();
+  bodyRoot.name = "BodyRoot";
 
   // --- BENTUK TUBUH ---
   const mainBodyMesh = new Mesh(gl, PP1.createEllipsoid(0.9, 1.8, 1.2, 32, 32));
   const mainBodyNode = new SceneNode(mainBodyMesh, cfg.colors.red);
+  mainBodyNode.name = "MainBody";
   mat4.translate(
     mainBodyNode.localTransform,
     mainBodyNode.localTransform,
@@ -28,26 +32,11 @@ function createGabiteBody(gl) {
   const bottomBodyMesh = new Mesh(
     gl,
     PP1.createEllipticParaboloid(0.9, 2.3, 1.2, 32)
-  ); // Params: width, depth, height, segments
-  const bottomBodyNode = new SceneNode(bottomBodyMesh, cfg.colors.white);
-
-  // 2. Pindahkan (translate) ke posisi di bawah perut. Nilai Y mungkin perlu disesuaikan.
-  mat4.translate(
-    bottomBodyNode.localTransform,
-    bottomBodyNode.localTransform,
-    [0, -4.3, 0.81]
   );
-  mat4.scale(
-    bottomBodyNode.localTransform,
-    bottomBodyNode.localTransform,
-    [1, 1, 0.9]
-  ); // Perkecil di sumbu Z
 
-  bodyRoot.addChild(bottomBodyNode);
-
-  const triangleBodyMesh = new Mesh(gl, PP1.createCone(0.1, 0.3, 8)); // Params: topRadius, height, bottomRadius, segments
+  const triangleBodyMesh = new Mesh(gl, PP1.createCone(0.1, 0.3, 8));
   const triangleBodyNode = new SceneNode(triangleBodyMesh, cfg.colors.white);
-
+  triangleBodyNode.name = "TriangleBody";
   mat4.translate(
     triangleBodyNode.localTransform,
     triangleBodyNode.localTransform,
@@ -68,6 +57,7 @@ function createGabiteBody(gl) {
 
   const backMesh = new Mesh(gl, PP1.createEllipsoid(1.1, 1.9, 1, 32, 32));
   const backNode = new SceneNode(backMesh, cfg.colors.darkBlue);
+  backNode.name = "Back";
   mat4.translate(
     backNode.localTransform,
     backNode.localTransform,
@@ -81,7 +71,7 @@ function createGabiteBody(gl) {
   );
   bodyRoot.addChild(backNode);
 
-  // --- EKOR DENGAN KURVA BEZIER (lebih kurus & lebih pendek) ---
+  // --- EKOR DENGAN KURVA BEZIER ---
   const p0 = [0, -2.8, 1.0];
   const p1 = [0, -2.9, 2.7];
   const p2 = [0, -2.6, 2.9];
@@ -108,9 +98,11 @@ function createGabiteBody(gl) {
     PP1.createTubeFromPath(path, tailBaseRadius, 16, scaleFactors)
   );
   const tailNode = new SceneNode(tailMesh, cfg.colors.darkBlue);
+  tailNode.name = "Tail";
   mat4.scale(tailNode.localTransform, tailNode.localTransform, [1, 1, 1]);
   bodyRoot.addChild(tailNode);
 
+  // Tail fin
   const finShapePoints2D = [
     [2.8, 0.27],
     [0.68, 1.61],
@@ -129,23 +121,21 @@ function createGabiteBody(gl) {
     [3, -0.1],
   ];
 
-  // Menentukan pusat dan skala agar sesuai dengan model
   const centerX = 3.35;
   const centerZ = 2.75;
   const scale = 0.6;
 
-  // Proses koordinat: ubah ke 3D (XZ), pusatkan, dan skalakan
   const processedPoints = finShapePoints2D.map((p) => [
     (p[0] - centerX) * scale,
     0,
     (p[1] - centerZ) * scale,
   ]);
 
-  // Buat geometri 3D dengan mengekstrusi bentuk 2D
-  const finGeom = PP1.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95); // Ketebalan 0.25
+  const finGeom = PP1.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95);
   const finMesh = new Mesh(gl, finGeom);
 
   const fintailNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+  fintailNode.name = "TailFin";
   mat4.translate(
     fintailNode.localTransform,
     fintailNode.localTransform,
@@ -163,17 +153,29 @@ function createGabiteBody(gl) {
     1,
     [0, -1, 0]
   );
-  // Skala dengan flip horizontal pada sumbu X
   mat4.scale(
     fintailNode.localTransform,
     fintailNode.localTransform,
     [0.5, 0.5, -0.5]
   );
-
   tailNode.addChild(fintailNode);
 
+  const bottomBodyNode = new SceneNode(bottomBodyMesh, cfg.colors.white);
+  bottomBodyNode.name = "BottomBody";
+  mat4.translate(
+    bottomBodyNode.localTransform,
+    bottomBodyNode.localTransform,
+    [0, -4.3, 0.81]
+  );
+  mat4.scale(
+    bottomBodyNode.localTransform,
+    bottomBodyNode.localTransform,
+    [1, 1, 0.9]
+  );
+  tailNode.addChild(bottomBodyNode);
+
   // --- KAKI LENGKAP ---
-  const leftLeg = createGabiteLeg(gl);
+  const leftLeg = createGabiteLeg(gl, "Left");
   mat4.translate(
     leftLeg.localTransform,
     leftLeg.localTransform,
@@ -187,7 +189,7 @@ function createGabiteBody(gl) {
   );
   bodyRoot.addChild(leftLeg);
 
-  const rightLeg = createGabiteLeg(gl);
+  const rightLeg = createGabiteLeg(gl, "Right");
   mat4.translate(
     rightLeg.localTransform,
     rightLeg.localTransform,
@@ -201,9 +203,31 @@ function createGabiteBody(gl) {
   );
   bodyRoot.addChild(rightLeg);
 
-  // --- TANGAN (mengarah ke depan, siku jelas) ---
-  const arm = createGabiteArm(gl);
-  bodyRoot.addChild(arm);
+  // --- TANGAN ---
+  const armRoot = createGabiteArm(gl);
+  bodyRoot.addChild(armRoot);
+
+  // Store references for animation rig (will be picked up by parent)
+  bodyRoot._rigRefs = {
+    leftThigh: leftLeg.children[0], // First child is thigh
+    rightThigh: rightLeg.children[0],
+    leftShin: leftLeg.children[0]?.children?.find((c) =>
+      c.name?.includes("Shin")
+    ),
+    rightShin: rightLeg.children[0]?.children?.find((c) =>
+      c.name?.includes("Shin")
+    ),
+    leftFoot: leftLeg.children[0]?.children
+      ?.find((c) => c.name?.includes("Shin"))
+      ?.children?.find((c) => c.name?.includes("Foot")),
+    rightFoot: rightLeg.children[0]?.children
+      ?.find((c) => c.name?.includes("Shin"))
+      ?.children?.find((c) => c.name?.includes("Foot")),
+    tail: tailNode,
+    tailFin: fintailNode,
+    leftArm: armRoot.children?.find((c) => c.name?.includes("LeftUpper")),
+    rightArm: armRoot.children?.find((c) => c.name?.includes("RightUpper")),
+  };
 
   return bodyRoot;
 }
@@ -211,14 +235,17 @@ function createGabiteBody(gl) {
 /**
  * Membuat satu unit kaki Gabite.
  * @param {WebGLRenderingContext} gl - Konteks WebGL.
+ * @param {string} side - "Left" atau "Right"
  * @returns {SceneNode} Node root untuk satu kaki.
  */
-function createGabiteLeg(gl) {
+function createGabiteLeg(gl, side = "Left") {
   const cfg = GabiteAnatomy;
   const legRoot = new SceneNode();
+  legRoot.name = `${side}LegRoot`;
 
   const thighMesh = new Mesh(gl, PP1.createEllipsoid(0.7, 1.3, 1.0, 32, 32));
   const thighNode = new SceneNode(thighMesh, cfg.colors.darkBlue);
+  thighNode.name = `${side}Thigh`;
   mat4.rotate(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -229,6 +256,7 @@ function createGabiteLeg(gl) {
 
   const spikeMesh = new Mesh(gl, PP1.createCone(0.1, 1, 16));
   const spikeNode = new SceneNode(spikeMesh, cfg.colors.white);
+  spikeNode.name = `${side}ThighSpike1`;
   mat4.translate(
     spikeNode.localTransform,
     spikeNode.localTransform,
@@ -244,7 +272,8 @@ function createGabiteLeg(gl) {
   thighNode.addChild(spikeNode);
 
   const spikeMesh2 = new Mesh(gl, PP1.createCone(0.1, 1, 16));
-  const spikeNode2 = new SceneNode(spikeMesh, cfg.colors.white);
+  const spikeNode2 = new SceneNode(spikeMesh2, cfg.colors.white);
+  spikeNode2.name = `${side}ThighSpike2`;
   mat4.translate(
     spikeNode2.localTransform,
     spikeNode2.localTransform,
@@ -263,13 +292,12 @@ function createGabiteLeg(gl) {
   );
   thighNode.addChild(spikeNode2);
 
-  // --- PERUBAHAN: Mengganti Capsule dengan Hyperboloid of One Sheet ---
-  // Memberikan bentuk yang lebih melengkung dan natural pada tulang kering.
   const shinMesh = new Mesh(
     gl,
     PP1.createHyperboloidOneSheet(0.4, 0.4, 0.6, 0.9, 16, 16)
   );
   const shinNode = new SceneNode(shinMesh, cfg.colors.darkBlue);
+  shinNode.name = `${side}Shin`;
   mat4.translate(
     shinNode.localTransform,
     shinNode.localTransform,
@@ -279,6 +307,7 @@ function createGabiteLeg(gl) {
 
   const footMesh = new Mesh(gl, PP1.createEllipsoid(0.6, 0.3, 0.9, 32, 32));
   const footNode = new SceneNode(footMesh, cfg.colors.darkBlue);
+  footNode.name = `${side}Foot`;
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
@@ -290,6 +319,7 @@ function createGabiteLeg(gl) {
   const clawCenterMesh = new Mesh(gl, PP1.createCone(0.22, 0.6, 16));
 
   const clawNode1 = new SceneNode(clawSideMesh, cfg.colors.white);
+  clawNode1.name = `${side}Claw1`;
   mat4.translate(
     clawNode1.localTransform,
     clawNode1.localTransform,
@@ -299,6 +329,7 @@ function createGabiteLeg(gl) {
   footNode.addChild(clawNode1);
 
   const clawNode2 = new SceneNode(clawSideMesh, cfg.colors.white);
+  clawNode2.name = `${side}Claw2`;
   mat4.translate(
     clawNode2.localTransform,
     clawNode2.localTransform,
@@ -313,6 +344,7 @@ function createGabiteLeg(gl) {
   footNode.addChild(clawNode2);
 
   const clawNode3 = new SceneNode(clawCenterMesh, cfg.colors.white);
+  clawNode3.name = `${side}Claw3`;
   mat4.translate(
     clawNode3.localTransform,
     clawNode3.localTransform,
@@ -324,24 +356,25 @@ function createGabiteLeg(gl) {
 }
 
 /**
- * Membuat kedua tangan Gabite mengarah ke depan dengan siku menekuk tajam (mirror kiri-kanan).
+ * Membuat kedua tangan Gabite
  */
 function createGabiteArm(gl) {
   const cfg = GabiteAnatomy;
   const armRoot = new SceneNode();
+  armRoot.name = "ArmRoot";
 
   const upperArmMesh = new Mesh(gl, PP1.createEllipsoid(0.4, 1.3, 0.4, 32, 32));
   const forearmMesh = new Mesh(gl, PP1.createEllipsoid(0.4, 1.6, 0.5, 32, 32));
 
-  // ====== parameter pose (bisa ditweak cepat) ======
-  const shoulderYaw = Math.PI / 14; // ~12.8° keluar dari dada
-  const shoulderRoll = Math.PI / 24; // ~10° turun/naik sedikit
-  const elbowBend = Math.PI / 2; // ~60° tekuk siku (besar → sudut lebih tajam)
-  const forearmYawIn = Math.PI / 18; // ~10° yaw forearm ke dalam (ke arah tengah badan)
-  const wristRoll = Math.PI / 20; // ~9° roll wrist
+  const shoulderYaw = Math.PI / 14;
+  const shoulderRoll = Math.PI / 24;
+  const elbowBend = Math.PI / 2;
+  const forearmYawIn = Math.PI / 18;
+  const wristRoll = Math.PI / 20;
 
-  // ================== LENGAN KANAN ==================
+  // ====== RIGHT ARM ======
   const rightUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
+  rightUpper.name = "RightUpperArm";
   mat4.translate(
     rightUpper.localTransform,
     rightUpper.localTransform,
@@ -368,6 +401,7 @@ function createGabiteArm(gl) {
   armRoot.addChild(rightUpper);
 
   const rightFore = new SceneNode(forearmMesh, cfg.colors.darkBlue);
+  rightFore.name = "RightForearm";
   mat4.translate(
     rightFore.localTransform,
     rightFore.localTransform,
@@ -393,8 +427,9 @@ function createGabiteArm(gl) {
   );
   rightUpper.addChild(rightFore);
 
-  // ================== LENGAN KIRI (mirror) ==================
+  // ====== LEFT ARM ======
   const leftUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
+  leftUpper.name = "LeftUpperArm";
   mat4.translate(
     leftUpper.localTransform,
     leftUpper.localTransform,
@@ -421,6 +456,7 @@ function createGabiteArm(gl) {
   armRoot.addChild(leftUpper);
 
   const leftFore = new SceneNode(forearmMesh, cfg.colors.darkBlue);
+  leftFore.name = "LeftForearm";
   mat4.translate(
     leftFore.localTransform,
     leftFore.localTransform,
@@ -437,7 +473,7 @@ function createGabiteArm(gl) {
     leftFore.localTransform,
     -forearmYawIn,
     [0, 1, 0]
-  ); // yaw ke dalam (kebalikan)
+  );
   mat4.rotate(
     leftFore.localTransform,
     leftFore.localTransform,
@@ -446,7 +482,7 @@ function createGabiteArm(gl) {
   );
   leftUpper.addChild(leftFore);
 
-  // ============== MINI SAIL (CAKAR) ==============
+  // ====== HAND FINS ======
   const finW = 0.6,
     finH = 0.7,
     topBulge = 0.12,
@@ -468,8 +504,8 @@ function createGabiteArm(gl) {
   const finMesh = new Mesh(gl, finGeom);
   const wristOffset = -(1.6 + 0.08);
 
-  // KIRI (anak leftFore)
   const leftFin = new SceneNode(finMesh, cfg.colors.white);
+  leftFin.name = "LeftHandFin";
   mat4.translate(leftFin.localTransform, leftFin.localTransform, [
     -0.1,
     wristOffset + 0.55,
@@ -484,8 +520,8 @@ function createGabiteArm(gl) {
   mat4.scale(leftFin.localTransform, leftFin.localTransform, [0.9, 2.5, 0.9]);
   leftFore.addChild(leftFin);
 
-  // KANAN (anak rightFore)
   const rightFin = new SceneNode(finMesh, cfg.colors.white);
+  rightFin.name = "RightHandFin";
   mat4.translate(rightFin.localTransform, rightFin.localTransform, [
     0.1,
     wristOffset + 0.55,
@@ -501,15 +537,15 @@ function createGabiteArm(gl) {
     rightFin.localTransform,
     rightFin.localTransform,
     [-0.9, 2.5, 0.9]
-  ); // mirror X
+  );
   rightFore.addChild(rightFin);
 
-  // ============== SAIL (sirip) sebagai anak forearm ==============
+  // ====== ARM SAILS ======
   const sailGeom = CC1.createSail(2, 3, 0.4, 64);
   const sailMesh = new Mesh(gl, sailGeom);
 
-  // Sail kanan
   const rightSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
+  rightSail.name = "RightArmSail";
   mat4.translate(
     rightSail.localTransform,
     rightSail.localTransform,
@@ -535,14 +571,14 @@ function createGabiteArm(gl) {
   );
   rightFore.addChild(rightSail);
 
-  // Sail kiri
   const leftSail = new SceneNode(sailMesh, cfg.colors.darkBlue);
+  leftSail.name = "LeftArmSail";
   mat4.translate(
     leftSail.localTransform,
     leftSail.localTransform,
     [-0.1, -1.2, 0]
   );
-  mat4.scale(leftSail.localTransform, leftSail.localTransform, [-1, 1, 1]); // simetri bentuk
+  mat4.scale(leftSail.localTransform, leftSail.localTransform, [-1, 1, 1]);
   mat4.rotate(
     leftSail.localTransform,
     leftSail.localTransform,
@@ -567,41 +603,41 @@ function createGabiteArm(gl) {
 }
 
 /**
- * Membuat kepala Gabite menggunakan kurva Bezier untuk bentuk yang lebih lancip.
- * @param {WebGLRenderingContext} gl - Konteks WebGL.
- * @returns {SceneNode} Node root untuk kepala.
+ * Membuat kepala Gabite
  */
 function createGabiteHead(gl) {
   const cfg = GabiteAnatomy;
   const headRoot = new SceneNode();
+  headRoot.name = "HeadRoot";
 
-  // --- BENTUK KEPALA UTAMA (Menggunakan Ellipsoid) ---
-  const headMesh = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
+  // Main head shape
+  const headMesh = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32));
   const headNode = new SceneNode(headMesh, cfg.colors.darkBlue);
+  headNode.name = "HeadMain";
 
   mat4.translate(
     headRoot.localTransform,
     headRoot.localTransform,
     [0, 0.6, -0.5]
   );
-  // Posisikan kepala
   mat4.translate(
     headNode.localTransform,
     headNode.localTransform,
     [0, 0.4, 0.1]
   );
-  mat4.rotate(
-    headNode.localTransform,
-    headNode.localTransform,
-    -Math.PI / 15,
-    [1, 0, 0]
-  ); // Miringkan sedikit
+  // mat4.rotate(
+  //   headNode.localTransform,
+  //   headNode.localTransform,
+  //   -Math.PI / 15,
+  //   [1, 0, 0]
+  // );
   headRoot.addChild(headNode);
 
-  // --- SIRIP SISI (JET) ---
-  const finMesh = new Mesh(gl, PP1.createEllipsoid(0.5, 0.5, 1.2, 24, 24)); // Lebih pipih dan panjang
+  // Jet fins (side fins)
+  const finMesh = new Mesh(gl, PP1.createEllipsoid(0.5, 0.5, 1.2, 24, 24));
 
   const leftFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+  leftFinNode.name = "LeftJetFin";
   mat4.translate(
     leftFinNode.localTransform,
     leftFinNode.localTransform,
@@ -609,9 +645,9 @@ function createGabiteHead(gl) {
   );
   headNode.addChild(leftFinNode);
 
-  // Garis Putih Sirip Kiri
   const stripeMesh = new Mesh(gl, PP1.createCylinder(0.3, 0.25, 16));
   const leftStripeNode = new SceneNode(stripeMesh, cfg.colors.white);
+  leftStripeNode.name = "LeftJetStripe";
   mat4.translate(
     leftStripeNode.localTransform,
     leftStripeNode.localTransform,
@@ -631,6 +667,7 @@ function createGabiteHead(gl) {
   leftFinNode.addChild(leftStripeNode);
 
   const rightFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+  rightFinNode.name = "RightJetFin";
   mat4.translate(
     rightFinNode.localTransform,
     rightFinNode.localTransform,
@@ -638,8 +675,8 @@ function createGabiteHead(gl) {
   );
   headNode.addChild(rightFinNode);
 
-  // Garis Putih Sirip Kanan
   const rightStripeNode = new SceneNode(stripeMesh, cfg.colors.white);
+  rightStripeNode.name = "RightJetStripe";
   mat4.translate(
     rightStripeNode.localTransform,
     rightStripeNode.localTransform,
@@ -658,10 +695,10 @@ function createGabiteHead(gl) {
   );
   rightFinNode.addChild(rightStripeNode);
 
-  const headMesh2 = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32)); // radiusX, radiusY, radiusZ
+  // Red overlay
+  const headMesh2 = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32));
   const headNode2 = new SceneNode(headMesh2, cfg.colors.red);
-
-  // Posisikan kepala
+  headNode2.name = "HeadOverlay";
   mat4.translate(
     headNode2.localTransform,
     headNode2.localTransform,
@@ -677,68 +714,37 @@ function createGabiteHead(gl) {
     headNode2.localTransform,
     -Math.PI / 15,
     [1, 0, 0]
-  ); // Miringkan sedikit
+  );
   headRoot.addChild(headNode2);
 
+  // Teeth
   const toothMesh = new Mesh(gl, PP1.createCone(0.1, 0.3, 8));
-  const leftToothNode = new SceneNode(toothMesh, cfg.colors.white);
-  mat4.translate(
-    leftToothNode.localTransform,
-    leftToothNode.localTransform,
-    [0.78, -0.5, -0.7]
-  );
-  mat4.rotate(
-    leftToothNode.localTransform,
-    leftToothNode.localTransform,
-    2.77,
-    [0, 0, -1]
-  );
-  headNode.addChild(leftToothNode);
 
-  const leftToothNode2 = new SceneNode(toothMesh, cfg.colors.white);
-  mat4.translate(
-    leftToothNode2.localTransform,
-    leftToothNode2.localTransform,
-    [0.74, -0.5, -0.8]
-  );
-  mat4.rotate(
-    leftToothNode2.localTransform,
-    leftToothNode2.localTransform,
-    2.77,
-    [0, 0, -1]
-  );
-  headNode.addChild(leftToothNode2);
+  const teeth = [
+    { name: "LeftTooth1", pos: [0.78, -0.5, -0.7] },
+    { name: "LeftTooth2", pos: [0.74, -0.5, -0.8] },
+    { name: "RightTooth1", pos: [-0.78, -0.5, -0.7] },
+    { name: "RightTooth2", pos: [-0.74, -0.5, -0.8] },
+  ];
 
-  const rightToothNode = new SceneNode(toothMesh, cfg.colors.white);
-  mat4.translate(
-    rightToothNode.localTransform,
-    rightToothNode.localTransform,
-    [-0.78, -0.5, -0.7]
-  );
-  mat4.rotate(
-    rightToothNode.localTransform,
-    rightToothNode.localTransform,
-    2.77,
-    [0, 0, 1]
-  );
-  headNode.addChild(rightToothNode);
+  teeth.forEach((tooth) => {
+    const toothNode = new SceneNode(toothMesh, cfg.colors.white);
+    toothNode.name = tooth.name;
+    mat4.translate(
+      toothNode.localTransform,
+      toothNode.localTransform,
+      tooth.pos
+    );
+    const rotDir = tooth.name.includes("Left") ? -1 : 1;
+    mat4.rotate(toothNode.localTransform, toothNode.localTransform, 2.77, [
+      0,
+      0,
+      rotDir,
+    ]);
+    headNode.addChild(toothNode);
+  });
 
-  const rightToothNode2 = new SceneNode(toothMesh, cfg.colors.white);
-  mat4.translate(
-    rightToothNode2.localTransform,
-    rightToothNode2.localTransform,
-    [-0.74, -0.5, -0.8]
-  );
-  mat4.rotate(
-    rightToothNode2.localTransform,
-    rightToothNode2.localTransform,
-    2.77,
-    [0, 0, 1]
-  );
-  headNode.addChild(rightToothNode2);
-
-  // ============== MATA (patch hitam, iris kuning, pupil vertikal) ==============
-  // Torus sederhana via lathe untuk iris
+  // Eyes
   function createTorusGeometry(R, r, segProfile = 48, segRevolve = 48) {
     const profile = [];
     for (let i = 0; i <= segProfile; i++) {
@@ -750,13 +756,14 @@ function createGabiteHead(gl) {
 
   function createGabiteEye(gl, side = 1) {
     const eyeRoot = new SceneNode();
+    eyeRoot.name = `${side > 0 ? "Right" : "Left"}Eye`;
 
-    // Patch mata (sclera gelap) berbentuk almond
     const patchMesh = new Mesh(
       gl,
       PP1.createEllipsoid(0.55, 0.33, 0.08, 24, 24)
     );
     const patchNode = new SceneNode(patchMesh, cfg.colors.black);
+    patchNode.name = "EyePatch";
     mat4.scale(
       patchNode.localTransform,
       patchNode.localTransform,
@@ -766,13 +773,13 @@ function createGabiteHead(gl) {
       patchNode.localTransform,
       patchNode.localTransform,
       [0, 0, -0.03]
-    ); // sedikit masuk agar menempel
+    );
     eyeRoot.addChild(patchNode);
 
-    // Iris cincin kuning
     const irisGeom = createTorusGeometry(0.18, 0.045, 40, 40);
     const irisMesh = new Mesh(gl, irisGeom);
     const irisNode = new SceneNode(irisMesh, cfg.colors.yellow);
+    irisNode.name = "Iris";
     mat4.rotate(
       irisNode.localTransform,
       irisNode.localTransform,
@@ -797,12 +804,12 @@ function createGabiteHead(gl) {
     );
     eyeRoot.addChild(irisNode);
 
-    // Pupil vertikal
     const pupilMesh = new Mesh(
       gl,
       PP1.createEllipsoid(0.06, 0.2, 0.03, 18, 18)
     );
     const pupilNode = new SceneNode(pupilMesh, cfg.colors.black);
+    pupilNode.name = "Pupil";
     mat4.translate(
       pupilNode.localTransform,
       pupilNode.localTransform,
@@ -810,17 +817,14 @@ function createGabiteHead(gl) {
     );
     eyeRoot.addChild(pupilNode);
 
-    // Posisi dan orientasi: miring dan menempel pada ellipsoid kepala
-    // Tempatkan pada sisi ellipsoid (x mendekati radiusX, z di permukaan depan)
-    const yawOut = side * 1.2; // ~69°: arahkan normal ke samping-depan
-    const pitch = -Math.PI / 18; // ~10°: sedikit miring ke belakang
-    const roll = -side * (Math.PI / 8); // bentuk almond condong
+    const yawOut = side * 1.2;
+    const pitch = -Math.PI / 18;
+    const roll = -side * (Math.PI / 8);
     mat4.translate(eyeRoot.localTransform, eyeRoot.localTransform, [
       side * 0.81,
       -0.02,
       -0.8,
     ]);
-    // Arahkan +Z mata ke arah normal lokal permukaan kepala
     mat4.rotate(
       eyeRoot.localTransform,
       eyeRoot.localTransform,
@@ -843,49 +847,35 @@ function createGabiteHead(gl) {
     return eyeRoot;
   }
 
-  // Pasang mata kiri dan kanan
   headNode.addChild(createGabiteEye(gl, +1));
   headNode.addChild(createGabiteEye(gl, -1));
 
   return headRoot;
 }
 
+/**
+ * Membuat leher Gabite
+ */
 function createGabiteNeck(gl) {
   const cfg = GabiteAnatomy;
-  // --- MESH ---
-  // Menggunakan Hyperboloid of 1 Sheet untuk bentuk leher yang organik
+
   const neckMesh = new Mesh(
     gl,
-    PP1.createHyperboloidOneSheet(
-      0.6, // radiusX di bagian terlebar
-      0.6, // radiusZ di bagian terlebar
-      0.4, // pinchY (seberapa "ramping" di tengah)
-      1.0, // height (panjang leher)
-      16, // latitudeBands (segmen vertikal)
-      16 // longitudeBands (segmen horizontal)
-    )
+    PP1.createHyperboloidOneSheet(0.6, 0.6, 0.4, 1.0, 16, 16)
   );
 
   const neckMesh2 = new Mesh(
     gl,
-    PP1.createHyperboloidOneSheet(
-      0.6, // radiusX di bagian terlebar
-      0.6, // radiusZ di bagian terlebar
-      0.4, // pinchY (seberapa "ramping" di tengah)
-      1.0, // height (panjang leher)
-      16, // latitudeBands (segmen vertikal)
-      16 // longitudeBands (segmen horizontal)
-    )
+    PP1.createHyperboloidOneSheet(0.6, 0.6, 0.4, 1.0, 16, 16)
   );
 
-  // --- NODE ---
   const neckNode = new SceneNode(neckMesh, cfg.colors.darkBlue);
+  neckNode.name = "NeckMain";
   const neckNode2 = new SceneNode(neckMesh2, cfg.colors.red);
+  neckNode2.name = "NeckOverlay";
 
   neckNode.addChild(neckNode2);
 
-  // --- TRANSFORMASI ---
-  // Sedikit memiringkan leher ke depan
   mat4.rotate(
     neckNode.localTransform,
     neckNode.localTransform,
@@ -919,10 +909,12 @@ function createGabiteNeck(gl) {
   return neckNode;
 }
 
+/**
+ * Membuat sirip punggung Gabite
+ */
 function createGabiteFin(gl) {
   const cfg = GabiteAnatomy;
 
-  // Koordinat 2D dari GeoGebra, diinterpretasikan di bidang XZ.
   const finShapePoints2D = [
     [2.8, 0.27],
     [0.68, 1.61],
@@ -941,23 +933,21 @@ function createGabiteFin(gl) {
     [3, -0.1],
   ];
 
-  // Menentukan pusat dan skala agar sesuai dengan model
   const centerX = 3.35;
   const centerZ = 2.75;
   const scale = 0.6;
 
-  // Proses koordinat: ubah ke 3D (XZ), pusatkan, dan skalakan
   const processedPoints = finShapePoints2D.map((p) => [
     (p[0] - centerX) * scale,
     0,
     (p[1] - centerZ) * scale,
   ]);
 
-  // Buat geometri 3D dengan mengekstrusi bentuk 2D
-  const finGeom = PP1.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95); // Ketebalan 0.25
+  const finGeom = PP1.createExtrudedShape(processedPoints, 0.1, 1.0, 0.95);
   const finMesh = new Mesh(gl, finGeom);
 
   const finNode = new SceneNode(finMesh, cfg.colors.darkBlue);
+  finNode.name = "DorsalFinMesh";
   mat4.translate(
     finNode.localTransform,
     finNode.localTransform,
@@ -967,3 +957,11 @@ function createGabiteFin(gl) {
   mat4.rotate(finNode.localTransform, finNode.localTransform, 1, [0, -1, 0]);
   return finNode;
 }
+
+// Export to window
+window.createGabiteBody = createGabiteBody;
+window.createGabiteLeg = createGabiteLeg;
+window.createGabiteArm = createGabiteArm;
+window.createGabiteHead = createGabiteHead;
+window.createGabiteNeck = createGabiteNeck;
+window.createGabiteFin = createGabiteFin;
