@@ -6,5 +6,10 @@ window.entityConfig = {
     rotationEuler: [0, 0, 0],
     worldSpace: false,
   },
+
+  // MEGA_GARCHOMP: {  // Posisi dikontrol animator
+  //   scale: [3, 3, 3], // <-- Ganti angka ini untuk memperbesar/memperkecil
+  //                          // Contoh: [1.5, 1.5, 1.5] membuatnya 50% lebih besar
+  // },
   // Tambah Pokemon lain di sini nanti
 };

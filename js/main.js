@@ -144,6 +144,19 @@ function main() {
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
 
+  // ===== BLUR EVENT (Reset Keys on Focus Loss) =====
+  function handleBlur() {
+    // Reset semua state tombol ketika jendela kehilangan fokus
+    for (const key in keys) {
+      if (keys.hasOwnProperty(key)) {
+        keys[key] = false;
+      }
+    }
+    console.log("Window lost focus, keys reset."); // Optional: for debugging
+  }
+
+  // Tambahkan event listener untuk blur
+  window.addEventListener("blur", handleBlur);
   // ===== MOUSE INTERACTION =====
   let isDragging = false;
   let lastMouseX = -1;
@@ -488,15 +501,54 @@ function main() {
 
     const moveSpeed = 30.0 * deltaTime;
     const panSpeed = 20.0 * deltaTime;
+    const verticalPanSpeed = 20.0 * deltaTime;
 
     if (cameraState.mode === "LOCKED") {
-      if (keys["w"]) cameraState.target[2] -= panSpeed;
-      if (keys["s"]) cameraState.target[2] += panSpeed;
-      if (keys["a"]) cameraState.target[0] -= panSpeed;
-      if (keys["d"]) cameraState.target[0] += panSpeed;
-      if (keys["q"]) cameraState.target[1] -= panSpeed;
-      if (keys["e"]) cameraState.target[1] += panSpeed;
+      // Hitung vektor arah berdasarkan azimuth kamera
+      const forwardX = Math.sin(cameraState.azimuth);
+      const forwardZ = Math.cos(cameraState.azimuth);
+      // Vektor kanan adalah rotasi 90 derajat dari vektor maju di bidang XZ
+      const rightX = Math.cos(cameraState.azimuth);
+      const rightZ = -Math.sin(cameraState.azimuth);
+
+      let deltaX = 0;
+      let deltaZ = 0;
+
+      // Gerakan maju/mundur relatif terhadap arah pandang
+      if (keys["w"]) {
+          deltaX -= forwardX * panSpeed;
+          deltaZ -= forwardZ * panSpeed;
+      }
+      if (keys["s"]) {
+          deltaX += forwardX * panSpeed;
+          deltaZ += forwardZ * panSpeed;
+      }
+      // Gerakan kiri/kanan (strafe) relatif terhadap arah pandang
+      if (keys["a"]) {
+          deltaX -= rightX * panSpeed;
+          deltaZ -= rightZ * panSpeed;
+      }
+      if (keys["d"]) {
+          deltaX += rightX * panSpeed;
+          deltaZ += rightZ * panSpeed;
+      }
+
+      // Terapkan perubahan ke target kamera
+      cameraState.target[0] += deltaX;
+      cameraState.target[2] += deltaZ;
+
+      // Gerakan naik/turun (Q/E) tetap sama (sumbu Y dunia)
+      if (keys["q"]) cameraState.target[1] -= verticalPanSpeed;
+      if (keys["e"]) cameraState.target[1] += verticalPanSpeed;
     }
+    // if (cameraState.mode === "LOCKED") {
+    //   if (keys["w"]) cameraState.target[2] -= panSpeed;
+    //   if (keys["s"]) cameraState.target[2] += panSpeed;
+    //   if (keys["a"]) cameraState.target[0] -= panSpeed;
+    //   if (keys["d"]) cameraState.target[0] += panSpeed;
+    //   if (keys["q"]) cameraState.target[1] -= panSpeed;
+    //   if (keys["e"]) cameraState.target[1] += panSpeed;
+    // }
   }
 
   function calculateOrbitPosition() {
