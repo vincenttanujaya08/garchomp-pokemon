@@ -500,7 +500,9 @@ function main() {
     // Kecepatan normal dan sprint
     const normalPanSpeed = 20.0 * deltaTime;
     const sprintMultiplier = 5; // Atur seberapa cepat sprintnya (misal: 2.5x)
-    const currentPanSpeed = keys['shift'] ? normalPanSpeed * sprintMultiplier : normalPanSpeed;
+    const currentPanSpeed = keys["shift"]
+      ? normalPanSpeed * sprintMultiplier
+      : normalPanSpeed;
 
     // Kecepatan vertikal tetap sama (atau bisa juga ditambahkan multiplier jika mau)
     const verticalPanSpeed = 20.0 * deltaTime;
@@ -518,20 +520,20 @@ function main() {
 
       // Gunakan currentPanSpeed yang sudah memperhitungkan Shift
       if (keys["w"]) {
-          deltaX -= forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-          deltaZ -= forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaX -= forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaZ -= forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
       if (keys["s"]) {
-          deltaX += forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-          deltaZ += forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaX += forwardX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaZ += forwardZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
       if (keys["a"]) {
-          deltaX -= rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-          deltaZ -= rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaX -= rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaZ -= rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
       if (keys["d"]) {
-          deltaX += rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
-          deltaZ += rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaX += rightX * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
+        deltaZ += rightZ * currentPanSpeed; // Ganti panSpeed -> currentPanSpeed
       }
 
       // Terapkan perubahan ke target kamera
@@ -542,7 +544,7 @@ function main() {
       if (keys["q"]) cameraState.target[1] -= verticalPanSpeed; // Tetap pakai verticalPanSpeed
       if (keys["e"]) cameraState.target[1] += verticalPanSpeed; // Tetap pakai verticalPanSpeed
     }
-  
+
     // if (cameraState.mode === "LOCKED") {
     //   if (keys["w"]) cameraState.target[2] -= panSpeed;
     //   if (keys["s"]) cameraState.target[2] += panSpeed;
@@ -730,6 +732,9 @@ function main() {
     });
 
     console.log("✅ Mega Garchomp loaded on Island C");
+  }
+
+  if (window.createGabite) {
   }
 
   // ===== INITIALIZE =====
