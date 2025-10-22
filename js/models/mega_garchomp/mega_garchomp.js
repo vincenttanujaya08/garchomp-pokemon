@@ -9,7 +9,7 @@
 //  Build Neck
 // ---------------------------------------------------------
 function createMegaGarchompNeck(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const reds = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
@@ -317,7 +317,7 @@ function createMegaGarchompJaw(gl) {
 // ---------------------------------------------------------
 
 function createMegaGarchompUpperHead(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const yellow = [1.0, 0.84, 0.0, 1.0];
   const black = [0.1, 0.1, 0.1, 1.0];
@@ -783,7 +783,7 @@ function createMegaGarchompHead(gl) {
     const yellow = [1.0, 0.84, 0.0, 1.0];
     const black = [0.1, 0.1, 0.1, 1.0];
     const white = [1.0, 1.0, 1.0, 1.0];
-    const darkBlue = [0.25, 0.25, 0.45, 1.0];
+    const darkBlue = [0.18, 0.22, 0.38, 1.0];
 
     const rugbyProfile = [];
     const smoothness = 10;
@@ -1401,7 +1401,7 @@ function createMegaGarchompHead(gl) {
 // ---------------------------------------------------------
 function createMegaGarchompTorso(gl) {
   // --- COLORS ---
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
@@ -1761,7 +1761,7 @@ function createMegaGarchompTorso(gl) {
 //  Build Tail
 // ---------------------------------------------------------
 function createMegaGarchompTail(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const pathSegments = 25; // Tingkatkan detail kurva
 
@@ -1906,7 +1906,7 @@ function createMegaGarchompTail(gl) {
 //  Build Left Leg
 // ---------------------------------------------------------
 function createMegaGarchompLeftLeg(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
@@ -2131,7 +2131,7 @@ function createMegaGarchompLeftLeg(gl) {
 //  Build Right Leg
 // ---------------------------------------------------------
 function createMegaGarchompRightLeg(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
@@ -2353,7 +2353,7 @@ function createMegaGarchompRightLeg(gl) {
 //  Build Dorsal Fin
 // ---------------------------------------------------------
 function createDorsalFin(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
 
   // -- Gabungkan semua titik menjadi SATU array --
@@ -2417,7 +2417,7 @@ function createDorsalFin(gl) {
 //  Build Right Arm
 // ---------------------------------------------------------
 function createMegaGarchompRightArm(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
 
   // --- MESHES ---
@@ -2581,7 +2581,7 @@ function createMegaGarchompRightArm(gl) {
 //  Build Left Arm
 // ---------------------------------------------------------
 function createMegaGarchompLeftArm(gl) {
-  const darkBlue = [0.25, 0.25, 0.45, 1.0];
+  const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
 
