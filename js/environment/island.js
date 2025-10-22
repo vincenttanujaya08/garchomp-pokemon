@@ -51,7 +51,30 @@ function createIsland(gl) {
   islandRoot.addChild(earthNode);
   islandRoot.addChild(baseRockNode);
 
-  // // --- Dekorasi ---
+  // // --- Dekorasi ---\
+  const cactus1 = createCactus(gl);
+  mat4.translate(cactus1.localTransform, cactus1.localTransform, [
+    0.3,
+    grassThickness,
+    0.2,
+  ]);
+  mat4.scale(cactus1.localTransform, cactus1.localTransform, [0.1, 0.1, 0.1]);
+  islandRoot.addChild(cactus1);
+
+  const cactus2 = createCactus(gl);
+  mat4.translate(cactus2.localTransform, cactus2.localTransform, [
+    -0.4,
+    grassThickness,
+    0.3,
+  ]);
+  mat4.rotate(
+    cactus2.localTransform,
+    cactus2.localTransform,
+    Math.PI / 6,
+    [0, 1, 0]
+  );
+  mat4.scale(cactus2.localTransform, cactus2.localTransform, [0.08, 0.08, 0.08]);
+  islandRoot.addChild(cactus2);
   // const rock1 = createRock(gl);
   // mat4.translate(rock1.localTransform, rock1.localTransform, [
   //   0.4,
