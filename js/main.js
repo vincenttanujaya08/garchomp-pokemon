@@ -477,8 +477,8 @@ function main() {
             pokeballMotionNode: garchompPokeballPlacementNode,
             pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
-            gabiteOffsetStart: [0, -1.1, 0.8],
-            gabiteOffsetTarget: [0, -0.2, -2.2],
+            gabiteOffsetStart: [0, 0, 0],
+            gabiteOffsetTarget: [0, 0, 0],
           },
         });
       }
@@ -573,7 +573,7 @@ function main() {
         mat4.translate(
           megaPokeballPlacementNode.localTransform,
           megaPokeballPlacementNode.localTransform,
-          [2, -5, -80]
+          [5, -5, -80]
         );
         mat4.rotate(
           megaPokeballPlacementNode.localTransform,
@@ -626,8 +626,8 @@ function main() {
             pokeballMotionNode: megaPokeballPlacementNode,
             pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
-            gabiteOffsetStart: [0, -1.1, 0.8],
-            gabiteOffsetTarget: [0, -0.2, -2.2],
+            gabiteOffsetStart: [0, 0, 0],
+            gabiteOffsetTarget: [0, 0, 0],
           },
         });
       }
@@ -767,8 +767,8 @@ function main() {
             pokeballMotionNode: pokeballPlacementNode,
             pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
-            gabiteOffsetStart: [0, -1.1, 0.8],
-            gabiteOffsetTarget: [0, -0.2, -2.2],
+            gabiteOffsetStart: [0, 0, 0],
+            gabiteOffsetTarget: [0, 0, 0],
           },
         });
       }
