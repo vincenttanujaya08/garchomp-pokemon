@@ -1,6 +1,7 @@
 /**
  * CloudAnimator.js - Smooth Orbiting & Bobbing Animation for Clouds
  * Extends AnimationController for consistency with Pokemon animations
+ * FIXED: Properly handles existing cloud nodes without mesh conflicts
  */
 
 class CloudAnimator extends AnimationController {
@@ -42,11 +43,14 @@ class CloudAnimator extends AnimationController {
     this.currentOrbitAngle = this.orbitPhase;
     this.currentSelfRotation = 0;
 
-    // Store original local transform (untuk reference)
-    this.originalLocalTransform = mat4.clone(this.entity.localTransform);
+    // IMPORTANT: Store INITIAL local transform to preserve scale
+    this.initialTransform = mat4.clone(this.entity.localTransform);
+    this.initialScale = this.extractScale(this.initialTransform);
 
     console.log(
-      `☁️ CloudAnimator initialized for ${this.entity.name || "Cloud"}`
+      `☁️ CloudAnimator initialized for ${
+        this.entity.name || "Cloud"
+      } with scale [${this.initialScale.map((s) => s.toFixed(2)).join(", ")}]`
     );
   }
 
@@ -82,7 +86,7 @@ class CloudAnimator extends AnimationController {
       this.islandCenter[2] + orbitPos[2],
     ];
 
-    // 6. Build transform matrix
+    // 6. Build transform matrix (CRITICAL: Preserve scale!)
     this.buildTransformMatrix(finalPos, this.currentSelfRotation);
   }
 
@@ -126,8 +130,10 @@ class CloudAnimator extends AnimationController {
 
   /**
    * Build final transform matrix
+   * CRITICAL FIX: Preserve initial scale from createCloud1/createCloud2
    */
   buildTransformMatrix(position, selfRotation) {
+    // Start fresh
     mat4.identity(this.entity.localTransform);
 
     // 1. Translate to world position
@@ -147,13 +153,12 @@ class CloudAnimator extends AnimationController {
       );
     }
 
-    // 3. Apply original scale (dari createCloud1/createCloud2)
-    // Extract scale from original transform
-    const origScale = this.extractScale(this.originalLocalTransform);
+    // 3. CRITICAL: Apply initial scale (from createCloud1/createCloud2)
+    // This preserves the scale that was set in island.js
     mat4.scale(
       this.entity.localTransform,
       this.entity.localTransform,
-      origScale
+      this.initialScale
     );
   }
 
@@ -203,4 +208,6 @@ if (typeof module !== "undefined" && module.exports) {
 }
 window.CloudAnimator = CloudAnimator;
 
-console.log("✅ CloudAnimator loaded - Arbitrary axis orbit with bobbing");
+console.log(
+  "✅ CloudAnimator loaded - Fixed transform handling with scale preservation"
+);
