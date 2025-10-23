@@ -381,9 +381,18 @@ function main() {
     gabiteScaleNode.name = "GABITE_SCALE_NODE";
     gabiteScaleNode.addChild(gabiteNode);
 
+    const gabiteFrontOffsetNode = new SceneNode();
+    gabiteFrontOffsetNode.name = "GABITE_FRONT_OFFSET_NODE";
+    mat4.translate(
+      gabiteFrontOffsetNode.localTransform,
+      gabiteFrontOffsetNode.localTransform,
+      [0, -1.1, 0.8]
+    );
+    gabiteFrontOffsetNode.addChild(gabiteScaleNode);
+
     const gabiteLiftNode = new SceneNode();
     gabiteLiftNode.name = "GABITE_LIFT_NODE";
-    gabiteLiftNode.addChild(gabiteScaleNode);
+    gabiteLiftNode.addChild(gabiteFrontOffsetNode);
 
     const gabiteOrientationNode = new SceneNode();
     gabiteOrientationNode.name = "GABITE_ORIENTATION_NODE";
@@ -438,17 +447,37 @@ function main() {
           pokeballTopNode: pokeballData.topHinge,
           gabiteScaleNode,
           gabiteLiftNode,
-          colorRootNode: gabiteNode,
+          gabiteOffsetNode: gabiteFrontOffsetNode,
+          colorGroups: [
+            {
+              root: gabiteNode,
+              startColor: [1, 1, 1, 1],
+              mode: "instant", // flash white once emerging starts
+              applyOn: "emerging",
+            },
+            {
+              root: pokeballData.root,
+              startColor: [1, 1, 1, 1],
+              mode: "lerp", // blend back to colour during opening
+              applyOn: "start",
+              blendPhase: "opening",
+            },
+          ],
           config: {
-            initialScale: 0.08,
+            initialScale: 0.2,
             finalScale: 1.0,
             initialLift: -1.6,
             finalLift: 0.0,
-            openAngle: Math.PI * 0.95,
+            openAngle: Math.PI * 0.45,
             openDuration: 1.0,
             postOpenDelay: 0.25,
             emergeDuration: 1.5,
-            colorStartColor: [1, 1, 1, 1],
+            retreatDuration: 0.6,
+            pokeballMotionNode: pokeballPlacementNode,
+            pokeballMotionOffset: [0, 0.9, -1.8],
+            pokeballTiltAngle: -Math.PI * 0.35,
+            gabiteOffsetStart: [0, -1.1, 0.8],
+            gabiteOffsetTarget: [0, -0.2, -2.2],
           },
         });
       }
@@ -870,3 +899,4 @@ function loadShader(gl, type, source) {
 
 // ===== START APP =====
 window.addEventListener("DOMContentLoaded", main);
+

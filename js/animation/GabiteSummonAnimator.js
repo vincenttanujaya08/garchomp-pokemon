@@ -1,9 +1,16 @@
 class GabiteSummonAnimator {
+  /**
+   * Controls the Pokéball opening + Gabite emergence sequence.
+   * Supports multiple colour groups so elements can flash white
+   * and blend back to their original palettes at different times.
+   */
   constructor({
     pokeballTopNode,
     gabiteScaleNode,
     gabiteLiftNode,
-    colorRootNode = null,
+    gabiteOffsetNode = null,
+    colorRootNode = null, // legacy single-root (instant restore)
+    colorGroups = [], // [{ root, startColor?, mode?, applyOn?, blendPhase? }]
     config = {},
   }) {
     this.config = {
@@ -17,36 +24,53 @@ class GabiteSummonAnimator {
       initialLift: -1.4,
       finalLift: 0.0,
       colorStartColor: [1, 1, 1, 1],
+      retreatDuration: 0.6,
+      gabiteOffsetStart: [0, 0, 0],
+      gabiteOffsetTarget: [0, 0, 0],
       ...config,
     };
 
     this.pokeballTopNode = pokeballTopNode || null;
     this.gabiteScaleNode = gabiteScaleNode;
     this.gabiteLiftNode = gabiteLiftNode;
-    this.colorRootNode = colorRootNode;
+    this.gabiteOffsetNode = gabiteOffsetNode || null;
 
     this._topClosedMatrix = this.pokeballTopNode
       ? mat4.clone(this.pokeballTopNode.localTransform)
       : null;
     this._scaleBaseMatrix = mat4.clone(this.gabiteScaleNode.localTransform);
     this._liftBaseMatrix = mat4.clone(this.gabiteLiftNode.localTransform);
-
-    this._colorStartColor = Array.isArray(this.config.colorStartColor)
-      ? this.config.colorStartColor
-      : [1, 1, 1, 1];
-    this._colorBindings = this.colorRootNode
-      ? this._captureColorBindings(this.colorRootNode)
+    this._offsetBaseMatrix = this.gabiteOffsetNode
+      ? mat4.clone(this.gabiteOffsetNode.localTransform)
       : null;
+    this._offsetStart = Array.isArray(this.config.gabiteOffsetStart)
+      ? this.config.gabiteOffsetStart
+      : [0, 0, 0];
+    this._offsetTarget = Array.isArray(this.config.gabiteOffsetTarget)
+      ? this.config.gabiteOffsetTarget
+      : this._offsetStart;
+
+    this.pokeballMotionNode = config.pokeballMotionNode || null;
+    this._motionBaseMatrix = this.pokeballMotionNode
+      ? mat4.clone(this.pokeballMotionNode.localTransform)
+      : null;
+    this._motionOffset = Array.isArray(config.pokeballMotionOffset)
+      ? config.pokeballMotionOffset
+      : [0, 0, 0];
+    this._pokeballTiltAngle = config.pokeballTiltAngle || 0;
 
     this.totalTime = 0;
     this.stateTime = 0;
     this.state = "DELAY";
-    this._startColorApplied = false;
-    this._colorsRestored = false;
+
+    this._colorGroups = [];
+    this._initColorGroups(colorRootNode, colorGroups);
 
     this._setTopAngle(0);
     this._setGabiteScale(this.config.initialScale);
     this._setGabiteLift(this.config.initialLift);
+    this._setGabiteOffset(0);
+    this._setPokeballTransform(0, 0);
   }
 
   update(dt) {
@@ -56,9 +80,20 @@ class GabiteSummonAnimator {
     switch (this.state) {
       case "DELAY":
         if (this.stateTime >= this.config.startDelay) {
-          this._transition("OPENING");
+          this._transition("RETREAT");
         }
         break;
+
+      case "RETREAT": {
+        const t = Math.min(
+          this.stateTime / Math.max(this.config.retreatDuration, 1e-3),
+          1
+        );
+        const eased = this._easeOutCubic(t);
+        this._setPokeballTransform(eased, 0);
+        if (t >= 1) this._transition("OPENING");
+        break;
+      }
 
       case "OPENING": {
         const t = Math.min(
@@ -68,11 +103,15 @@ class GabiteSummonAnimator {
         const eased = this._easeOutCubic(t);
         const angle = -this.config.openAngle * eased;
         this._setTopAngle(angle);
+        this._updateBlendGroups("opening", eased);
+        this._setPokeballTransform(1, eased);
         if (t >= 1) this._transition("POST_OPEN_DELAY");
         break;
       }
 
       case "POST_OPEN_DELAY":
+        this._updateBlendGroups("opening", 1);
+        this._setPokeballTransform(1, 1);
         if (this.stateTime >= this.config.postOpenDelay) {
           this._transition("EMERGING");
         }
@@ -95,6 +134,7 @@ class GabiteSummonAnimator {
 
         this._setGabiteScale(s);
         this._setGabiteLift(lift);
+        this._setGabiteOffset(easedScale);
 
         if (t >= 1) {
           this._transition("FINISHED");
@@ -107,7 +147,9 @@ class GabiteSummonAnimator {
         this._setTopAngle(-this.config.openAngle);
         this._setGabiteScale(this.config.finalScale);
         this._setGabiteLift(this.config.finalLift);
-        this._restoreOriginalColors();
+        this._setGabiteOffset(1);
+        this._setPokeballTransform(1, 1);
+        this._restoreAllOriginalColors();
         break;
     }
   }
@@ -119,11 +161,13 @@ class GabiteSummonAnimator {
   _transition(nextState) {
     this.state = nextState;
     this.stateTime = 0;
+
     if (nextState === "EMERGING") {
-      this._setStartColor();
+      this._applyInstantStartColors();
     }
+
     if (nextState === "FINISHED") {
-      this._restoreOriginalColors();
+      this._restoreAllOriginalColors();
     }
   }
 
@@ -155,43 +199,190 @@ class GabiteSummonAnimator {
     ]);
   }
 
-  _setStartColor() {
-    if (!this._colorBindings || this._startColorApplied) return;
-    for (const binding of this._colorBindings) {
-      const { node, startColor } = binding;
+  _setGabiteOffset(amount) {
+    if (!this.gabiteOffsetNode || !this._offsetBaseMatrix) return;
+    const t = Math.min(Math.max(amount, 0), 1);
+    const sx = this._offsetStart[0] || 0;
+    const sy = this._offsetStart[1] || 0;
+    const sz = this._offsetStart[2] || 0;
+    const tx = this._offsetTarget[0] || 0;
+    const ty = this._offsetTarget[1] || 0;
+    const tz = this._offsetTarget[2] || 0;
+    mat4.copy(this.gabiteOffsetNode.localTransform, this._offsetBaseMatrix);
+    mat4.translate(
+      this.gabiteOffsetNode.localTransform,
+      this.gabiteOffsetNode.localTransform,
+      [
+        sx + (tx - sx) * t,
+        sy + (ty - sy) * t,
+        sz + (tz - sz) * t,
+      ]
+    );
+  }
+
+  _setPokeballTransform(translateT, tiltT) {
+    if (!this.pokeballMotionNode || !this._motionBaseMatrix) return;
+    const tt = Math.min(Math.max(translateT, 0), 1);
+    const rt = Math.min(Math.max(tiltT, 0), 1);
+    mat4.copy(this.pokeballMotionNode.localTransform, this._motionBaseMatrix);
+
+    if (this._motionOffset) {
+      mat4.translate(
+        this.pokeballMotionNode.localTransform,
+        this.pokeballMotionNode.localTransform,
+        [
+          (this._motionOffset[0] || 0) * tt,
+          (this._motionOffset[1] || 0) * tt,
+          (this._motionOffset[2] || 0) * tt,
+        ]
+      );
+    }
+
+    if (this._pokeballTiltAngle) {
+      mat4.rotateX(
+        this.pokeballMotionNode.localTransform,
+        this.pokeballMotionNode.localTransform,
+        this._pokeballTiltAngle * rt
+      );
+    }
+  }
+
+  _initColorGroups(legacyRoot, colorGroupsInput) {
+    const groups = [];
+
+    if (legacyRoot) {
+      groups.push({
+        root: legacyRoot,
+        startColor: this.config.colorStartColor,
+        mode: "instant",
+        applyOn: "emerging",
+      });
+    }
+
+    if (Array.isArray(colorGroupsInput)) {
+      colorGroupsInput.forEach((entry) => {
+        if (entry && entry.root) groups.push(entry);
+      });
+    }
+
+    this._colorGroups = groups
+      .map((entry) => this._createColorGroup(entry))
+      .filter(Boolean);
+
+    // Apply start colours immediately for groups requesting it (e.g. Pokéball)
+    this._colorGroups.forEach((group) => {
+      if (group.applyOn === "start" && !group.startApplied) {
+        this._setGroupToStartColor(group);
+        group.startApplied = true;
+      }
+    });
+  }
+
+  _createColorGroup({
+    root,
+    startColor,
+    mode = "instant",
+    applyOn,
+    blendPhase,
+  }) {
+    const bindings = this._captureColorBindings(
+      root,
+      startColor || this.config.colorStartColor
+    );
+    if (!bindings || !bindings.length) return null;
+
+    const normalizedMode = mode === "lerp" ? "lerp" : "instant";
+    const normalizedApplyOn =
+      applyOn || (normalizedMode === "lerp" ? "start" : "emerging");
+    const normalizedBlendPhase =
+      normalizedMode === "lerp" ? blendPhase || "opening" : null;
+
+    return {
+      bindings,
+      mode: normalizedMode,
+      applyOn: normalizedApplyOn,
+      blendPhase: normalizedBlendPhase,
+      startApplied: normalizedApplyOn === "start",
+      blendComplete: normalizedMode !== "lerp",
+      restored: false,
+    };
+  }
+
+  _setGroupToStartColor(group) {
+    group.bindings.forEach(({ node, startColor }) => {
       node.color = startColor.slice();
-    }
-    this._startColorApplied = true;
-    this._colorsRestored = false;
+    });
   }
 
-  _restoreOriginalColors() {
-    if (!this._colorBindings || this._colorsRestored) return;
-    for (const binding of this._colorBindings) {
-      const { node, originalColor } = binding;
-      node.color = originalColor.slice();
-    }
-    this._colorsRestored = true;
+  _applyInstantStartColors() {
+    this._colorGroups.forEach((group) => {
+      if (group.mode === "instant" && !group.startApplied) {
+        this._setGroupToStartColor(group);
+        group.startApplied = true;
+        group.restored = false;
+      }
+    });
   }
 
-  _captureColorBindings(root) {
+  _updateBlendGroups(phase, alpha) {
+    const t = Math.min(Math.max(alpha, 0), 1);
+    this._colorGroups.forEach((group) => {
+      if (
+        group.mode === "lerp" &&
+        group.blendPhase === phase &&
+        !group.restored
+      ) {
+        this._applyGroupBlend(group, t);
+        if (t >= 1) group.blendComplete = true;
+      }
+    });
+  }
+
+  _applyGroupBlend(group, alpha) {
+    group.bindings.forEach(({ node, startColor, originalColor }) => {
+      const dst = node.color;
+      dst[0] = startColor[0] + (originalColor[0] - startColor[0]) * alpha;
+      dst[1] = startColor[1] + (originalColor[1] - startColor[1]) * alpha;
+      dst[2] = startColor[2] + (originalColor[2] - startColor[2]) * alpha;
+      dst[3] = startColor[3] + (originalColor[3] - startColor[3]) * alpha;
+    });
+  }
+
+  _restoreAllOriginalColors() {
+    this._colorGroups.forEach((group) => {
+      if (group.restored) return;
+      group.bindings.forEach(({ node, originalColor }) => {
+        node.color = originalColor.slice();
+      });
+      group.restored = true;
+      group.startApplied = false;
+      group.blendComplete = true;
+    });
+  }
+
+  _captureColorBindings(root, startColor) {
     const bindings = [];
     const stack = [root];
     while (stack.length) {
       const node = stack.pop();
+      if (!node) continue;
       if (node.color) {
-        const original = node.color.slice();
-        const startColor = [
-          this._colorStartColor[0] ?? original[0],
-          this._colorStartColor[1] ?? original[1],
-          this._colorStartColor[2] ?? original[2],
-          this._colorStartColor[3] ?? original[3],
-        ];
-        bindings.push({ node, originalColor: original, startColor });
+        bindings.push({
+          node,
+          originalColor: node.color.slice(),
+          startColor: [
+            startColor?.[0] ?? node.color[0],
+            startColor?.[1] ?? node.color[1],
+            startColor?.[2] ?? node.color[2],
+            startColor?.[3] ?? node.color[3],
+          ],
+        });
       }
-      if (node.children) stack.push(...node.children);
+      if (node.children && node.children.length) {
+        stack.push(...node.children);
+      }
     }
-    return bindings.length ? bindings : null;
+    return bindings;
   }
 
   _easeOutCubic(t) {
