@@ -35,10 +35,10 @@ function main() {
 
   // ===== CAMERA STATE =====
   const cameraState = {
-    target: [0, -5, -30],
+    target: [-3, 0, 0],
     distance: 80,
     azimuth: 0,
-    elevation: 0.5,
+    elevation: 0.1,
     minElevation: -Math.PI / 3,
     maxElevation: Math.PI / 2.5,
   };
@@ -242,8 +242,8 @@ function main() {
     g.name = "GARCHOMP";
     const wrap = new SceneNode();
     wrap.name = "GARCHOMP_WRAPPER";
-    mat4.scale(wrap.localTransform, wrap.localTransform, [2, 2, 2]);
-    mat4.translate(wrap.localTransform, wrap.localTransform, [0, -5, -11]);
+    mat4.scale(wrap.localTransform, wrap.localTransform, [3, 3, 3]);
+    mat4.translate(wrap.localTransform, wrap.localTransform, [-10, 0.5, -2]);
     wrap.addChild(g);
 
     const anim = new GarchompAnimator(g, {
@@ -275,12 +275,12 @@ function main() {
     mat4.scale(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
-      [2, 2, 2]
+      [3, 3, 3]
     );
     mat4.translate(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
-      [-30, -12, -34]
+      [-20, -6.5, -24]
     );
 
     // === Penting: pastikan HADAP DEPAN DUNIA (-Z) ===
@@ -355,18 +355,17 @@ function main() {
   // ===== GIANT ROCK FORMATIONS (Layered Mesas) =====
   const rockFormations = [];
 
-  // Ganti fungsi yang dipanggil di sini:
-  // const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
-  // mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, -1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
-  // mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
-  // mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 3);
-  // rockFormations.push(rockFormation1);
+  const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
+  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, -1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
+  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
+  mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 2);
+  rockFormations.push(rockFormation1);
 
-  // const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
-  // mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [70, 1, -125]);
-  // mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
-  // mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
-  // rockFormations.push(rockFormation2);
+  const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
+  mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [82, 1, -120]);
+  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
+  mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
+  rockFormations.push(rockFormation2);
 
   // const rockFormation3 = createLayeredMesa(gl, 5, 10, 9, 12, 0.5);
   // mat4.translate(rockFormation3.localTransform, rockFormation3.localTransform, [0, -1, -150]); // Jauh di belakang tengah

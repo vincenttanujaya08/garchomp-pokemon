@@ -54,7 +54,7 @@ function createIsland(gl) {
   // --- Dekorasi Kaktus ---
   const cactus1 = createCactus(gl);
   mat4.translate(cactus1.localTransform, cactus1.localTransform, [
-    0.3,
+    0.5,
     grassThickness,
     0.2,
   ]);
