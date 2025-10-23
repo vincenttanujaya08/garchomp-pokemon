@@ -33,8 +33,7 @@ function createIsland(gl) {
   const earthNode = new SceneNode(dirtMesh, [0.6, 0.4, 0.2, 1.0]);
   const baseRockNode = new SceneNode(rockMesh, [0.5, 0.5, 0.5, 1.0]);
 
-  const baseRockNode2 = new SceneNode(rockMesh, [0.5, 0.5, 0.5, 2.0]);
-
+  // offset vertikal untuk layer tanah & batu
   mat4.translate(earthNode.localTransform, earthNode.localTransform, [
     0,
     -grassThickness,
@@ -80,10 +79,7 @@ function createIsland(gl) {
   );
   islandRoot.addChild(cactus2);
 
-  // --- Dekorasi Batu Angular ---
-  // Posisi Y = 0 agar batu benar-benar menyentuh permukaan island
-
-  // Batu angular 1
+  // --- Dekorasi Batu Angular / Simple ---
   const rock1 = createAngularRock(gl, 0.3);
   mat4.translate(rock1.localTransform, rock1.localTransform, [0.5, 0, -0.3]);
   mat4.rotate(
@@ -95,7 +91,6 @@ function createIsland(gl) {
   mat4.scale(rock1.localTransform, rock1.localTransform, [0.12, 0.12, 0.12]);
   islandRoot.addChild(rock1);
 
-  // Batu angular 2
   const rock2 = createAngularRock(gl, 0.7);
   mat4.translate(rock2.localTransform, rock2.localTransform, [-0.9, 0, -0.2]);
   mat4.rotate(
@@ -107,7 +102,6 @@ function createIsland(gl) {
   mat4.scale(rock2.localTransform, rock2.localTransform, [0.09, 0.09, 0.09]);
   islandRoot.addChild(rock2);
 
-  // Batu sederhana 3
   const rock3 = createSimpleAngularRock(gl);
   mat4.translate(rock3.localTransform, rock3.localTransform, [-0.9, 0, -0.5]);
   mat4.rotate(
@@ -119,7 +113,6 @@ function createIsland(gl) {
   mat4.scale(rock3.localTransform, rock3.localTransform, [0.08, 0.08, 0.08]);
   islandRoot.addChild(rock3);
 
-  // Batu angular 4
   const rock4 = createAngularRock(gl, 0.5);
   mat4.translate(rock4.localTransform, rock4.localTransform, [0.6, 0, 0.3]);
   mat4.rotate(
@@ -131,7 +124,6 @@ function createIsland(gl) {
   mat4.scale(rock4.localTransform, rock4.localTransform, [0.06, 0.06, 0.06]);
   islandRoot.addChild(rock4);
 
-  // Batu sederhana 5
   const rock5 = createSimpleAngularRock(gl);
   mat4.translate(rock5.localTransform, rock5.localTransform, [0.2, 0, -0.6]);
   mat4.rotate(
@@ -143,7 +135,6 @@ function createIsland(gl) {
   mat4.scale(rock5.localTransform, rock5.localTransform, [0.07, 0.07, 0.07]);
   islandRoot.addChild(rock5);
 
-  // Batu angular 6
   const rock6 = createAngularRock(gl, 0.8);
   mat4.translate(rock6.localTransform, rock6.localTransform, [-0.4, 0, -0.1]);
   mat4.rotate(
@@ -155,7 +146,6 @@ function createIsland(gl) {
   mat4.scale(rock6.localTransform, rock6.localTransform, [0.1, 0.1, 0.1]);
   islandRoot.addChild(rock6);
 
-  // Batu sederhana 7
   const rock7 = createSimpleAngularRock(gl);
   mat4.translate(rock7.localTransform, rock7.localTransform, [-0.3, 0, 0.5]);
   mat4.rotate(
@@ -167,7 +157,6 @@ function createIsland(gl) {
   mat4.scale(rock7.localTransform, rock7.localTransform, [0.05, 0.05, 0.05]);
   islandRoot.addChild(rock7);
 
-  // Batu angular 8
   const rock8 = createAngularRock(gl, 0.4);
   mat4.translate(rock8.localTransform, rock8.localTransform, [-0.8, 0, -0.65]);
   mat4.rotate(
@@ -179,158 +168,114 @@ function createIsland(gl) {
   mat4.scale(rock8.localTransform, rock8.localTransform, [0.09, 0.09, 0.09]);
   islandRoot.addChild(rock8);
 
-  // --- Dekorasi Awan ---
-  // Posisi awan dinaikkan agar lebih tinggi di langit
+  // =========================
+  //  Awan Prosedural Multi-Ring (worldSpace)
+  // =========================
 
-  // Awan 1 (tipe sederhana) - kiri depan
-  const cloud1 = createCloud1(gl);
-  mat4.translate(
-    cloud1.localTransform,
-    cloud1.localTransform,
-    [-1.5, 1.8, -1.0]
-  );
-  mat4.rotate(
-    cloud1.localTransform,
-    cloud1.localTransform,
-    Math.PI / 8,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud1.localTransform, cloud1.localTransform, [0.3, 0.3, 0.3]);
-  islandRoot.addChild(cloud1);
+  // Helper random
+  const randRange = (a, b) => a + Math.random() * (b - a);
+  const GOLDEN_ANGLE = 2.399963229728653; // ~137.5°
+  const evenAngle = (i, jitter = 0) =>
+    i * GOLDEN_ANGLE + randRange(-jitter, jitter);
 
-  // Awan 2 (tipe kompleks) - kanan belakang
-  const cloud2 = createCloud2(gl);
-  mat4.translate(
-    cloud2.localTransform,
-    cloud2.localTransform,
-    [1.2, 2.2, -1.5]
-  );
-  mat4.rotate(
-    cloud2.localTransform,
-    cloud2.localTransform,
-    -Math.PI / 4,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud2.localTransform, cloud2.localTransform, [0.25, 0.25, 0.25]);
-  islandRoot.addChild(cloud2);
+  /**
+   * Buat satu ring awan yang merata
+   * @param {number} count
+   * @param {object} cfg { orbitRadius, orbitHeight, speedRange:[min,max], sizeRange:[min,max], tilt, angleJitter }
+   * @returns {CloudOrbitAnimator[]}
+   */
+  function spawnCloudRing(count, cfg) {
+    const anims = [];
+    for (let i = 0; i < count; i++) {
+      const cloudNode = (Math.random() < 0.5 ? createCloud1 : createCloud2)(gl);
+      cloudNode.worldSpace = true; // Opsi A: animator tulis world-matrix
 
-  // Awan 3 (tipe sederhana) - kanan depan atas
-  const cloud3 = createCloud1(gl);
-  mat4.translate(cloud3.localTransform, cloud3.localTransform, [0.8, 1.4, 0.5]);
-  mat4.rotate(
-    cloud3.localTransform,
-    cloud3.localTransform,
-    -Math.PI / 6,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud3.localTransform, cloud3.localTransform, [0.2, 0.2, 0.2]);
-  islandRoot.addChild(cloud3);
+      // Skala awal (acak dalam rentang)
+      const s = randRange(cfg.sizeRange[0], cfg.sizeRange[1]);
+      mat4.scale(cloudNode.localTransform, cloudNode.localTransform, [s, s, s]);
 
-  // Awan 4 (tipe kompleks) - kiri belakang
-  const cloud4 = createCloud2(gl);
-  mat4.translate(
-    cloud4.localTransform,
-    cloud4.localTransform,
-    [-1.0, 2.3, -0.8]
-  );
-  mat4.rotate(
-    cloud4.localTransform,
-    cloud4.localTransform,
-    Math.PI / 3,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud4.localTransform, cloud4.localTransform, [0.28, 0.28, 0.28]);
-  islandRoot.addChild(cloud4);
+      // Variasi rotasi awal
+      mat4.rotateY(
+        cloudNode.localTransform,
+        cloudNode.localTransform,
+        randRange(0, Math.PI * 2)
+      );
 
-  // Awan 5 (tipe sederhana) - tengah jauh
-  const cloud5 = createCloud1(gl);
-  mat4.translate(
-    cloud5.localTransform,
-    cloud5.localTransform,
-    [-0.3, 2.0, -2.0]
-  );
-  mat4.rotate(
-    cloud5.localTransform,
-    cloud5.localTransform,
-    Math.PI / 2,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud5.localTransform, cloud5.localTransform, [0.35, 0.35, 0.35]);
-  islandRoot.addChild(cloud5);
+      islandRoot.addChild(cloudNode);
 
-  // Awan 6 (tipe kompleks) - kanan jauh tinggi
-  const cloud6 = createCloud2(gl);
-  mat4.translate(
-    cloud6.localTransform,
-    cloud6.localTransform,
-    [1.5, 2.7, -0.5]
-  );
-  mat4.rotate(
-    cloud6.localTransform,
-    cloud6.localTransform,
-    -Math.PI / 5,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud6.localTransform, cloud6.localTransform, [0.22, 0.22, 0.22]);
-  islandRoot.addChild(cloud6);
+      const startAngle = evenAngle(i, cfg.angleJitter ?? 0.15);
+      const orbitSpeed = randRange(cfg.speedRange[0], cfg.speedRange[1]);
+      const orbitRadius = cfg.orbitRadius + randRange(-2.0, 2.0);
+      const orbitHeight = cfg.orbitHeight + randRange(-1.0, 1.0);
 
-  // Awan 7 (tipe sederhana) - depan kiri
-  const cloud7 = createCloud1(gl);
-  mat4.translate(
-    cloud7.localTransform,
-    cloud7.localTransform,
-    [-0.8, 1.6, 0.8]
-  );
-  mat4.rotate(
-    cloud7.localTransform,
-    cloud7.localTransform,
-    Math.PI / 4,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud7.localTransform, cloud7.localTransform, [0.18, 0.18, 0.18]);
-  islandRoot.addChild(cloud7);
+      const animator = new CloudOrbitAnimator(cloudNode, {
+        orbitRadius,
+        orbitHeight,
+        orbitSpeed,
+        orbitTilt: cfg.tilt || 0,
+        startAngle,
 
-  // Awan 8 (tipe kompleks) - tengah atas
-  const cloud8 = createCloud2(gl);
-  mat4.translate(
-    cloud8.localTransform,
-    cloud8.localTransform,
-    [0.3, 2.8, -1.2]
-  );
-  mat4.rotate(
-    cloud8.localTransform,
-    cloud8.localTransform,
-    Math.PI / 7,
-    [0, 1, 0]
-  );
-  mat4.scale(cloud8.localTransform, cloud8.localTransform, [0.32, 0.32, 0.32]);
-  islandRoot.addChild(cloud8);
+        // variasi halus: hidup tapi tetap rapat
+        heightVariation: 1.5,
+        heightVariationSpeed: randRange(0.4, 0.9),
 
-  // const tree1 = createDeadTree(gl);
-  // mat4.translate(tree1.localTransform, tree1.localTransform, [
-  //   -0.2,
-  //   grassThickness,
-  //   -0.5,
-  // ]);
-  // mat4.scale(tree1.localTransform, tree1.localTransform, [0.08, 0.08, 0.08]);
-  // islandRoot.addChild(tree1);
+        radiusVariation: 2.0,
+        radiusVariationSpeed: randRange(0.5, 0.9),
 
-  // const tree2 = createDeadTree(gl);
-  // mat4.translate(tree2.localTransform, tree2.localTransform, [
-  //   0.8,
-  //   grassThickness,
-  //   -0.5,
-  // ]);
-  // mat4.rotate(
-  //   tree2.localTransform,
-  //   tree2.localTransform,
-  //   Math.PI / 2,
-  //   [0, 1, 0]
-  // );
-  // mat4.scale(tree2.localTransform, tree2.localTransform, [0.12, 0.12, 0.12]);
-  // islandRoot.addChild(tree2);
+        selfRotationSpeed: randRange(0.05, 0.2),
+        scalePulse: randRange(0.03, 0.08),
+        scalePulseSpeed: randRange(0.5, 1.1),
+      });
 
-  // Atur skala dan posisi keseluruhan pulau
+      anims.push(animator);
+    }
+    return anims;
+  }
+
+  // Ring konfigurasi (silakan tweak jumlah & parameter agar lebih padat/lega)
+  const RINGS = [
+    // count, orbitRadius, orbitHeight, speedRange, sizeRange, tilt, angleJitter
+    {
+      count: 12,
+      orbitRadius: 34,
+      orbitHeight: 18,
+      speedRange: [0.3, 0.45],
+      sizeRange: [0.18, 0.28],
+      tilt: Math.PI / 12,
+      angleJitter: 0.2,
+    },
+    {
+      count: 14,
+      orbitRadius: 44,
+      orbitHeight: 22,
+      speedRange: [0.22, 0.35],
+      sizeRange: [0.22, 0.32],
+      tilt: -Math.PI / 18,
+      angleJitter: 0.18,
+    },
+    {
+      count: 10,
+      orbitRadius: 54,
+      orbitHeight: 26,
+      speedRange: [0.15, 0.25],
+      sizeRange: [0.26, 0.36],
+      tilt: Math.PI / 10,
+      angleJitter: 0.15,
+    },
+  ];
+
+  const cloudAnimators = [];
+  RINGS.forEach((ring) => {
+    const anims = spawnCloudRing(ring.count, ring);
+    cloudAnimators.push(...anims);
+  });
+
+  // simpan supaya bisa di-pick up di main.js
+  islandRoot.cloudAnimators = cloudAnimators;
+
+  // =========================
+  // Transform pulau keseluruhan
+  // =========================
   mat4.scale(
     islandRoot.localTransform,
     islandRoot.localTransform,
@@ -342,7 +287,7 @@ function createIsland(gl) {
     [0, -0.4, -0.4]
   );
 
+  // export
   window.createIsland = createIsland;
-
   return islandRoot;
 }

@@ -207,7 +207,7 @@ function main() {
   // ===== ISLANDS WITH CLOUD ANIMATORS =====
   const islands = [];
   const waterBodies = [];
-  const allCloudAnimators = []; // <<< COLLECT ALL CLOUD ANIMATORS
+  const allCloudAnimators = []; // ← NEW: Array untuk cloud animators
 
   ISLAND_CONFIG.forEach((cfg) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
@@ -228,15 +228,21 @@ function main() {
 
     // ===== COLLECT CLOUD ANIMATORS FROM ISLAND =====
     if (island.cloudAnimators && Array.isArray(island.cloudAnimators)) {
-      // Update island center in world coordinates for each animator
+      // Calculate island world center AFTER transforms applied
       const islandWorldCenter = [
         island.localTransform[12],
         island.localTransform[13],
         island.localTransform[14],
       ];
 
+      const CLOUD_Y_OFFSET = 150; // <<— atur sesuka kamu
+      islandWorldCenter[1] += CLOUD_Y_OFFSET;
+
       island.cloudAnimators.forEach((animator) => {
-        animator.islandCenter = islandWorldCenter;
+        // Set island center for orbital reference
+        animator.setIslandCenter(islandWorldCenter);
+
+        // Add to global list
         allCloudAnimators.push(animator);
       });
 
@@ -344,40 +350,11 @@ function main() {
   // ===== POKEMONS =====
   const pokemons = [];
 
-  // GARCHOMP
-  // if (window.createGarchomp) {
-  //   const g = window.createGarchomp(gl);
-  //   g.name = "GARCHOMP";
-  //   const wrap = new SceneNode();
-  //   wrap.name = "GARCHOMP_WRAPPER";
-  //   mat4.scale(wrap.localTransform, wrap.localTransform, [3, 3, 3]);
-  //   mat4.translate(wrap.localTransform, wrap.localTransform, [-10, 0.75, -2]);
-  //   wrap.addChild(g);
-
-  //   const anim = new GarchompAnimator(g, {
-  //     startPos: [30, -2.5, -25],
-  //     endPos: [30, -2.5, -15],
-  //     walkDuration: 3.0,
-  //     pauseDuration: 5.0,
-  //     turnDuration: 1.0,
-  //     tailSwayAmount: 0.2,
-  //     tailSwayFreq: 1.2,
-  //   });
-
-  //   pokemons.push({
-  //     node: wrap,
-  //     pokemonNode: g,
-  //     animator: anim,
-  //     islandIndex: 0,
-  //   });
-  // }
-
-  // === GARCHOMP (struktur & summon persis Gabite, posisi tetap) ===
+  // === GARCHOMP ===
   if (window.createGarchomp) {
     const garchompNode = window.createGarchomp(gl);
     garchompNode.name = "GARCHOMP";
 
-    // Hierarki persis Gabite
     const garchompScaleNode = new SceneNode();
     garchompScaleNode.name = "GARCHOMP_SCALE_NODE";
     garchompScaleNode.addChild(garchompNode);
@@ -392,13 +369,10 @@ function main() {
 
     const garchompOrientationNode = new SceneNode();
     garchompOrientationNode.name = "GARCHOMP_ORIENTATION_NODE";
-    // Tidak diputar (biarkan orientasi aslinya)
-    // mat4.rotateY(garchompOrientationNode.localTransform, garchompOrientationNode.localTransform, 0);
     garchompOrientationNode.addChild(garchompLiftNode);
 
     const garchompWrapper = new SceneNode();
     garchompWrapper.name = "GARCHOMP_WRAPPER";
-    // PERTAHANKAN transform posisi/scale yang sekarang
     mat4.scale(
       garchompWrapper.localTransform,
       garchompWrapper.localTransform,
@@ -411,7 +385,6 @@ function main() {
     );
     garchompWrapper.addChild(garchompOrientationNode);
 
-    // Optional: Pokéball summon (persis pola Gabite)
     let garchompSummonAnimator = null;
     let garchompPokeballPlacementNode = null;
 
@@ -444,7 +417,6 @@ function main() {
         garchompPokeballPlacementNode.addChild(pbScaleNode);
         garchompOrientationNode.addChild(garchompPokeballPlacementNode);
 
-        // Gunakan animator summon yang sama seperti Gabite (diasumsikan generik)
         garchompSummonAnimator = new GabiteSummonAnimator({
           pokeballTopNode: pokeballData.topHinge,
           gabiteScaleNode: garchompScaleNode,
@@ -484,7 +456,6 @@ function main() {
       }
     }
 
-    // Animator utama Garchomp (pakai konfigurasi yang kamu punya)
     const garchompAnimator = new GarchompAnimator(garchompNode, {
       startPos: [30, -2.5, -25],
       endPos: [30, -2.5, -15],
@@ -518,16 +489,15 @@ function main() {
       node: garchompWrapper,
       pokemonNode: garchompNode,
       animator: garchompCombinedAnimator,
-      islandIndex: 0, // tetap
+      islandIndex: 0,
     });
   }
 
-  // === MEGA GARCHOMP (struktur & summon persis Gabite, posisi tetap) ===
+  // === MEGA GARCHOMP ===
   if (window.createMegaGarchomp) {
     const megaNode = window.createMegaGarchomp(gl);
     megaNode.name = "MEGA_GARCHOMP";
 
-    // Hierarki persis Gabite
     const megaScaleNode = new SceneNode();
     megaScaleNode.name = "MEGA_GARCHOMP_SCALE_NODE";
     megaScaleNode.addChild(megaNode);
@@ -542,12 +512,10 @@ function main() {
 
     const megaOrientationNode = new SceneNode();
     megaOrientationNode.name = "MEGA_GARCHOMP_ORIENTATION_NODE";
-    // Arahkan seperti sebelumnya (startRotation sudah di animator)
     megaOrientationNode.addChild(megaLiftNode);
 
     const megaWrapper = new SceneNode();
     megaWrapper.name = "MEGA_GARCHOMP_WRAPPER";
-    // PERTAHANKAN transform posisi/scale yang sekarang
     mat4.scale(
       megaWrapper.localTransform,
       megaWrapper.localTransform,
@@ -560,7 +528,6 @@ function main() {
     );
     megaWrapper.addChild(megaOrientationNode);
 
-    // Optional: Pokéball summon sama seperti Gabite
     let megaSummonAnimator = null;
     let megaPokeballPlacementNode = null;
 
@@ -633,7 +600,6 @@ function main() {
       }
     }
 
-    // Animator utama Mega Garchomp (pakai konfigurasi yang kamu punya)
     const megaAnimator = new MegaGarchompAnimator(megaNode, {
       startPos: [0, -8, -55],
       endPos: [0, -8, -65],
@@ -665,11 +631,11 @@ function main() {
       node: megaWrapper,
       pokemonNode: megaNode,
       animator: megaCombinedAnimator,
-      islandIndex: 2, // tetap
+      islandIndex: 2,
     });
   }
 
-  // GABITE WITH POKEBALL SUMMON
+  // === GABITE WITH POKEBALL SUMMON ===
   if (window.createGabite) {
     const gabiteNode = window.createGabite(gl);
     gabiteNode.name = "GABITE";
@@ -744,13 +710,13 @@ function main() {
             {
               root: gabiteNode,
               startColor: [1, 1, 1, 1],
-              mode: "instant", // flash white once emerging starts
+              mode: "instant",
               applyOn: "emerging",
             },
             {
               root: pokeballData.root,
               startColor: [1, 1, 1, 1],
-              mode: "lerp", // blend back to colour during opening
+              mode: "lerp",
               applyOn: "start",
               blendPhase: "opening",
             },
@@ -812,35 +778,6 @@ function main() {
       islandIndex: 1,
     });
   }
-
-  // // MEGA GARCHOMP
-  // if (window.createMegaGarchomp) {
-  //   const m = window.createMegaGarchomp(gl);
-  //   m.name = "MEGA_GARCHOMP";
-  //   const wrap = new SceneNode();
-  //   wrap.name = "MEGA_GARCHOMP_WRAPPER";
-  //   mat4.scale(wrap.localTransform, wrap.localTransform, [7, 7, 7]);
-  //   mat4.translate(wrap.localTransform, wrap.localTransform, [-2, 7.5, 30]);
-  //   wrap.addChild(m);
-
-  //   const anim = new MegaGarchompAnimator(m, {
-  //     startPos: [0, -8, -55],
-  //     endPos: [0, -8, -65],
-  //     startRotation: Math.PI,
-  //     prowlDuration: 4.5,
-  //     idleDuration: 3.0,
-  //     attackDuration: 2.5,
-  //     roarDuration: 3.5,
-  //     turnDuration: 1.2,
-  //   });
-
-  //   pokemons.push({
-  //     node: wrap,
-  //     pokemonNode: m,
-  //     animator: anim,
-  //     islandIndex: 2,
-  //   });
-  // }
 
   // ===== GIANT ROCK FORMATIONS =====
   const rockFormations = [];
@@ -919,7 +856,7 @@ function main() {
       if (p.animator) p.animator.update(dt);
     });
 
-    // ===== 2) UPDATE CLOUD ANIMATORS =====
+    // ===== 2) UPDATE CLOUD ANIMATORS ===== ← CRITICAL: This makes clouds move!
     allCloudAnimators.forEach((animator) => {
       animator.update(dt);
     });
