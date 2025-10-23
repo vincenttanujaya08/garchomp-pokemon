@@ -216,6 +216,7 @@ function createGarchompHead(gl) {
     Primitives.createEllipsoid(0.18, 0.15, 0.1, 16, 16)
   );
   const eyeIrisLeft = new SceneNode(eyeIrisMesh, cfg.colors.yellow);
+  eyeIrisLeft.name = "EyeIrisLeft";
   mat4.translate(
     eyeIrisLeft.localTransform,
     eyeIrisLeft.localTransform,
@@ -234,6 +235,7 @@ function createGarchompHead(gl) {
     Primitives.createEllipsoid(0.05, 0.1, 0.05, 16, 16)
   );
   const eyePupilLeft = new SceneNode(eyePupilMesh, cfg.colors.black);
+  eyePupilLeft.name = "EyePupilLeft";
   mat4.translate(
     eyePupilLeft.localTransform,
     eyePupilLeft.localTransform,
@@ -277,6 +279,7 @@ function createGarchompHead(gl) {
   headRoot.addChild(eyeWhiteRight);
 
   const eyeIrisRight = new SceneNode(eyeIrisMesh, cfg.colors.yellow);
+  eyeIrisRight.name = "EyeIrisRight";
   mat4.translate(
     eyeIrisRight.localTransform,
     eyeIrisRight.localTransform,
@@ -291,6 +294,7 @@ function createGarchompHead(gl) {
   headRoot.addChild(eyeIrisRight);
 
   const eyePupilRight = new SceneNode(eyePupilMesh, cfg.colors.black);
+  eyePupilRight.name = "EyePupilRight";
   mat4.translate(
     eyePupilRight.localTransform,
     eyePupilRight.localTransform,
@@ -303,6 +307,13 @@ function createGarchompHead(gl) {
     [0, 1, 0]
   );
   headRoot.addChild(eyePupilRight);
+
+  headRoot.eyes = {
+    irisL: eyeIrisLeft,
+    irisR: eyeIrisRight,
+    pupilL: eyePupilLeft,
+    pupilR: eyePupilRight,
+  };
 
   //   === PENGHUBUNG MULUT KE CONE (Gusi/Rahang) ===
   const jawConnectorMesh = new Mesh(
