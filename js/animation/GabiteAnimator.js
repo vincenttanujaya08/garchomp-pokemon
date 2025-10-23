@@ -26,8 +26,8 @@ class GabiteAnimator extends AnimationController {
       squatAmount: 0.15,
 
       // Tail
-      tailSwayFreq: 1.5,
-      tailSwayAmount: 0.25,
+      tailSwayFreq: 0.5,
+      tailSwayAmount: 0.12,
 
       // Body
       bodyBobAmount: 0.06,
@@ -314,8 +314,10 @@ class GabiteAnimator extends AnimationController {
   }
 
   // ===== Tail sway (continuous) =====
+  // Di GabiteAnimator.js - updateTailSway()
   updateTailSway(time) {
     if (!this.rig.tail || !this.bindPoses.tail) return;
+
     const swayY =
       Math.sin(time * this.tailSwayFreq * Math.PI) * this.tailSwayAmount;
     const swayX =
@@ -323,19 +325,31 @@ class GabiteAnimator extends AnimationController {
       this.tailSwayAmount *
       0.5;
 
+    // ← NEW: Tambah twist
+    const twist =
+      Math.sin(time * this.tailSwayFreq * Math.PI * 1.5) *
+      this.tailSwayAmount *
+      0.8; // Moderate twist
+
     mat4.copy(this.rig.tail.localTransform, this.bindPoses.tail);
-    mat4.rotate(
+    mat4.rotateY(
       this.rig.tail.localTransform,
       this.rig.tail.localTransform,
       swayY,
       [0, 1, 0]
     );
-    mat4.rotate(
+    mat4.rotateX(
       this.rig.tail.localTransform,
       this.rig.tail.localTransform,
       swayX,
       [1, 0, 0]
     );
+    mat4.rotateZ(
+      this.rig.tail.localTransform,
+      this.rig.tail.localTransform,
+      twist,
+      [0, 0, 1]
+    ); // ← NEW: Twist!
   }
 
   // Stay put (no root motion)
