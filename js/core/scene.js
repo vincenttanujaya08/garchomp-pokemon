@@ -28,10 +28,16 @@ class SceneNode {
     this.color = color;
     this.localTransform = mat4.create();
     this.children = [];
-    window.SceneNode = SceneNode;
+    // ❌ JANGAN taruh window.SceneNode di sini!
   }
 
   addChild(node) {
     this.children.push(node);
   }
 }
+
+// ✅ TARUH DI SINI - di luar class!
+window.SceneNode = SceneNode;
+window.Mesh = Mesh;
+
+console.log("✅ scene.js fixed - SceneNode properly exported");
