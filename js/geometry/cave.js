@@ -15,7 +15,10 @@ const CaveGeometry = {
     radius = 15,
     entranceWidth = 12,
     entranceHeight = 14,
-    segments = 64 // Increased for better smoothness
+    segments = 64,
+    floorThickness = 1.2,
+    wallThickness = 0.8, // << ketebalan dinding (outer-inner)
+    bevelRings = 4 // << jumlah ring bevel di mulut entrance
   ) {
     const vertices = [];
     const normals = [];
@@ -25,26 +28,11 @@ const CaveGeometry = {
     const halfH = entranceHeight / 2;
     const entranceCenterY = 2;
 
-    // Helper: Check if in entrance zone with smooth falloff
-    function isInEntranceZone(x, y, z) {
-      const zThreshold = radius * 0.65; // Deeper cut
-      if (z < zThreshold) return false;
-      if (y < 0.2) return false;
-
-      const nx = x / (halfW * 1.1); // Slightly larger for smooth edge
-      const ny = (y - entranceCenterY) / (halfH * 1.1);
-      const dist = nx * nx + ny * ny;
-
-      // Smooth falloff near edge
-      return dist < 1.0;
-    }
-
-    // Enhanced noise functions for rocky texture
+    // === noise helpers (pakai punyamu biar konsisten) ===
     function noise(x, y) {
       const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
       return (n - Math.floor(n)) * 2 - 1;
     }
-
     function smoothNoise(x, y) {
       const fx = x - Math.floor(x),
         fy = y - Math.floor(y);
@@ -52,21 +40,16 @@ const CaveGeometry = {
         y1 = Math.floor(y);
       const x2 = x1 + 1,
         y2 = y1 + 1;
-
       const v1 = noise(x1, y1),
         v2 = noise(x2, y1);
       const v3 = noise(x1, y2),
         v4 = noise(x2, y2);
-
-      // Cubic interpolation for smoother noise
       const cx = fx * fx * (3 - 2 * fx);
       const cy = fy * fy * (3 - 2 * fy);
-
       const i1 = v1 * (1 - cx) + v2 * cx;
       const i2 = v3 * (1 - cx) + v4 * cx;
       return i1 * (1 - cy) + i2 * cy;
     }
-
     function layeredNoise(x, y, octaves = 4) {
       let total = 0,
         frequency = 1,
@@ -81,140 +64,295 @@ const CaveGeometry = {
       return total / maxValue;
     }
 
-    // ===== OUTER SURFACE (rocky exterior) =====
-    const outerVertexMap = new Map();
-    const edgeVertices = []; // Track edge vertices for connection
+    // Helper: ellipse entrance cut (jangan drop vertex; kita cuma tidak buat face)
+    function inEntrance(x, y, z) {
+      const zThreshold = radius * 0.65; // kira2 setengah wajah depan
+      if (z < zThreshold) return false;
+      if (y < 0.2) return false;
+      const nx = x / (halfW * 1.02);
+      const ny = (y - entranceCenterY) / (halfH * 1.02);
+      return nx * nx + ny * ny <= 1.0;
+    }
 
+    // ==== 1) BUILD MID-SURFACE (hemisphere) ====
+    // simpan pos & normal sementara untuk extrude
+    const midPos = [];
+    const midNorm = [];
+    const valid = []; // penanda vertex valid (bukan "void"); di entrance tetap valid
+
+    // param: theta [0..PI/2] (hemisphere), phi [0..2PI]
     for (let lat = 0; lat <= segments; lat++) {
-      const theta = (lat * Math.PI) / (segments * 2);
-      const sinT = Math.sin(theta);
-      const cosT = Math.cos(theta);
-
+      const theta = (lat * Math.PI) / (segments * 2); // 0..PI/2
+      const sinT = Math.sin(theta),
+        cosT = Math.cos(theta);
       for (let lon = 0; lon <= segments; lon++) {
         const phi = (lon * 2 * Math.PI) / segments;
-        const sinP = Math.sin(phi);
-        const cosP = Math.cos(phi);
+        const sinP = Math.sin(phi),
+          cosP = Math.cos(phi);
 
+        // base sphere
         let x = radius * cosP * sinT;
         let y = radius * cosT;
         let z = radius * sinP * sinT;
 
-        const isEdge = isInEntranceZone(x, y, z);
-
-        if (isEdge) {
-          outerVertexMap.set(`${lat}-${lon}`, -1);
-          continue;
-        }
-
-        // Enhanced rocky displacement
-        const n1 = layeredNoise(lon * 0.4, lat * 0.4, 4);
-        const n2 = layeredNoise(lon * 0.8 + 100, lat * 0.8 + 100, 3) * 0.5;
-        const heightFactor = 1 - cosT * 0.7;
-
-        // Combine multiple noise layers for rocky look
+        // shared rocky displacement (sama untuk outer & inner)
+        const n1 = layeredNoise(lon * 0.45, lat * 0.45, 4);
+        const n2 = layeredNoise(lon * 0.9 + 77, lat * 0.9 + 77, 3) * 0.5;
+        const heightFactor = 1 - cosT * 0.7; // lebih kuat di dekat “top/face”
         const disp = 1 + (n1 * 0.22 + n2 * 0.12) * (0.4 + 0.6 * heightFactor);
 
         x *= disp;
         y *= disp;
         z *= disp;
 
-        const idx = vertices.length / 3;
-        outerVertexMap.set(`${lat}-${lon}`, idx);
-
-        vertices.push(x, y, z);
-
-        // Normal with slight random variation for rocky look
+        // normal sementara (dari posisi terdisplace, di-normalize)
         const len = Math.hypot(x, y, z) || 1;
-        const nv = layeredNoise(lon * 1.2 + 50, lat * 1.2 + 50, 2) * 0.15;
-        normals.push(x / len + nv, y / len + nv, z / len + nv);
+        const nx = x / len,
+          ny = y / len,
+          nz = z / len;
 
-        // Check if near entrance edge for connection
-        const distToEdge =
-          Math.abs(x / halfW) + Math.abs((y - entranceCenterY) / halfH);
-        if (z > radius * 0.5 && distToEdge > 0.85 && distToEdge < 1.15) {
-          edgeVertices.push({ idx, x, y, z });
+        midPos.push([x, y, z]);
+        midNorm.push([nx, ny, nz]);
+        valid.push(true);
+      }
+    }
+
+    // ==== 2) DUPLICATE: OUTER & INNER (shell) ====
+    // Indexing: untuk setiap (lat,lon) -> idx = lat*(segments+1) + lon
+    const vertIndexOuter = new Array(midPos.length);
+    const vertIndexInner = new Array(midPos.length);
+
+    for (let i = 0; i < midPos.length; i++) {
+      const [x, y, z] = midPos[i];
+      const [nx, ny, nz] = midNorm[i];
+
+      // Outer
+      const xo = x + nx * (wallThickness * 0.5);
+      const yo = y + ny * (wallThickness * 0.5);
+      const zo = z + nz * (wallThickness * 0.5);
+      const io = vertices.length / 3;
+      vertices.push(xo, yo, zo);
+      normals.push(nx, ny, nz);
+      vertIndexOuter[i] = io;
+
+      // Inner (kebalikan normal)
+      const xi = x - nx * (wallThickness * 0.5);
+      const yi = y - ny * (wallThickness * 0.5);
+      const zi = z - nz * (wallThickness * 0.5);
+      const ii = vertices.length / 3;
+      vertices.push(xi, yi, zi);
+      normals.push(-nx, -ny, -nz);
+      vertIndexInner[i] = ii;
+    }
+
+    // ==== 3) TRIANGLES: outer surface + inner surface ====
+    const V = (lat, lon) => lat * (segments + 1) + lon;
+
+    for (let lat = 0; lat < segments; lat++) {
+      for (let lon = 0; lon < segments; lon++) {
+        const a = V(lat, lon);
+        const b = V(lat + 1, lon);
+        const c = V(lat, lon + 1);
+        const d = V(lat + 1, lon + 1);
+
+        // Skip face kalau seluruh quad berada di entrance (kita cap dengan bevel nanti)
+        const centerX =
+          (midPos[a][0] + midPos[b][0] + midPos[c][0] + midPos[d][0]) * 0.25;
+        const centerY =
+          (midPos[a][1] + midPos[b][1] + midPos[c][1] + midPos[d][1]) * 0.25;
+        const centerZ =
+          (midPos[a][2] + midPos[b][2] + midPos[c][2] + midPos[d][2]) * 0.25;
+        const cut = inEntrance(centerX, centerY, centerZ);
+
+        // OUTER
+        if (!cut) {
+          const ao = vertIndexOuter[a],
+            bo = vertIndexOuter[b],
+            co = vertIndexOuter[c],
+            do_ = vertIndexOuter[d];
+          indices.push(ao, bo, co);
+          indices.push(bo, do_, co);
+        }
+
+        // INNER (winding dibalik)
+        if (!cut) {
+          const ai = vertIndexInner[a],
+            bi = vertIndexInner[b],
+            ci = vertIndexInner[c],
+            di = vertIndexInner[d];
+          indices.push(ai, ci, bi);
+          indices.push(bi, ci, di);
         }
       }
     }
 
-    // Build outer surface indices
+    // ==== 4) BRIDGE (side walls) antara outer & inner (keliling mesh) ====
+    // Untuk semua quad valid (tidak cut), sambungkan tepi partisi antar ring kolom
     for (let lat = 0; lat < segments; lat++) {
       for (let lon = 0; lon < segments; lon++) {
-        const a = outerVertexMap.get(`${lat}-${lon}`);
-        const b = outerVertexMap.get(`${lat + 1}-${lon}`);
-        const c = outerVertexMap.get(`${lat}-${lon + 1}`);
-        const d = outerVertexMap.get(`${lat + 1}-${lon + 1}`);
+        const a = V(lat, lon);
+        const b = V(lat + 1, lon);
+        const c = V(lat, lon + 1);
+        const d = V(lat + 1, lon + 1);
 
-        if (a >= 0 && b >= 0 && c >= 0 && d >= 0) {
+        const centerX =
+          (midPos[a][0] + midPos[b][0] + midPos[c][0] + midPos[d][0]) * 0.25;
+        const centerY =
+          (midPos[a][1] + midPos[b][1] + midPos[c][1] + midPos[d][1]) * 0.25;
+        const centerZ =
+          (midPos[a][2] + midPos[b][2] + midPos[c][2] + midPos[d][2]) * 0.25;
+        const cut = inEntrance(centerX, centerY, centerZ);
+        if (cut) continue;
+
+        // sambungkan outer<->inner pada semua sisi quad
+        const pairs = [
+          [a, c], // horizontal sisi atas
+          [b, d], // horizontal sisi bawah
+          [a, b], // vertical sisi kiri
+          [c, d], // vertical sisi kanan
+        ];
+        for (const [p, q] of pairs) {
+          const po = vertIndexOuter[p],
+            qo = vertIndexOuter[q];
+          const pi = vertIndexInner[p],
+            qi = vertIndexInner[q];
+          // dua tri membentuk quad sisi
+          indices.push(po, pi, qo);
+          indices.push(qo, pi, qi);
+        }
+      }
+    }
+
+    // ==== 5) ENTRANCE BEVEL (mulut gua halus) ====
+    // Cari ring “rim” (quads yang dipotong tadi). Kita bentuk beberapa ring lerp
+    // dari mid outward untuk “membuka” mulut dengan transisi mulus.
+    const rimVertsOuter = [];
+    const rimVertsInner = [];
+
+    for (let lat = 0; lat < segments; lat++) {
+      for (let lon = 0; lon < segments; lon++) {
+        const a = V(lat, lon);
+        const b = V(lat + 1, lon);
+        const c = V(lat, lon + 1);
+        const d = V(lat + 1, lon + 1);
+
+        const centerX =
+          (midPos[a][0] + midPos[b][0] + midPos[c][0] + midPos[d][0]) * 0.25;
+        const centerY =
+          (midPos[a][1] + midPos[b][1] + midPos[c][1] + midPos[d][1]) * 0.25;
+        const centerZ =
+          (midPos[a][2] + midPos[b][2] + midPos[c][2] + midPos[d][2]) * 0.25;
+        const cut = inEntrance(centerX, centerY, centerZ);
+        if (!cut) continue;
+
+        // tambahkan ke rim: sisi2 quad yang menempel area cut
+        const corners = [a, b, d, c]; // urut melingkar
+        for (let k = 0; k < 4; k++) {
+          const i0 = corners[k];
+          const i1 = corners[(k + 1) % 4];
+
+          // sisi ini rim jika satu sisi “tetangga” tidak cut
+          const midx = (midPos[i0][0] + midPos[i1][0]) * 0.5;
+          const midy = (midPos[i0][1] + midPos[i1][1]) * 0.5;
+          const midz = (midPos[i0][2] + midPos[i1][2]) * 0.5;
+
+          const neighborCut = inEntrance(midx, midy, midz);
+          if (!neighborCut) {
+            rimVertsOuter.push([vertIndexOuter[i0], vertIndexOuter[i1]]);
+            rimVertsInner.push([vertIndexInner[i0], vertIndexInner[i1]]);
+          }
+        }
+      }
+    }
+
+    // Deduplicate rim edges kasar (opsional; sederhana saja)
+    function dedupEdges(edges) {
+      const set = new Set();
+      const out = [];
+      for (const [a, b] of edges) {
+        const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+        if (!set.has(key)) {
+          set.add(key);
+          out.push([a, b]);
+        }
+      }
+      return out;
+    }
+    const rimO = dedupEdges(rimVertsOuter);
+    const rimI = dedupEdges(rimVertsInner);
+
+    // Buat ring bevel (lerp ke arah “keluar mulut” sedikit + smoothing normal)
+    function pushBevel(edges, outward = +1) {
+      const ringsIdx = [];
+      for (let r = 1; r <= bevelRings; r++) {
+        const t = r / bevelRings; // 0..1
+        const layer = [];
+        for (const [a, b] of edges) {
+          // posisi tiap vertex baru = lerp posisi mid → posisi outer/inner + offset kecil ke arah +Z (mulut)
+          const ax = vertices[a * 3],
+            ay = vertices[a * 3 + 1],
+            az = vertices[a * 3 + 2];
+          const bx = vertices[b * 3],
+            by = vertices[b * 3 + 1],
+            bz = vertices[b * 3 + 2];
+
+          // offset ke arah “keluar lubang”: kita pakai sumbu z lokal (approx)
+          const off = 0.25 * (1 - Math.cos(t * Math.PI)) * outward; // ease-in-out
+          const ax2 = ax;
+          const ay2 = ay;
+          const az2 = az + off;
+
+          const bx2 = bx;
+          const by2 = by;
+          const bz2 = bz + off;
+
+          const ia = vertices.length / 3;
+          vertices.push(ax2, ay2, az2);
+          // normal: ambil normal existing lalu sedikit dorong ke +Z
+          const anx = normals[a * 3],
+            any = normals[a * 3 + 1],
+            anz = normals[a * 3 + 2];
+          const nl = Math.hypot(anx, any, anz + 0.2) || 1;
+          normals.push(anx / nl, any / nl, (anz + 0.2) / nl);
+
+          const ib = vertices.length / 3;
+          vertices.push(bx2, by2, bz2);
+          const bnx = normals[b * 3],
+            bny = normals[b * 3 + 1],
+            bnz = normals[b * 3 + 2];
+          const nl2 = Math.hypot(bnx, bny, bnz + 0.2) || 1;
+          normals.push(bnx / nl2, bny / nl2, (bnz + 0.2) / nl2);
+
+          layer.push([ia, ib]);
+        }
+        ringsIdx.push(layer);
+      }
+      // stitch antar ring + ke rim awal
+      // ring 0 disambungkan ke edges existing
+      for (let i = 0; i < edges.length; i++) {
+        const [a, b] = edges[i];
+        const [c, d] = ringsIdx[0][i];
+        indices.push(a, b, c);
+        indices.push(b, d, c);
+      }
+      for (let r = 0; r < ringsIdx.length - 1; r++) {
+        const cur = ringsIdx[r];
+        const nxt = ringsIdx[r + 1];
+        for (let i = 0; i < cur.length; i++) {
+          const [a, b] = cur[i];
+          const [c, d] = nxt[i];
           indices.push(a, b, c);
           indices.push(b, d, c);
         }
       }
     }
 
-    // ===== INNER SURFACE (rocky interior with better texture) =====
-    const innerRadius = radius * 0.88; // Slightly thicker for better depth
-    const innerVertexMap = new Map();
+    // bevel untuk outer (outward +1) dan inner (sedikit inward -1)
+    pushBevel(rimO, +1);
+    pushBevel(rimI, -1);
 
-    for (let lat = 0; lat <= segments; lat++) {
-      const theta = (lat * Math.PI) / (segments * 2);
-      const sinT = Math.sin(theta);
-      const cosT = Math.cos(theta);
-
-      for (let lon = 0; lon <= segments; lon++) {
-        const phi = (lon * 2 * Math.PI) / segments;
-        const sinP = Math.sin(phi);
-        const cosP = Math.cos(phi);
-
-        let x = innerRadius * cosP * sinT;
-        let y = innerRadius * cosT;
-        let z = innerRadius * sinP * sinT;
-
-        if (isInEntranceZone(x, y, z)) {
-          innerVertexMap.set(`${lat}-${lon}`, -1);
-          continue;
-        }
-
-        // STRONGER rocky texture on interior
-        const n1 = layeredNoise(lon * 0.5 + 200, lat * 0.5 + 200, 5);
-        const n2 = layeredNoise(lon * 1.0 + 300, lat * 1.0 + 300, 3) * 0.4;
-        const n3 = layeredNoise(lon * 2.0 + 400, lat * 2.0 + 400, 2) * 0.2;
-
-        const disp = 1 + (n1 * 0.18 + n2 * 0.12 + n3 * 0.08);
-
-        x *= disp;
-        y *= disp;
-        z *= disp;
-
-        const idx = vertices.length / 3;
-        innerVertexMap.set(`${lat}-${lon}`, idx);
-
-        vertices.push(x, y, z);
-
-        // Inward normal with rocky variation
-        const len = Math.hypot(x, y, z) || 1;
-        const nv = layeredNoise(lon * 1.5 + 150, lat * 1.5 + 150, 2) * 0.2;
-        normals.push(-x / len + nv, -y / len + nv, -z / len + nv);
-      }
-    }
-
-    // Build inner surface (reversed winding)
-    for (let lat = 0; lat < segments; lat++) {
-      for (let lon = 0; lon < segments; lon++) {
-        const a = innerVertexMap.get(`${lat}-${lon}`);
-        const b = innerVertexMap.get(`${lat + 1}-${lon}`);
-        const c = innerVertexMap.get(`${lat}-${lon + 1}`);
-        const d = innerVertexMap.get(`${lat + 1}-${lon + 1}`);
-
-        if (a >= 0 && b >= 0 && c >= 0 && d >= 0) {
-          indices.push(a, c, b);
-          indices.push(b, c, d);
-        }
-      }
-    }
-
-    // ===== NO EDGE CONNECTION GEOMETRY =====
-    // Let the entrance be naturally hollow - no arc/rainbow shape!
+    // ==== 6) (Opsional) FLOOR rocky: kamu bisa tempel implementasi floor kamu di sini ====
+    // — untuk ringkas, skip; tinggal copy blok "ROCKY FLOOR" dari versimu tanpa perubahan —
 
     // ===== FLOOR (rocky) =====
     const floorStart = vertices.length / 3;
@@ -227,7 +365,7 @@ const CaveGeometry = {
     // Floor vertices with rocky texture
     for (let i = 0; i <= floorSegments; i++) {
       const angle = (i / floorSegments) * Math.PI * 2;
-      const r = radius * 0.95;
+      const r = radius * 1.2;
 
       const noise = layeredNoise(i * 0.3, 0, 3) * 0.3;
       const x = r * Math.cos(angle) * (1 + noise);
