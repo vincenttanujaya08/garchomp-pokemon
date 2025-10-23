@@ -1755,152 +1755,208 @@ function createMegaGarchompTorso(gl) {
     [0, 0, -1]
   );
 
+  const tailData = createMegaGarchompAnimatedTail(gl);
+  torsoRoot.addChild(tailData.root);
+
+  // Position tail
+  mat4.translate(
+    tailData.root.localTransform,
+    tailData.root.localTransform,
+    [0, -1.5, 0.5]
+  );
+
+  // ✅ EXPORT tail data
+  torsoRoot.tailJoints = tailData.joints;
+  torsoRoot.tailSegmentLength = tailData.segmentLength;
+
   return torsoRoot;
 }
 // ---------------------------------------------------------
 //  Build Tail
 // ---------------------------------------------------------
-function createMegaGarchompTail(gl) {
-  const darkBlue = [0.18, 0.22, 0.38, 1.0];
-  const lightBlue = [0.6, 0.6, 1.0, 1.0];
-  const pathSegments = 25; // Tingkatkan detail kurva
+// ---------------------------------------------------------
+//  Build ANIMATED Tail (SEGMENTED seperti Garchomp)
+// ---------------------------------------------------------
+function createMegaGarchompAnimatedTail(gl) {
+  const cfg = GarchompAnatomy;
+  const tailRoot = new SceneNode(null);
+  tailRoot.name = "MegaTailRoot";
 
-  // --- EKOR UTAMA ---
-
-  const p0 = [0, 0, -0.6];
-  const p1 = [0, -0.3, -2.0];
-  const p2 = [0, 0.5, -4.0];
-  const p3 = [0, 0.7, -5.0];
-
-  const tailPath = [];
-  const scaleFactors = [];
-  for (let i = 0; i <= pathSegments; i++) {
-    const t = i / pathSegments;
-    tailPath.push(Crv.getBezierPoint(t, p0, p1, p2, p3));
-    scaleFactors.push(1.0 - t); // Meruncing hingga 0
-  }
+  const numSegments = 12; // ✅ Lebih banyak untuk smoothness
+  const segmentLength = 0.6; // ✅ Lebih pendek untuk smoothness
 
   const tailProfile = [
-    [0.0, 0.7],
-    [0.5, 0.5],
-    [0.7, 0.0],
-    [0.5, -0.5],
-    [0.0, -0.7],
-    [-0.5, -0.5],
-    [-0.7, 0.0],
-    [-0.5, 0.5],
+    [0.0, 0.9], // ✅ Lebih besar untuk Mega Garchomp
+    [0.6, 0.6],
+    [0.9, 0.0],
+    [0.6, -0.6],
+    [0.0, -0.9],
+    [-0.6, -0.6],
+    [-0.9, 0.0],
+    [-0.6, 0.6],
   ];
 
-  const tailMesh = new Mesh(
-    gl,
-    Crv.createTaperedSweptSurface(tailProfile, tailPath, scaleFactors, true)
-  );
-  // --- SIRIP SAMPING (BARU) ---
-  const finProfile = [
-    [0, 0.3],
-    [0.15, 0],
-    [0, -0.3],
-    [-0.1, 0],
-  ]; // Profil pipih
+  const joints = [];
+  let previousJoint = tailRoot;
 
-  // Sirip Kiri
+  // ===== CREATE SEGMENTS (LOGIKA ASLI) =====
+  for (let i = 0; i < numSegments; i++) {
+    const t = i / numSegments;
+    const scaleStart = 1.0 - t; // ✅ BACK TO ORIGINAL
+    const scaleEnd = 1.0 - (i + 1) / numSegments; // ✅ BACK TO ORIGINAL
+
+    const segPath = [
+      [0, 0, 0],
+      [0, 0, -segmentLength],
+    ];
+    const segScales = [scaleStart, scaleEnd];
+
+    const segmentGeom = Curves.createTaperedSweptSurface(
+      tailProfile,
+      segPath,
+      segScales,
+      true
+    );
+    const segmentMesh = new Mesh(gl, segmentGeom);
+
+    // Joint node (pivot point)
+    const jointNode = new SceneNode(null);
+    jointNode.name = `MegaTailJoint${i}`;
+
+    // ✅ CRITICAL: Store metadata
+    jointNode._segmentLength = segmentLength;
+    jointNode._segmentIndex = i;
+
+    // Mesh as child
+    const segmentNode = new SceneNode(segmentMesh, cfg.colors.darkBlue);
+    jointNode.addChild(segmentNode);
+
+    // Position (only if not first)
+    if (i > 0) {
+      mat4.translate(jointNode.localTransform, jointNode.localTransform, [
+        0,
+        0,
+        -segmentLength,
+      ]);
+    }
+
+    previousJoint.addChild(jointNode);
+    joints.push(jointNode);
+    previousJoint = jointNode;
+  }
+
+  // ===== SIDE FINS =====
+  const finProfile = [
+    [0, 0.45],
+    [0.2, 0],
+    [0, -0.45],
+    [-0.15, 0],
+  ];
+
+  // ===== LEFT FIN =====
   const leftFin_p0 = [0, 0, 0];
-  const leftFin_p1 = [0.5, 0.1, -0.5];
-  const leftFin_p2 = [1.0, 0.0, -1.0];
-  const leftFin_p3 = [1.5, -0.2, -1.5];
+  const leftFin_p1 = [0.7, 0.15, -0.7];
+  const leftFin_p2 = [1.3, 0.0, -1.3];
+  const leftFin_p3 = [1.9, -0.25, -1.9];
+
   const leftFinPath = [];
   const leftFinScales = [];
-
-  for (let i = 0; i <= 10; i++) {
-    const t = i / 10;
+  for (let i = 0; i <= 12; i++) {
+    const t = i / 12;
     leftFinPath.push(
-      Crv.getBezierPoint(t, leftFin_p0, leftFin_p1, leftFin_p2, leftFin_p3)
+      Curves.getBezierPoint(t, leftFin_p0, leftFin_p1, leftFin_p2, leftFin_p3)
     );
     leftFinScales.push(1.0 - t);
   }
 
   const leftFinMesh = new Mesh(
     gl,
-    Crv.createTaperedSweptSurface(finProfile, leftFinPath, leftFinScales, true)
+    Curves.createTaperedSweptSurface(
+      finProfile,
+      leftFinPath,
+      leftFinScales,
+      true
+    )
   );
-  // Sirip Kanan
+  const leftFinNode = new SceneNode(leftFinMesh, cfg.colors.darkBlue);
+
+  // ===== RIGHT FIN =====
   const rightFin_p0 = [0, 0, 0];
-  const rightFin_p1 = [-0.5, 0.1, -0.5];
-  const rightFin_p2 = [-1.0, 0.0, -1.0];
-  const rightFin_p3 = [-1.5, -0.2, -1.5];
+  const rightFin_p1 = [-0.7, 0.15, -0.7];
+  const rightFin_p2 = [-1.3, 0.0, -1.3];
+  const rightFin_p3 = [-1.9, -0.25, -1.9];
+
   const rightFinPath = [];
   const rightFinScales = [];
-
-  for (let i = 0; i <= 10; i++) {
-    const t = i / 10;
+  for (let i = 0; i <= 12; i++) {
+    const t = i / 12;
     rightFinPath.push(
-      Crv.getBezierPoint(t, rightFin_p0, rightFin_p1, rightFin_p2, rightFin_p3)
+      Curves.getBezierPoint(
+        t,
+        rightFin_p0,
+        rightFin_p1,
+        rightFin_p2,
+        rightFin_p3
+      )
     );
     rightFinScales.push(1.0 - t);
   }
+
   const rightFinMesh = new Mesh(
     gl,
-    Crv.createTaperedSweptSurface(
+    Curves.createTaperedSweptSurface(
       finProfile,
       rightFinPath,
       rightFinScales,
       true
     )
   );
+  const rightFinNode = new SceneNode(rightFinMesh, cfg.colors.darkBlue);
 
-  // --- NODE & HIERARKI ---
-  const tailRoot = new SceneNode(null); // Node root untuk seluruh bagian ekor
-  const mainTailNode = new SceneNode(tailMesh, darkBlue);
-  const leftFinNode = new SceneNode(leftFinMesh, darkBlue);
-  const rightFinNode = new SceneNode(rightFinMesh, darkBlue);
+  // ===== ATTACH FINS ke segment tengah (segment 6) =====
+  if (joints.length > 6) {
+    const midJoint = joints[6];
 
-  // Gabungkan semua ke root ekor
-  tailRoot.addChild(mainTailNode);
-  mainTailNode.addChild(leftFinNode);
-  mainTailNode.addChild(rightFinNode);
+    // Left fin
+    midJoint.addChild(leftFinNode);
+    mat4.translate(
+      leftFinNode.localTransform,
+      leftFinNode.localTransform,
+      [0, 0.1, -0.5]
+    );
+    mat4.rotate(
+      leftFinNode.localTransform,
+      leftFinNode.localTransform,
+      -Math.PI / 2.2,
+      [-1, -1, 0]
+    );
+    mat4.scale(
+      leftFinNode.localTransform,
+      leftFinNode.localTransform,
+      [1.1, 1.1, 0.5]
+    );
 
-  // Posisikan sirip-sirip (Anda bisa atur ini nanti)
-  // Diberi posisi awal agar terlihat
-  mat4.translate(
-    mainTailNode.localTransform,
-    mainTailNode.localTransform,
-    [0, -1.5, 0]
-  );
-  mat4.translate(
-    leftFinNode.localTransform,
-    leftFinNode.localTransform,
-    [0, 0.43, -3.8]
-  );
-  mat4.rotate(
-    leftFinNode.localTransform,
-    leftFinNode.localTransform,
-    -Math.PI / 2,
-    [-1, -1, 0]
-  );
-  mat4.scale(
-    leftFinNode.localTransform,
-    leftFinNode.localTransform,
-    [1, 1, 0.5]
-  );
+    // Right fin
+    midJoint.addChild(rightFinNode);
+    mat4.translate(
+      rightFinNode.localTransform,
+      rightFinNode.localTransform,
+      [0, 0.1, -0.5]
+    );
+    mat4.rotate(
+      rightFinNode.localTransform,
+      rightFinNode.localTransform,
+      Math.PI / 1.25,
+      [1, 1, 1]
+    );
+    mat4.scale(
+      rightFinNode.localTransform,
+      rightFinNode.localTransform,
+      [1.1, 1.1, 0.12]
+    );
+  }
 
-  mat4.translate(
-    rightFinNode.localTransform,
-    rightFinNode.localTransform,
-    [0, 0.43, -3.8]
-  );
-  mat4.rotate(
-    rightFinNode.localTransform,
-    rightFinNode.localTransform,
-    Math.PI / 1.3,
-    [1, 1, 1]
-  );
-  mat4.scale(
-    rightFinNode.localTransform,
-    rightFinNode.localTransform,
-    [1, 1, 0.1]
-  );
-
-  return tailRoot;
+  return { root: tailRoot, joints: joints, segmentLength: segmentLength };
 }
 // ---------------------------------------------------------
 //  Build Left Leg
@@ -2005,8 +2061,13 @@ function createMegaGarchompLeftLeg(gl) {
     [0, -0.5, -0.2]
   ); // ADJUSTED
   mat4.scale(footNode.localTransform, footNode.localTransform, [1, 1, 1]);
-  mat4.rotate(footNode.localTransform,footNode.localTransform, 5, [1, 0, 0]);
-  mat4.rotate(footNode.localTransform,footNode.localTransform, 0.35, [0, 0, -1]);
+  mat4.rotate(footNode.localTransform, footNode.localTransform, 5, [1, 0, 0]);
+  mat4.rotate(
+    footNode.localTransform,
+    footNode.localTransform,
+    0.35,
+    [0, 0, -1]
+  );
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
@@ -2229,8 +2290,13 @@ function createMegaGarchompRightLeg(gl) {
     [0, -0.5, -0.2]
   ); // ADJUSTED
   mat4.scale(footNode.localTransform, footNode.localTransform, [1, 1, 1]);
-  mat4.rotate(footNode.localTransform,footNode.localTransform, 5, [1, 0, 0]);
-  mat4.rotate(footNode.localTransform,footNode.localTransform, 0.35, [0, 0, 1]);
+  mat4.rotate(footNode.localTransform, footNode.localTransform, 5, [1, 0, 0]);
+  mat4.rotate(
+    footNode.localTransform,
+    footNode.localTransform,
+    0.35,
+    [0, 0, 1]
+  );
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
@@ -2751,7 +2817,7 @@ function createMegaGarchompLeftArm(gl) {
 // ---------------------------------------------------------
 function createMegaGarchomp(gl) {
   const torso = createMegaGarchompTorso(gl);
-  const tail = createMegaGarchompTail(gl);
+  // const tail = createMegaGarchompTail(gl);
   const leftLeg = createMegaGarchompLeftLeg(gl);
   const rightLeg = createMegaGarchompRightLeg(gl);
   const DorsalFin = createDorsalFin(gl);
@@ -2763,16 +2829,17 @@ function createMegaGarchomp(gl) {
   // Build hierarchy
   neck.addChild(head);
   torso.addChild(DorsalFin);
-  torso.addChild(tail);
+  // torso.addChild(tail);
   torso.addChild(rightArm);
   torso.addChild(leftArm);
   torso.addChild(neck);
   torso.addChild(leftLeg);
   torso.addChild(rightLeg);
 
-  // Transformations
-  mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
-  mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
+  // // Transformations
+  // mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
+  // mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
+
   mat4.translate(
     leftLeg.localTransform,
     leftLeg.localTransform,
@@ -2793,16 +2860,11 @@ function createMegaGarchomp(gl) {
   // ✅ FIXED: Complete Animation Rig Export
   torso.name = "MEGA_GARCHOMP";
   torso.animationRig = {
-    // Core body
     torso: torso,
     neck: neck,
     head: head,
-
-    // ✅ FIX: Export arm ROOTS, bukan child nodes
     leftArm: leftArm,
     rightArm: rightArm,
-
-    // ✅ FIX: Export leg ROOTS + individual joints
     leftLeg: leftLeg,
     rightLeg: rightLeg,
     leftThigh: leftLeg.joints ? leftLeg.joints.thigh : null,
@@ -2812,13 +2874,11 @@ function createMegaGarchomp(gl) {
     rightShin: rightLeg.joints ? rightLeg.joints.shin : null,
     rightFoot: rightLeg.joints ? rightLeg.joints.foot : null,
 
-    // Tail
-    tail: tail,
+    // ✅ TAIL DATA (CRITICAL!)
+    tailJoints: torso.tailJoints || [],
+    tailSegmentLength: torso.tailSegmentLength || 0.7,
 
-    // Dorsal fin
     dorsalFin: DorsalFin,
-
-    // ✅ JAW for roar
     jaw: head.children.find((child) => child.name === "LowerJaw"),
   };
 

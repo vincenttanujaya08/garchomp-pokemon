@@ -175,6 +175,7 @@ class MegaGarchompAnimator extends AnimationController {
       "rightFoot",
       "torso",
       "neck",
+      "head", // ✅ ADD THIS
       "jaw",
     ];
     for (const k of keys) {
@@ -225,6 +226,103 @@ class MegaGarchompAnimator extends AnimationController {
     this.updateTailDrag();
   }
 
+  // Di dalam class MegaGarchompAnimator, tambahkan method ini:
+
+  // Di class MegaGarchompAnimator
+  updateTailSway(time) {
+    const joints = this.rig.tailJoints || [];
+    if (joints.length === 0) return;
+
+    // ✅ TUNING PARAMETERS untuk smoothness
+    const swayFrequency = 0.8; // ← Lebih lambat (dari 1.2)
+    const swayAmount = 0.25; // ← Lebih besar amplitude
+    const phaseShift = Math.PI * 0.8; // ← Lebih smooth phase shift
+
+    let accumulatedRotY = 0;
+    let accumulatedRotX = 0;
+
+    for (let i = 0; i < joints.length; i++) {
+      const joint = joints[i];
+      if (!joint) continue;
+
+      const segmentLength = joint._segmentLength || 0.6;
+      const segmentIndex = joint._segmentIndex || i;
+
+      // ✅ SMOOTH: Phase shift yang lebih gradual
+      const phase = (i / joints.length) * phaseShift;
+      const t = i / joints.length;
+
+      // ✅ SMOOTH: Easing untuk amplitude (lebih smooth di base, lebih besar di tip)
+      const amplitudeCurve = 0.2 + 0.8 * this.easeInOutCubic(t);
+
+      // ✅ Primary sway (horizontal)
+      const swayY =
+        Math.sin(time * swayFrequency * Math.PI * 2 + phase) *
+        swayAmount *
+        amplitudeCurve;
+
+      // ✅ Secondary sway (vertical, lebih kecil)
+      const swayX =
+        Math.sin(time * swayFrequency * Math.PI * 2 + phase + Math.PI / 2) *
+        swayAmount *
+        0.3 * // ← Lebih kecil dari Y sway
+        amplitudeCurve;
+
+      // ✅ Twist (subtle)
+      const twist =
+        Math.sin(time * swayFrequency * Math.PI + phase) *
+        0.15 * // ← Reduced dari 0.3
+        t;
+
+      // ✅ SMOOTH: Rotasi per-segment yang lebih kecil
+      const rotationDamping = 0.35; // ← Lebih kecil = lebih smooth
+
+      accumulatedRotY += swayY * rotationDamping;
+      accumulatedRotX += swayX * rotationDamping;
+
+      mat4.identity(joint.localTransform);
+
+      // Position
+      if (segmentIndex > 0) {
+        mat4.translate(joint.localTransform, joint.localTransform, [
+          0,
+          0,
+          -segmentLength,
+        ]);
+      }
+
+      // ✅ Apply rotations dengan smooth blending
+      mat4.rotateY(
+        joint.localTransform,
+        joint.localTransform,
+        swayY * rotationDamping
+      );
+      mat4.rotateX(
+        joint.localTransform,
+        joint.localTransform,
+        swayX * rotationDamping
+      );
+      mat4.rotateZ(joint.localTransform, joint.localTransform, twist);
+
+      // Store for debugging
+      joint._currentRotY = accumulatedRotY;
+      joint._currentRotX = accumulatedRotX;
+      joint._currentRotZ = twist;
+    }
+  }
+
+  // Dan panggil di updateStateMachine():
+  updateStateMachine(deltaTime) {
+    const state = this.states[this.currentState];
+    if (!state) return;
+
+    if (state.onUpdate) state.onUpdate.call(this, deltaTime);
+    if (this.stateTime >= state.duration) this.handleStateTransition();
+
+    // Body effects
+    this.updateBodySway();
+    this.updateTailSway(this.totalTime); // ✅ ADD THIS
+  }
   handleStateTransition() {
     switch (this.currentState) {
       case MegaGarchompAnimState.PROWL_FORWARD:
@@ -384,6 +482,7 @@ class MegaGarchompAnimator extends AnimationController {
   }
 
   // ====== ROAR ======
+  // ====== ROAR ======
   updateRoar(deltaTime) {
     const t = this.stateTime / this.roarDuration;
     let intensity = 0;
@@ -391,6 +490,7 @@ class MegaGarchompAnimator extends AnimationController {
     else if (t < 0.7) intensity = 1.0;
     else intensity = this.easeInOutCubic(1 - (t - 0.7) / 0.3);
 
+    // ===== TORSO LEAN =====
     if (this.rig.torso && this.bind?.torso) {
       const leanAngle = -this.roarLeanBack * intensity;
       mat4.copy(this.rig.torso.localTransform, this.bind.torso);
@@ -402,6 +502,7 @@ class MegaGarchompAnimator extends AnimationController {
       );
     }
 
+    // ===== NECK TILT =====
     if (this.rig.neck && this.bind?.neck) {
       const tiltAngle = -this.roarHeadTilt * intensity;
       mat4.copy(this.rig.neck.localTransform, this.bind.neck);
@@ -413,6 +514,34 @@ class MegaGarchompAnimator extends AnimationController {
       );
     }
 
+    // ===== HEAD SCALE (NEW!) =====
+    if (this.rig.head && this.bind?.head) {
+      // Scale curve: grow slightly during roar peak
+      let headScale = 1.0;
+
+      if (t < 0.3) {
+        // Phase 1: Quick grow (0.0 - 0.3s)
+        const growT = t / 0.3;
+        headScale = this.lerp(1.0, 1.08, this.easeOutBack(growT)); // 8% bigger
+      } else if (t < 0.7) {
+        // Phase 2: Hold at max (0.3 - 0.7s)
+        headScale = 1.08;
+      } else {
+        // Phase 3: Settle back (0.7 - 1.0s)
+        const settleT = (t - 0.7) / 0.3;
+        headScale = this.lerp(1.08, 1.0, this.easeInOutCubic(settleT));
+      }
+
+      // Apply scale to head
+      mat4.copy(this.rig.head.localTransform, this.bind.head);
+      mat4.scale(this.rig.head.localTransform, this.rig.head.localTransform, [
+        headScale,
+        headScale,
+        headScale,
+      ]);
+    }
+
+    // ===== JAW OPEN =====
     if (this.rig.jaw && this.bind?.jaw) {
       mat4.copy(this.rig.jaw.localTransform, this.bind.jaw);
       mat4.rotate(
