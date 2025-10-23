@@ -93,7 +93,7 @@ function createIsland(gl) {
   // Batu angular 2
   const rock2 = createAngularRock(gl, 0.7);
   mat4.translate(rock2.localTransform, rock2.localTransform, [
-    -0.6,
+    -0.9,
     0,
     -0.2,
   ]);
@@ -137,7 +137,7 @@ function createIsland(gl) {
   // Batu angular 6
   const rock6 = createAngularRock(gl, 0.8);
   mat4.translate(rock6.localTransform, rock6.localTransform, [
-    -0.2,
+    -0.4,
     0,
     -0.1,
   ]);
@@ -161,10 +161,10 @@ function createIsland(gl) {
   mat4.translate(rock8.localTransform, rock8.localTransform, [
     -0.8,
     0,
-    -0.7,
+    -0.65,
   ]);
   mat4.rotate(rock8.localTransform, rock8.localTransform, -Math.PI / 4, [0, 1, 0]);
-  mat4.scale(rock8.localTransform, rock8.localTransform, [0.11, 0.11, 0.11]);
+  mat4.scale(rock8.localTransform, rock8.localTransform, [0.09, 0.09, 0.09]);
   islandRoot.addChild(rock8);
 
   // --- Dekorasi Awan ---
@@ -196,7 +196,7 @@ function createIsland(gl) {
   const cloud3 = createCloud1(gl);
   mat4.translate(cloud3.localTransform, cloud3.localTransform, [
     0.8,
-    2.5,
+    1.4,
     0.5
   ]);
   mat4.rotate(cloud3.localTransform, cloud3.localTransform, -Math.PI / 6, [0, 1, 0]);

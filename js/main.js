@@ -172,6 +172,7 @@ function main() {
       viewPosition: gl.getUniformLocation(shaderProgram, "u_viewPosition"),
     },
   };
+  
 
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
@@ -312,6 +313,27 @@ function main() {
     });
   }
 
+  // ===== GIANT ROCK FORMATIONS (Layered Mesas) =====
+  const rockFormations = [];
+
+  // Ganti fungsi yang dipanggil di sini:
+  const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
+  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, 1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
+  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
+  mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 9);
+  rockFormations.push(rockFormation1);
+
+  const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
+  mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [70, 1, -125]);
+  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
+  mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
+  rockFormations.push(rockFormation2);
+
+  const rockFormation3 = createLayeredMesa(gl, 5, 10, 9, 12, 0.5);
+  mat4.translate(rockFormation3.localTransform, rockFormation3.localTransform, [0, -1, -150]); // Jauh di belakang tengah
+  mat4.scale(rockFormation3.localTransform, rockFormation3.localTransform, [3.5, 3.5, 3.5]);
+  rockFormations.push(rockFormation3);
+
   // ===== PROJECTION / VIEW =====
   const projectionMatrix = mat4.create();
   const viewMatrix = mat4.create();
@@ -382,6 +404,15 @@ function main() {
           I,
           cameraPosition
         );
+    });
+    rockFormations.forEach((rock) => {
+      drawScene(gl, 
+        programInfo, 
+        rock, 
+        projectionMatrix, 
+        viewMatrix, 
+        I, 
+        cameraPosition );
     });
 
     requestAnimationFrame(animate);

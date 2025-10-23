@@ -473,3 +473,65 @@ function createCloud2(gl) {
 
   return cloudRoot;
 }
+
+/**
+ * Membuat formasi batu mesa berlapis (layered mesa) dengan variasi kemiringan.
+ * @param {WebGLRenderingContext} gl
+ * @param {number} layers - Jumlah lapisan.
+ * @param {number} baseWidth - Lebar dasar mesa.
+ * @param {number} baseDepth - Kedalaman dasar mesa.
+ * @param {number} totalHeight - Tinggi total mesa.
+ * @param {number} seed - Seed untuk variasi (0-1).
+ * @returns {SceneNode} Node root untuk mesa.
+ */
+function createLayeredMesa(gl, layers = 5, baseWidth = 10, baseDepth = 8, totalHeight = 12, seed = Math.random()) {
+  const mesaRoot = new SceneNode();
+  mesaRoot.name = "LayeredMesa_" + seed.toFixed(3);
+
+  const canyonColors = [
+    [0.76, 0.48, 0.32, 1.0], // Reddish-Orange
+    [0.65, 0.40, 0.28, 1.0], // Darker Red-Brown
+    [0.85, 0.65, 0.45, 1.0], // Lighter Tan/Orange
+    [0.55, 0.35, 0.25, 1.0], // Deep Brown
+    [0.70, 0.55, 0.40, 1.0], // Medium Brown
+    [0.88, 0.70, 0.55, 1.0]  // Pale Orange/Tan
+  ];
+
+  const layerHeight = totalHeight / layers;
+  let currentY = -totalHeight / 2 + layerHeight / 2;
+
+  const layerMesh = new Mesh(gl, Prm.createCuboid(1, 1, 1));
+
+  for (let i = 0; i < layers; i++) {
+    const t = (i / (layers - 1 || 1));
+    const width = baseWidth * (1.0 - t * (0.3 + seed * 0.2));
+    const depth = baseDepth * (1.0 - t * (0.4 + seed * 0.1));
+
+    const offsetX = (Math.random() - 0.5) * baseWidth * 0.05 * t;
+    const offsetZ = (Math.random() - 0.5) * baseDepth * 0.05 * t;
+
+    const layerColor = canyonColors[Math.floor(Math.random() * canyonColors.length)];
+
+    const layerNode = new SceneNode(layerMesh, layerColor);
+
+    // --- TAMBAHKAN ROTASI X DAN Z DI SINI ---
+    const randomTiltX = (Math.random() - 0.5) * 0.15; // Kemiringan acak kecil sumbu X (maks ~8.5 derajat)
+    const randomTiltZ = (Math.random() - 0.5) * 0.15; // Kemiringan acak kecil sumbu Z (maks ~8.5 derajat)
+    // ------------------------------------------
+
+    // Terapkan transformasi: Posisi, Rotasi (Y, X, Z), Skala
+    mat4.translate(layerNode.localTransform, layerNode.localTransform, [offsetX, currentY, offsetZ]);
+    mat4.rotateY(layerNode.localTransform, layerNode.localTransform, (Math.random() - 0.5) * 0.1); // Rotasi Y acak kecil
+    mat4.rotateX(layerNode.localTransform, layerNode.localTransform, randomTiltX); // <-- TAMBAHKAN ROTASI X
+    mat4.rotateZ(layerNode.localTransform, layerNode.localTransform, randomTiltZ); // <-- TAMBAHKAN ROTASI Z
+    mat4.scale(layerNode.localTransform, layerNode.localTransform, [width, layerHeight, depth]);
+
+    mesaRoot.addChild(layerNode);
+
+    currentY += layerHeight;
+  }
+
+   mat4.scale(mesaRoot.localTransform, mesaRoot.localTransform, [1.5, 1.5, 1.5]);
+
+  return mesaRoot;
+}
