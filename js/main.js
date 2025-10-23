@@ -1,6 +1,6 @@
 /**
  * Main Application Entry Point
- * Multi-Island Setup with FREE CAMERA & Animated Pokemon
+ * Multi-Island Setup with FREE CAMERA, Animated Pokemon & ANIMATED CLOUDS
  */
 
 function main() {
@@ -175,8 +175,8 @@ function main() {
 
   const caveShaderProgram = initShaderProgram(
     gl,
-    caveVertexShaderSource, // Variabel baru dari shaders.js
-    caveFragmentShaderSource // Variabel baru dari shaders.js
+    caveVertexShaderSource,
+    caveFragmentShaderSource
   );
   const caveProgramInfo = {
     program: caveShaderProgram,
@@ -196,7 +196,7 @@ function main() {
       lightDirection: gl.getUniformLocation(
         caveShaderProgram,
         "u_lightDirection"
-      ), // Cave shader mungkin tidak pakai ini
+      ),
       viewPosition: gl.getUniformLocation(caveShaderProgram, "u_viewPosition"),
     },
   };
@@ -204,15 +204,17 @@ function main() {
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
 
-  // ===== ISLANDS =====
+  // ===== ISLANDS WITH CLOUD ANIMATORS =====
   const islands = [];
   const waterBodies = [];
+  const allCloudAnimators = []; // <<< COLLECT ALL CLOUD ANIMATORS
+
   ISLAND_CONFIG.forEach((cfg) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
     if (!island) return;
     island.name = cfg.name;
 
-    const islandWorldPosition = [...cfg.position]; 
+    const islandWorldPosition = [...cfg.position];
     const islandScaleFactor = cfg.scale || 1.0;
 
     const T = mat4.create();
@@ -224,75 +226,108 @@ function main() {
     mat4.multiply(island.localTransform, S, island.localTransform);
     islands.push(island);
 
-    // if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) { 
+    // ===== COLLECT CLOUD ANIMATORS FROM ISLAND =====
+    if (island.cloudAnimators && Array.isArray(island.cloudAnimators)) {
+      // Update island center in world coordinates for each animator
+      const islandWorldCenter = [
+        island.localTransform[12],
+        island.localTransform[13],
+        island.localTransform[14],
+      ];
 
-    //    const finalIslandWorldPos = [
-    //        island.localTransform[12],
-    //        island.localTransform[13],
-    //        island.localTransform[14]
-    //    ];
-    //    const waterNode = createWaterBody(gl, finalIslandWorldPos, 30 * islandScaleFactor); 
-    //    waterBodies.push(waterNode); 
-    // } else {
-    //     console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping water creation.");
-    // }
+      island.cloudAnimators.forEach((animator) => {
+        animator.islandCenter = islandWorldCenter;
+        allCloudAnimators.push(animator);
+      });
+
+      console.log(
+        `   ${cfg.name}: ${island.cloudAnimators.length} cloud animators registered`
+      );
+    }
   });
 
+  console.log(`✅ Total cloud animators: ${allCloudAnimators.length}`);
+
   let mainWaterNode = null;
-    if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) {
-        console.log("🌊 Creating main water body...");
-        
-        const waterWorldPosition = [0, -50, -190]; 
-        const waterScaleFactor = 150; 
+  if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) {
+    console.log("🌊 Creating main water body...");
 
+    const waterWorldPosition = [0, -50, -190];
+    const waterScaleFactor = 150;
 
-        const waterRadiusX = 1.5 * waterScaleFactor; 
-        const waterRadiusZ = 1.2 * waterScaleFactor; 
-        const waterDepth = 0.5 * waterScaleFactor;   
+    const waterRadiusX = 1.5 * waterScaleFactor;
+    const waterRadiusZ = 1.2 * waterScaleFactor;
+    const waterDepth = 0.5 * waterScaleFactor;
 
-        const waterMesh = new Mesh(gl, Primitives.createHalfEllipsoid(
-            waterRadiusX,
-            waterDepth,
-            waterRadiusZ,
-            32,
-            32
-        ));
-        const waterColor = [0.2, 0.5, 0.8, 0.7]; 
-        mainWaterNode = new SceneNode(waterMesh, waterColor);
-        mainWaterNode.name = "MainWaterBody";
+    const waterMesh = new Mesh(
+      gl,
+      Primitives.createHalfEllipsoid(
+        waterRadiusX,
+        waterDepth,
+        waterRadiusZ,
+        32,
+        32
+      )
+    );
+    const waterColor = [0.2, 0.5, 0.8, 0.7];
+    mainWaterNode = new SceneNode(waterMesh, waterColor);
+    mainWaterNode.name = "MainWaterBody";
 
-        mat4.identity(mainWaterNode.localTransform);
-        mat4.translate(mainWaterNode.localTransform, mainWaterNode.localTransform, waterWorldPosition);
+    mat4.identity(mainWaterNode.localTransform);
+    mat4.translate(
+      mainWaterNode.localTransform,
+      mainWaterNode.localTransform,
+      waterWorldPosition
+    );
 
-        console.log(`   Water positioned at [${waterWorldPosition.map(n => n.toFixed(1)).join(', ')}] with scale factor ${waterScaleFactor}`);
-    } else {
-         console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping main water creation.");
-    }
+    console.log(
+      `   Water positioned at [${waterWorldPosition
+        .map((n) => n.toFixed(1))
+        .join(", ")}] with scale factor ${waterScaleFactor}`
+    );
+  } else {
+    console.warn(
+      "createWaterBody or Primitives.createHalfEllipsoid not found. Skipping main water creation."
+    );
+  }
 
-    // ===== SNOW GLOBE ENCLOSURE =====
+  // ===== SNOW GLOBE ENCLOSURE =====
   let snowGlobeNode = null;
   if (window.Primitives?.createEllipsoid) {
-      console.log("🔮 Creating snow globe enclosure...");
-      // Ukuran dan posisi globe (sesuaikan!)
-      const globeRadiusX = 100;
-      const globeRadiusY = 80;
-      const globeRadiusZ = 100;
-      const globeWorldPosition = [0, 20, -40]; // Pusat globe
+    console.log("🔮 Creating snow globe enclosure...");
+    const globeRadiusX = 100;
+    const globeRadiusY = 80;
+    const globeRadiusZ = 100;
+    const globeWorldPosition = [0, 20, -40];
 
-      const globeMesh = new Mesh(gl, Primitives.createEllipsoid(
-          globeRadiusX, globeRadiusY, globeRadiusZ, 64, 64
-      ));
-      // Warna kaca/globe semi-transparan
-      const globeColor = [0.7, 0.85, 1.0, 0.25]; // Biru sangat muda, alpha 0.25
-      snowGlobeNode = new SceneNode(globeMesh, globeColor);
-      snowGlobeNode.name = "SnowGlobe";
+    const globeMesh = new Mesh(
+      gl,
+      Primitives.createEllipsoid(
+        globeRadiusX,
+        globeRadiusY,
+        globeRadiusZ,
+        64,
+        64
+      )
+    );
+    const globeColor = [0.7, 0.85, 1.0, 0.25];
+    snowGlobeNode = new SceneNode(globeMesh, globeColor);
+    snowGlobeNode.name = "SnowGlobe";
 
-      mat4.identity(snowGlobeNode.localTransform);
-      mat4.translate(snowGlobeNode.localTransform, snowGlobeNode.localTransform, globeWorldPosition);
+    mat4.identity(snowGlobeNode.localTransform);
+    mat4.translate(
+      snowGlobeNode.localTransform,
+      snowGlobeNode.localTransform,
+      globeWorldPosition
+    );
 
-      console.log(`   Globe positioned at [${globeWorldPosition.map(n => n.toFixed(1)).join(', ')}]`);
+    console.log(
+      `   Globe positioned at [${globeWorldPosition
+        .map((n) => n.toFixed(1))
+        .join(", ")}]`
+    );
   } else {
-      console.warn("Primitives.createEllipsoid not found. Skipping globe.");
+    console.warn("Primitives.createEllipsoid not found. Skipping globe.");
   }
 
   // ===== CAVE SETUP =====
@@ -300,8 +335,8 @@ function main() {
   const cave = window.createCave ? window.createCave(gl) : null;
   if (cave) {
     console.log("✅ Cave created successfully!");
-    mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); 
-    mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); 
+    mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]);
+    mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]);
   } else {
     console.error("❌ Cave creation failed!");
   }
@@ -309,7 +344,7 @@ function main() {
   // ===== POKEMONS =====
   const pokemons = [];
 
-  // GARCHOMP (biarkan sesuai punyamu; fokus kita Gabite)
+  // GARCHOMP
   if (window.createGarchomp) {
     const g = window.createGarchomp(gl);
     g.name = "GARCHOMP";
@@ -337,14 +372,13 @@ function main() {
     });
   }
 
-  // ===== GABITE — STAY PUT & FACE WORLD -Z =====
+  // GABITE
   if (window.createGabite) {
     const gabiteNode = window.createGabite(gl);
     gabiteNode.name = "GABITE";
     const gabiteWrapper = new SceneNode();
     gabiteWrapper.name = "GABITE_WRAPPER";
 
-    // Scale & place on Island B
     mat4.scale(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
@@ -356,9 +390,7 @@ function main() {
       [-20, -6.5, -24]
     );
 
-    // === Penting: pastikan HADAP DEPAN DUNIA (-Z) ===
-    // Jika MODEL LOCAL forward kamu adalah +Z (umum), set true untuk putar 180°.
-    const MODEL_LOCAL_FORWARD_IS_POS_Z = true; // ubah ke false kalau modelmu sudah menghadap -Z
+    const MODEL_LOCAL_FORWARD_IS_POS_Z = true;
     if (MODEL_LOCAL_FORWARD_IS_POS_Z) {
       mat4.rotateY(
         gabiteWrapper.localTransform,
@@ -366,11 +398,9 @@ function main() {
         Math.PI
       );
     }
-    // Setelah ini, “depan” gabite = world -Z. Tidak akan mengikuti kamera.
 
     gabiteWrapper.addChild(gabiteNode);
 
-    // Animator idle-look + hop (tanpa root motion)
     const gabiteAnimator = new GabiteAnimator(gabiteNode, {
       lookDuration: 2.0,
       neckTurnAngle: Math.PI / 4,
@@ -384,10 +414,8 @@ function main() {
       armSwingAngle: Math.PI / 10,
     });
 
-    // currentRotation diabaikan oleh animator (stay put), tapi kita set 0 untuk konsistensi
     gabiteAnimator.currentRotation = 0;
 
-    // Gabite tidak butuh tick (tidak ada root motion / follow camera)
     pokemons.push({
       node: gabiteWrapper,
       pokemonNode: gabiteNode,
@@ -396,7 +424,7 @@ function main() {
     });
   }
 
-  // MEGA GARCHOMP (biarkan apa adanya)
+  // MEGA GARCHOMP
   if (window.createMegaGarchomp) {
     const m = window.createMegaGarchomp(gl);
     m.name = "MEGA_GARCHOMP";
@@ -425,25 +453,44 @@ function main() {
     });
   }
 
-  // ===== GIANT ROCK FORMATIONS (Layered Mesas) =====
+  // ===== GIANT ROCK FORMATIONS =====
   const rockFormations = [];
 
-  const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
-  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-75, -5, -90]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
-  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [3, 3, 3]);       // Skala keseluruhan (Sesuaikan!)
-  mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 2);
+  const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2);
+  mat4.translate(
+    rockFormation1.localTransform,
+    rockFormation1.localTransform,
+    [-75, -5, -90]
+  );
+  mat4.scale(
+    rockFormation1.localTransform,
+    rockFormation1.localTransform,
+    [3, 3, 3]
+  );
+  mat4.rotateY(
+    rockFormation1.localTransform,
+    rockFormation1.localTransform,
+    Math.PI / 2
+  );
   rockFormations.push(rockFormation1);
 
   const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
-  mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [82, 1, -120]);
-  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [3, 3, 3]);
-  mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
+  mat4.translate(
+    rockFormation2.localTransform,
+    rockFormation2.localTransform,
+    [82, 1, -120]
+  );
+  mat4.scale(
+    rockFormation2.localTransform,
+    rockFormation2.localTransform,
+    [3, 3, 3]
+  );
+  mat4.rotateY(
+    rockFormation2.localTransform,
+    rockFormation2.localTransform,
+    -Math.PI / 6
+  );
   rockFormations.push(rockFormation2);
-
-  // const rockFormation3 = createLayeredMesa(gl, 5, 10, 9, 12, 0.5);
-  // mat4.translate(rockFormation3.localTransform, rockFormation3.localTransform, [0, -1, -150]); // Jauh di belakang tengah
-  // mat4.scale(rockFormation3.localTransform, rockFormation3.localTransform, [3.5, 3.5, 3.5]);
-  // rockFormations.push(rockFormation3);
 
   // ===== PROJECTION / VIEW =====
   const projectionMatrix = mat4.create();
@@ -478,33 +525,36 @@ function main() {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    // 1) Update pose animator (Gabite: neck look + hop; NO root motion)
+    // ===== 1) UPDATE POKEMON ANIMATORS =====
     pokemons.forEach((p) => {
       if (p.animator) p.animator.update(dt);
     });
 
-    // (Tidak ada tick untuk Gabite—dia statis dan tidak follow camera)
+    // ===== 2) UPDATE CLOUD ANIMATORS =====
+    allCloudAnimators.forEach((animator) => {
+      animator.update(dt);
+    });
 
-    // 2) Skybox
+    // ===== 3) SKYBOX =====
     gl.depthMask(false);
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
     gl.depthMask(true);
 
-    // 2.5) Draw Cave (menggunakan cave shader)
-    const identityMatrix = mat4.create(); // Matriks identitas untuk parent transform awal
+    // ===== 4) CAVE =====
+    const identityMatrix = mat4.create();
     if (cave) {
       drawScene(
         gl,
-        caveProgramInfo, // <<< Gunakan shader gua
+        caveProgramInfo,
         cave,
         projectionMatrix,
         viewMatrix,
-        identityMatrix, // Mulai dari world origin
+        identityMatrix,
         cameraPosition
       );
     }
 
-    // 3) Draw
+    // ===== 5) DRAW ISLANDS (with animated clouds) =====
     const I = mat4.create();
     islands.forEach((island) => {
       if (island)
@@ -518,6 +568,8 @@ function main() {
           cameraPosition
         );
     });
+
+    // ===== 6) DRAW POKEMONS =====
     pokemons.forEach((p) => {
       if (p.node)
         drawScene(
@@ -530,6 +582,8 @@ function main() {
           cameraPosition
         );
     });
+
+    // ===== 7) DRAW ROCK FORMATIONS =====
     rockFormations.forEach((rock) => {
       drawScene(
         gl,
@@ -542,12 +596,21 @@ function main() {
       );
     });
 
+    // ===== 8) DRAW WATER (transparent) =====
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // Pengaturan blend standar
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     if (mainWaterNode) {
-          drawScene(gl, programInfo, mainWaterNode, projectionMatrix, viewMatrix, I, cameraPosition);
-      }
+      drawScene(
+        gl,
+        programInfo,
+        mainWaterNode,
+        projectionMatrix,
+        viewMatrix,
+        I,
+        cameraPosition
+      );
+    }
 
     gl.disable(gl.BLEND);
 
