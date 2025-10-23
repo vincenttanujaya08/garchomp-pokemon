@@ -173,6 +173,28 @@ function main() {
     },
   };
 
+  const caveShaderProgram = initShaderProgram(
+  gl,
+  caveVertexShaderSource, // Variabel baru dari shaders.js
+  caveFragmentShaderSource // Variabel baru dari shaders.js
+);
+const caveProgramInfo = {
+    program: caveShaderProgram,
+    attribLocations: {
+        vertexPosition: gl.getAttribLocation(caveShaderProgram, "a_position"),
+        vertexNormal: gl.getAttribLocation(caveShaderProgram, "a_normal"),
+    },
+    uniformLocations: {
+        projectionMatrix: gl.getUniformLocation(caveShaderProgram, "u_projectionMatrix"),
+        viewMatrix: gl.getUniformLocation(caveShaderProgram, "u_viewMatrix"),
+        modelMatrix: gl.getUniformLocation(caveShaderProgram, "u_modelMatrix"),
+        normalMatrix: gl.getUniformLocation(caveShaderProgram, "u_normalMatrix"),
+        color: gl.getUniformLocation(caveShaderProgram, "u_color"),
+        lightDirection: gl.getUniformLocation(caveShaderProgram, "u_lightDirection"), // Cave shader mungkin tidak pakai ini
+        viewPosition: gl.getUniformLocation(caveShaderProgram, "u_viewPosition"),
+    },
+};
+
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
 
@@ -192,6 +214,18 @@ function main() {
     mat4.multiply(island.localTransform, S, island.localTransform);
     islands.push(island);
   });
+
+    // ===== CAVE SETUP =====
+  console.log("Creating cave...");
+  const cave = window.createCave ? window.createCave(gl) : null;
+  if (cave) {
+      console.log("✅ Cave created successfully!");
+      // Atur posisi dan skala gua di belakang pulau
+      mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); // Atur X, Y, Z sesuai keinginan
+      mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); // Atur skala
+  } else {
+      console.error("❌ Cave creation failed!");
+  }
 
   // ===== POKEMONS =====
   const pokemons = [];
@@ -316,22 +350,22 @@ function main() {
   const rockFormations = [];
 
   // Ganti fungsi yang dipanggil di sini:
-  const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
-  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, 1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
-  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
-  mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 9);
-  rockFormations.push(rockFormation1);
+  // const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
+  // mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, -1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
+  // mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
+  // mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 3);
+  // rockFormations.push(rockFormation1);
 
-  const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
-  mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [70, 1, -125]);
-  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
-  mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
-  rockFormations.push(rockFormation2);
+  // const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
+  // mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [70, 1, -125]);
+  // mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
+  // mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
+  // rockFormations.push(rockFormation2);
 
-  const rockFormation3 = createLayeredMesa(gl, 5, 10, 9, 12, 0.5);
-  mat4.translate(rockFormation3.localTransform, rockFormation3.localTransform, [0, -1, -150]); // Jauh di belakang tengah
-  mat4.scale(rockFormation3.localTransform, rockFormation3.localTransform, [3.5, 3.5, 3.5]);
-  rockFormations.push(rockFormation3);
+  // const rockFormation3 = createLayeredMesa(gl, 5, 10, 9, 12, 0.5);
+  // mat4.translate(rockFormation3.localTransform, rockFormation3.localTransform, [0, -1, -150]); // Jauh di belakang tengah
+  // mat4.scale(rockFormation3.localTransform, rockFormation3.localTransform, [3.5, 3.5, 3.5]);
+  // rockFormations.push(rockFormation3);
 
   // ===== PROJECTION / VIEW =====
   const projectionMatrix = mat4.create();
@@ -353,7 +387,7 @@ function main() {
       (50 * Math.PI) / 180,
       gl.canvas.clientWidth / gl.canvas.clientHeight,
       0.1,
-      500.0
+      1000.0
     );
 
     updateCameraMovement(dt);
@@ -377,6 +411,21 @@ function main() {
     gl.depthMask(false);
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
     gl.depthMask(true);
+
+    // 2.5) Draw Cave (menggunakan cave shader)
+    const identityMatrix = mat4.create(); // Matriks identitas untuk parent transform awal
+    if (cave) {
+        drawScene(
+            gl,
+            caveProgramInfo, // <<< Gunakan shader gua
+            cave,
+            projectionMatrix,
+            viewMatrix,
+            identityMatrix, // Mulai dari world origin
+            cameraPosition
+        );
+    }
+
 
     // 3) Draw
     const I = mat4.create();

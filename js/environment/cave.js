@@ -17,12 +17,18 @@ function createCave(gl) {
 
   // ===== COLOR PALETTE =====
   const colors = {
-    bodyDark: [0.18, 0.16, 0.14, 1.0],
-    interiorDark: [0.09, 0.08, 0.07, 1.0],
-    stoneMedium: [0.28, 0.25, 0.22, 1.0],
-    rockBrown1: [0.35, 0.3, 0.25, 1.0],
-    rockBrown2: [0.25, 0.22, 0.18, 1.0],
-    rockBrown3: [0.32, 0.28, 0.23, 1.0],
+    bodyDark: [0.40, 0.40, 0.40, 1.0],
+
+    // Bagian dalam: Lebih gelap lagi dari bodyDark
+    interiorDark: [0.30, 0.28, 0.25, 1.0],
+
+    // Stalaktit/mit: Ambil warna batu dekorasi pulau yang medium [0.45, 0.35, 0.25]
+    stoneMedium: [0.45, 0.35, 0.25, 1.0],
+
+    // Variasi batu di dalam: Ambil dari warna tanah [0.6, 0.4, 0.2] & batu dekorasi, digelapkan
+    rockBrown1: [0.50, 0.35, 0.20, 1.0], // Mirip tanah, sedikit lebih gelap
+    rockBrown2: [0.40, 0.30, 0.20, 1.0], // Mirip batu medium, sedikit lebih gelap
+    rockBrown3: [0.30, 0.22, 0.15, 1.0]
   };
 
   console.log("🗻 Building cave with walking space...");
@@ -36,7 +42,7 @@ function createCave(gl) {
     64 // segments
   );
   const bodyMesh = new Mesh(gl, bodyGeometry);
-  const bodyNode = new SceneNode(bodyMesh, colors.bodyDark);
+  const bodyNode = new SceneNode(bodyMesh, colors.rockBrown3);
   bodyNode.name = "CAVE_BODY";
   caveRoot.addChild(bodyNode);
 
