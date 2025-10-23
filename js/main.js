@@ -224,28 +224,84 @@ function main() {
     mat4.multiply(island.localTransform, S, island.localTransform);
     islands.push(island);
 
-    if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) { 
+    // if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) { 
 
-       const finalIslandWorldPos = [
-           island.localTransform[12],
-           island.localTransform[13],
-           island.localTransform[14]
-       ];
-       const waterNode = createWaterBody(gl, finalIslandWorldPos, 30 * islandScaleFactor); 
-       waterBodies.push(waterNode); 
-    } else {
-        console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping water creation.");
-    }
+    //    const finalIslandWorldPos = [
+    //        island.localTransform[12],
+    //        island.localTransform[13],
+    //        island.localTransform[14]
+    //    ];
+    //    const waterNode = createWaterBody(gl, finalIslandWorldPos, 30 * islandScaleFactor); 
+    //    waterBodies.push(waterNode); 
+    // } else {
+    //     console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping water creation.");
+    // }
   });
+
+  let mainWaterNode = null;
+    if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) {
+        console.log("🌊 Creating main water body...");
+        
+        const waterWorldPosition = [0, -50, -190]; 
+        const waterScaleFactor = 150; 
+
+
+        const waterRadiusX = 1.5 * waterScaleFactor; 
+        const waterRadiusZ = 1.2 * waterScaleFactor; 
+        const waterDepth = 0.5 * waterScaleFactor;   
+
+        const waterMesh = new Mesh(gl, Primitives.createHalfEllipsoid(
+            waterRadiusX,
+            waterDepth,
+            waterRadiusZ,
+            32,
+            32
+        ));
+        const waterColor = [0.2, 0.5, 0.8, 0.7]; 
+        mainWaterNode = new SceneNode(waterMesh, waterColor);
+        mainWaterNode.name = "MainWaterBody";
+
+        mat4.identity(mainWaterNode.localTransform);
+        mat4.translate(mainWaterNode.localTransform, mainWaterNode.localTransform, waterWorldPosition);
+
+        console.log(`   Water positioned at [${waterWorldPosition.map(n => n.toFixed(1)).join(', ')}] with scale factor ${waterScaleFactor}`);
+    } else {
+         console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping main water creation.");
+    }
+
+    // ===== SNOW GLOBE ENCLOSURE =====
+  let snowGlobeNode = null;
+  if (window.Primitives?.createEllipsoid) {
+      console.log("🔮 Creating snow globe enclosure...");
+      // Ukuran dan posisi globe (sesuaikan!)
+      const globeRadiusX = 100;
+      const globeRadiusY = 80;
+      const globeRadiusZ = 100;
+      const globeWorldPosition = [0, 20, -40]; // Pusat globe
+
+      const globeMesh = new Mesh(gl, Primitives.createEllipsoid(
+          globeRadiusX, globeRadiusY, globeRadiusZ, 64, 64
+      ));
+      // Warna kaca/globe semi-transparan
+      const globeColor = [0.7, 0.85, 1.0, 0.25]; // Biru sangat muda, alpha 0.25
+      snowGlobeNode = new SceneNode(globeMesh, globeColor);
+      snowGlobeNode.name = "SnowGlobe";
+
+      mat4.identity(snowGlobeNode.localTransform);
+      mat4.translate(snowGlobeNode.localTransform, snowGlobeNode.localTransform, globeWorldPosition);
+
+      console.log(`   Globe positioned at [${globeWorldPosition.map(n => n.toFixed(1)).join(', ')}]`);
+  } else {
+      console.warn("Primitives.createEllipsoid not found. Skipping globe.");
+  }
 
   // ===== CAVE SETUP =====
   console.log("Creating cave...");
   const cave = window.createCave ? window.createCave(gl) : null;
   if (cave) {
     console.log("✅ Cave created successfully!");
-    // Atur posisi dan skala gua di belakang pulau
-    mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); // Atur X, Y, Z sesuai keinginan
-    mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); // Atur skala
+    mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); 
+    mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); 
   } else {
     console.error("❌ Cave creation failed!");
   }
@@ -489,9 +545,9 @@ function main() {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // Pengaturan blend standar
 
-    waterBodies.forEach((water) => {
-       drawScene(gl, programInfo, water, projectionMatrix, viewMatrix, I, cameraPosition);
-    });
+    if (mainWaterNode) {
+          drawScene(gl, programInfo, mainWaterNode, projectionMatrix, viewMatrix, I, cameraPosition);
+      }
 
     gl.disable(gl.BLEND);
 
