@@ -258,6 +258,8 @@ function createIsland(gl) {
   mat4.scale(cloud8.localTransform, cloud8.localTransform, [0.32, 0.32, 0.32]);
   islandRoot.addChild(cloud8);
 
+  
+
   // const tree1 = createDeadTree(gl);
   // mat4.translate(tree1.localTransform, tree1.localTransform, [
   //   -0.2,
@@ -293,6 +295,8 @@ function createIsland(gl) {
     islandRoot.localTransform,
     [0, -0.4, -0.4]
   );
+
+  
 
   window.createIsland = createIsland;
 

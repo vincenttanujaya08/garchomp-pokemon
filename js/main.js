@@ -206,10 +206,14 @@ function main() {
 
   // ===== ISLANDS =====
   const islands = [];
+  const waterBodies = [];
   ISLAND_CONFIG.forEach((cfg) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
     if (!island) return;
     island.name = cfg.name;
+
+    const islandWorldPosition = [...cfg.position]; 
+    const islandScaleFactor = cfg.scale || 1.0;
 
     const T = mat4.create();
     mat4.translate(T, T, cfg.position);
@@ -219,6 +223,19 @@ function main() {
     mat4.multiply(island.localTransform, T, island.localTransform);
     mat4.multiply(island.localTransform, S, island.localTransform);
     islands.push(island);
+
+    if (window.createWaterBody && window.Primitives?.createHalfEllipsoid) { 
+
+       const finalIslandWorldPos = [
+           island.localTransform[12],
+           island.localTransform[13],
+           island.localTransform[14]
+       ];
+       const waterNode = createWaterBody(gl, finalIslandWorldPos, 30 * islandScaleFactor); 
+       waterBodies.push(waterNode); 
+    } else {
+        console.warn("createWaterBody or Primitives.createHalfEllipsoid not found. Skipping water creation.");
+    }
   });
 
   // ===== CAVE SETUP =====
@@ -356,14 +373,14 @@ function main() {
   const rockFormations = [];
 
   const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2); // (gl, layers, baseW, baseD, totalH, seed)
-  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-90, -1, -100]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
-  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [4, 4, 4]);       // Skala keseluruhan (Sesuaikan!)
+  mat4.translate(rockFormation1.localTransform, rockFormation1.localTransform, [-75, -5, -90]); // Posisi X, Y, Z (Mungkin perlu Y lebih rendah)
+  mat4.scale(rockFormation1.localTransform, rockFormation1.localTransform, [3, 3, 3]);       // Skala keseluruhan (Sesuaikan!)
   mat4.rotateY(rockFormation1.localTransform, rockFormation1.localTransform, Math.PI / 2);
   rockFormations.push(rockFormation1);
 
   const rockFormation2 = createLayeredMesa(gl, 8, 15, 12, 20, 0.7);
   mat4.translate(rockFormation2.localTransform, rockFormation2.localTransform, [82, 1, -120]);
-  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [4, 4, 4]);
+  mat4.scale(rockFormation2.localTransform, rockFormation2.localTransform, [3, 3, 3]);
   mat4.rotateY(rockFormation2.localTransform, rockFormation2.localTransform, -Math.PI / 6);
   rockFormations.push(rockFormation2);
 
@@ -468,6 +485,15 @@ function main() {
         cameraPosition
       );
     });
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // Pengaturan blend standar
+
+    waterBodies.forEach((water) => {
+       drawScene(gl, programInfo, water, projectionMatrix, viewMatrix, I, cameraPosition);
+    });
+
+    gl.disable(gl.BLEND);
 
     requestAnimationFrame(animate);
   }

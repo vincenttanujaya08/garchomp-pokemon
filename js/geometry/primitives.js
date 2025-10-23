@@ -873,6 +873,100 @@ const Primitives = {
       indices: new Uint16Array(indices),
     };
   },
+  // Tambahkan fungsi ini di dalam object Primitives di js/geometry/primitives.js
+
+/**
+ * Setengah Ellipsoid (Bagian Bawah Saja) - untuk air
+ */
+createHalfEllipsoid: function (
+  radiusX = 1,
+  radiusY = 1,
+  radiusZ = 1,
+  latitudeBands = 30,
+  longitudeBands = 30
+) {
+  const vertices = [];
+  const normals = [];
+  const indices = [];
+
+  // Hanya iterasi dari equator (PI/2) ke kutub bawah (PI)
+  for (let latNumber = latitudeBands / 2; latNumber <= latitudeBands; latNumber++) {
+    const theta = (latNumber * Math.PI) / latitudeBands;
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta); // Negatif atau nol untuk bagian bawah
+
+    for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+      const phi = (longNumber * 2 * Math.PI) / longitudeBands;
+      const sinPhi = Math.sin(phi);
+      const cosPhi = Math.cos(phi);
+
+      const x = radiusX * cosPhi * sinTheta;
+      const y = radiusY * cosTheta; // Akan selalu <= 0
+      const z = radiusZ * sinPhi * sinTheta;
+
+      // Normal mengarah keluar dari pusat ellipsoid
+      const normal = [
+        x / (radiusX * radiusX),
+        y / (radiusY * radiusY),
+        z / (radiusZ * radiusZ),
+      ];
+      const len = Math.sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2);
+
+      vertices.push(x, y, z);
+      // Normal dibalik agar menghadap ke dalam mangkok jika diinginkan,
+      // tapi untuk air, normal keluar (permukaan atas) mungkin lebih baik.
+      // Kita gunakan normal keluar standar saja.
+      normals.push(normal[0] / len, normal[1] / len, normal[2] / len);
+    }
+  }
+
+  // Tambahkan permukaan datar di bagian atas (y=0)
+  const topCenterIndex = vertices.length / 3;
+  vertices.push(0, 0, 0); // Titik pusat di y=0
+  normals.push(0, 1, 0); // Normal menghadap ke atas
+
+  const equatorStartIndex = 0; // Index vertex pertama di equator
+  for (let longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+     const phi = (longNumber * 2 * Math.PI) / longitudeBands;
+     const sinPhi = Math.sin(phi);
+     const cosPhi = Math.cos(phi);
+     const x = radiusX * cosPhi; // sinTheta is 1 at equator
+     const z = radiusZ * sinPhi;
+     vertices.push(x, 0, z); // Vertex di y=0
+     normals.push(0, 1, 0); // Normal menghadap ke atas
+  }
+
+
+  // Indices untuk bagian melengkung
+  const latStart = 0; // Mulai dari equator (index 0 setelah modifikasi loop)
+  const numLatBands = latitudeBands / 2; // Hanya setengah band
+   for (let latNumber = latStart; latNumber < numLatBands; latNumber++) {
+     for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+       const first = latNumber * (longitudeBands + 1) + longNumber;
+       const second = first + longitudeBands + 1;
+
+       indices.push(first, first + 1, second);
+       indices.push(second, first + 1, second + 1);
+     }
+   }
+
+  // Indices untuk permukaan datar atas
+   const topRingStartIndex = topCenterIndex + 1;
+   for (let longNumber = 0; longNumber < longitudeBands; longNumber++) {
+       indices.push(
+           topCenterIndex,
+           topRingStartIndex + longNumber,
+           topRingStartIndex + longNumber + 1
+       );
+   }
+
+
+  return {
+    vertices: new Float32Array(vertices),
+    normals: new Float32Array(normals),
+    indices: new Uint16Array(indices),
+  };
+},
 };
 
 window.Primitives = Primitives;
