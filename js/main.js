@@ -172,7 +172,6 @@ function main() {
       viewPosition: gl.getUniformLocation(shaderProgram, "u_viewPosition"),
     },
   };
-  
 
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
