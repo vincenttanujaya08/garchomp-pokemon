@@ -372,13 +372,30 @@ function main() {
     });
   }
 
-  // GABITE
+  // GABITE WITH POKEBALL SUMMON
   if (window.createGabite) {
     const gabiteNode = window.createGabite(gl);
     gabiteNode.name = "GABITE";
+
+    const gabiteScaleNode = new SceneNode();
+    gabiteScaleNode.name = "GABITE_SCALE_NODE";
+    gabiteScaleNode.addChild(gabiteNode);
+
+    const gabiteLiftNode = new SceneNode();
+    gabiteLiftNode.name = "GABITE_LIFT_NODE";
+    gabiteLiftNode.addChild(gabiteScaleNode);
+
+    const gabiteOrientationNode = new SceneNode();
+    gabiteOrientationNode.name = "GABITE_ORIENTATION_NODE";
+    mat4.rotateY(
+      gabiteOrientationNode.localTransform,
+      gabiteOrientationNode.localTransform,
+      Math.PI
+    );
+    gabiteOrientationNode.addChild(gabiteLiftNode);
+
     const gabiteWrapper = new SceneNode();
     gabiteWrapper.name = "GABITE_WRAPPER";
-
     mat4.scale(
       gabiteWrapper.localTransform,
       gabiteWrapper.localTransform,
@@ -389,17 +406,53 @@ function main() {
       gabiteWrapper.localTransform,
       [-20, -6.5, -24]
     );
+    gabiteWrapper.addChild(gabiteOrientationNode);
 
-    const MODEL_LOCAL_FORWARD_IS_POS_Z = true;
-    if (MODEL_LOCAL_FORWARD_IS_POS_Z) {
-      mat4.rotateY(
-        gabiteWrapper.localTransform,
-        gabiteWrapper.localTransform,
-        Math.PI
-      );
+    let gabiteSummonAnimator = null;
+    let pokeballPlacementNode = null;
+
+    if (window.createPokeball) {
+      const pokeballData = window.createPokeball(gl, 1.0);
+      if (pokeballData && pokeballData.root) {
+        pokeballPlacementNode = new SceneNode();
+        pokeballPlacementNode.name = "POKEBALL_PLACEMENT_NODE";
+        mat4.translate(
+          pokeballPlacementNode.localTransform,
+          pokeballPlacementNode.localTransform,
+          [0, -1.2, 0]
+        );
+
+        const pokeballScaleNode = new SceneNode();
+        pokeballScaleNode.name = "POKEBALL_SCALE_NODE";
+        mat4.scale(
+          pokeballScaleNode.localTransform,
+          pokeballScaleNode.localTransform,
+          [1.5, 1.5, 1.5]
+        );
+
+        pokeballScaleNode.addChild(pokeballData.root);
+        pokeballPlacementNode.addChild(pokeballScaleNode);
+        gabiteOrientationNode.addChild(pokeballPlacementNode);
+
+        gabiteSummonAnimator = new GabiteSummonAnimator({
+          pokeballTopNode: pokeballData.topHinge,
+          gabiteScaleNode,
+          gabiteLiftNode,
+          colorRootNode: gabiteNode,
+          config: {
+            initialScale: 0.08,
+            finalScale: 1.0,
+            initialLift: -1.6,
+            finalLift: 0.0,
+            openAngle: Math.PI * 0.95,
+            openDuration: 1.0,
+            postOpenDelay: 0.25,
+            emergeDuration: 1.5,
+            colorStartColor: [1, 1, 1, 1],
+          },
+        });
+      }
     }
-
-    gabiteWrapper.addChild(gabiteNode);
 
     const gabiteAnimator = new GabiteAnimator(gabiteNode, {
       lookDuration: 2.0,
@@ -416,10 +469,30 @@ function main() {
 
     gabiteAnimator.currentRotation = 0;
 
+    const combinedAnimator = {
+      update(dt) {
+        if (gabiteSummonAnimator) {
+          gabiteSummonAnimator.update(dt);
+          if (
+            pokeballPlacementNode &&
+            gabiteSummonAnimator.isFinished()
+          ) {
+            const idx = gabiteOrientationNode.children.indexOf(
+              pokeballPlacementNode
+            );
+            if (idx !== -1)
+              gabiteOrientationNode.children.splice(idx, 1);
+            pokeballPlacementNode = null;
+          }
+        }
+        gabiteAnimator.update(dt);
+      },
+    };
+
     pokemons.push({
       node: gabiteWrapper,
       pokemonNode: gabiteNode,
-      animator: gabiteAnimator,
+      animator: combinedAnimator,
       islandIndex: 1,
     });
   }
