@@ -90,7 +90,7 @@ function createCactus(gl) {
 
   // Lengan kiri - ujung atas ellipsoid
   const leftArmTop = new SceneNode(ellipsoidMesh, green);
-  mat4.translate(leftArmTop.localTransform, leftArmTop.localTransform, [-0.8, 1.9, 0]);
+  mat4.translate(leftArmTop.localTransform, leftArmTop.localTransform, [-0.8, 1.85, 0]);
   mat4.scale(leftArmTop.localTransform, leftArmTop.localTransform, [0.3, 0.3, 0.3]);
 
   // Lengan kiri - bagian horizontal (penghubung)
@@ -111,7 +111,7 @@ function createCactus(gl) {
 
   // Lengan kanan - ujung atas ellipsoid
   const rightArmTop = new SceneNode(ellipsoidMesh, green);
-  mat4.translate(rightArmTop.localTransform, rightArmTop.localTransform, [0.75, 1.4, 0]);
+  mat4.translate(rightArmTop.localTransform, rightArmTop.localTransform, [0.75, 1.35, 0]);
   mat4.scale(rightArmTop.localTransform, rightArmTop.localTransform, [0.3, 0.35, 0.3]);
 
   // Lengan kanan - bagian horizontal (penghubung)
