@@ -363,8 +363,10 @@ class GarchompAnimator extends AnimationController {
 
   // ===== TAIL ANIMATION (SMOOTH - NO GAPS!) =====
 
+  // ===== TAIL ANIMATION (SMOOTH - NO GAPS!) + TWIST =====
+
   updateTailSway(time) {
-    const joints = this.rig.tailJoints || [];
+    const joints = this.rig.tailJoints || []; // ← FIX: pakai this.rig.tailJoints
     if (joints.length === 0) return;
 
     // Accumulated rotation untuk smooth compound motion
@@ -395,6 +397,10 @@ class GarchompAnimator extends AnimationController {
         0.2 *
         t; // Gradual increase
 
+      // ← NEW: Twist effect (Z rotation)
+      const twist =
+        Math.sin(time * this.tailSwayFreq * Math.PI + phase) * 0.5 * t; // Subtle twist
+
       // Accumulate rotations for compound effect
       accumulatedRotY += swayY * 0.3; // Reduce per-segment rotation
       accumulatedRotX += swayX * 0.3;
@@ -414,10 +420,12 @@ class GarchompAnimator extends AnimationController {
       // 2. Apply LOCAL rotation (small per segment)
       mat4.rotateY(joint.localTransform, joint.localTransform, swayY * 0.3);
       mat4.rotateX(joint.localTransform, joint.localTransform, swayX * 0.3);
+      mat4.rotateZ(joint.localTransform, joint.localTransform, twist); // ← NEW: Twist
 
       // Store accumulated for debugging
       joint._currentRotY = accumulatedRotY;
       joint._currentRotX = accumulatedRotX;
+      joint._currentRotZ = twist; // ← NEW: Store twist
     }
   }
 
