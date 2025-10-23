@@ -1,16 +1,16 @@
 class GabiteSummonAnimator {
   /**
    * Controls the Pokéball opening + Gabite emergence sequence.
-   * Supports multiple colour groups so elements can flash white
-   * and blend back to their original palettes at different times.
+   * Supports optional colour groups so elements can flash white
+   * and blend back to their palettes during the opening.
    */
   constructor({
     pokeballTopNode,
     gabiteScaleNode,
     gabiteLiftNode,
     gabiteOffsetNode = null,
-    colorRootNode = null, // legacy single-root (instant restore)
-    colorGroups = [], // [{ root, startColor?, mode?, applyOn?, blendPhase? }]
+    colorRootNode = null,
+    colorGroups = [],
     config = {},
   }) {
     this.config = {
@@ -24,7 +24,9 @@ class GabiteSummonAnimator {
       initialLift: -1.4,
       finalLift: 0.0,
       colorStartColor: [1, 1, 1, 1],
-      retreatDuration: 0.6,
+      pokeballMotionOffset: [0, 0, 0],
+      pokeballTiltAngle: 0,
+      pokeballMotionNode: null,
       gabiteOffsetStart: [0, 0, 0],
       gabiteOffsetTarget: [0, 0, 0],
       ...config,
@@ -50,14 +52,14 @@ class GabiteSummonAnimator {
       ? this.config.gabiteOffsetTarget
       : this._offsetStart;
 
-    this.pokeballMotionNode = config.pokeballMotionNode || null;
+    this.pokeballMotionNode = this.config.pokeballMotionNode || null;
     this._motionBaseMatrix = this.pokeballMotionNode
       ? mat4.clone(this.pokeballMotionNode.localTransform)
       : null;
-    this._motionOffset = Array.isArray(config.pokeballMotionOffset)
-      ? config.pokeballMotionOffset
+    this._motionOffset = Array.isArray(this.config.pokeballMotionOffset)
+      ? this.config.pokeballMotionOffset
       : [0, 0, 0];
-    this._pokeballTiltAngle = config.pokeballTiltAngle || 0;
+    this._pokeballTiltAngle = this.config.pokeballTiltAngle || 0;
 
     this.totalTime = 0;
     this.stateTime = 0;
@@ -70,7 +72,7 @@ class GabiteSummonAnimator {
     this._setGabiteScale(this.config.initialScale);
     this._setGabiteLift(this.config.initialLift);
     this._setGabiteOffset(0);
-    this._setPokeballTransform(0, 0);
+    this._setPokeballMotion(0);
   }
 
   update(dt) {
@@ -80,20 +82,9 @@ class GabiteSummonAnimator {
     switch (this.state) {
       case "DELAY":
         if (this.stateTime >= this.config.startDelay) {
-          this._transition("RETREAT");
+          this._transition("OPENING");
         }
         break;
-
-      case "RETREAT": {
-        const t = Math.min(
-          this.stateTime / Math.max(this.config.retreatDuration, 1e-3),
-          1
-        );
-        const eased = this._easeOutCubic(t);
-        this._setPokeballTransform(eased, 0);
-        if (t >= 1) this._transition("OPENING");
-        break;
-      }
 
       case "OPENING": {
         const t = Math.min(
@@ -104,14 +95,14 @@ class GabiteSummonAnimator {
         const angle = -this.config.openAngle * eased;
         this._setTopAngle(angle);
         this._updateBlendGroups("opening", eased);
-        this._setPokeballTransform(1, eased);
+        this._setPokeballMotion(eased);
         if (t >= 1) this._transition("POST_OPEN_DELAY");
         break;
       }
 
       case "POST_OPEN_DELAY":
         this._updateBlendGroups("opening", 1);
-        this._setPokeballTransform(1, 1);
+        this._setPokeballMotion(1);
         if (this.stateTime >= this.config.postOpenDelay) {
           this._transition("EMERGING");
         }
@@ -148,7 +139,7 @@ class GabiteSummonAnimator {
         this._setGabiteScale(this.config.finalScale);
         this._setGabiteLift(this.config.finalLift);
         this._setGabiteOffset(1);
-        this._setPokeballTransform(1, 1);
+        this._setPokeballMotion(1);
         this._restoreAllOriginalColors();
         break;
     }
@@ -208,6 +199,7 @@ class GabiteSummonAnimator {
     const tx = this._offsetTarget[0] || 0;
     const ty = this._offsetTarget[1] || 0;
     const tz = this._offsetTarget[2] || 0;
+
     mat4.copy(this.gabiteOffsetNode.localTransform, this._offsetBaseMatrix);
     mat4.translate(
       this.gabiteOffsetNode.localTransform,
@@ -220,10 +212,9 @@ class GabiteSummonAnimator {
     );
   }
 
-  _setPokeballTransform(translateT, tiltT) {
+  _setPokeballMotion(amount) {
     if (!this.pokeballMotionNode || !this._motionBaseMatrix) return;
-    const tt = Math.min(Math.max(translateT, 0), 1);
-    const rt = Math.min(Math.max(tiltT, 0), 1);
+    const t = Math.min(Math.max(amount, 0), 1);
     mat4.copy(this.pokeballMotionNode.localTransform, this._motionBaseMatrix);
 
     if (this._motionOffset) {
@@ -231,9 +222,9 @@ class GabiteSummonAnimator {
         this.pokeballMotionNode.localTransform,
         this.pokeballMotionNode.localTransform,
         [
-          (this._motionOffset[0] || 0) * tt,
-          (this._motionOffset[1] || 0) * tt,
-          (this._motionOffset[2] || 0) * tt,
+          (this._motionOffset[0] || 0) * t,
+          (this._motionOffset[1] || 0) * t,
+          (this._motionOffset[2] || 0) * t,
         ]
       );
     }
@@ -242,7 +233,7 @@ class GabiteSummonAnimator {
       mat4.rotateX(
         this.pokeballMotionNode.localTransform,
         this.pokeballMotionNode.localTransform,
-        this._pokeballTiltAngle * rt
+        this._pokeballTiltAngle * t
       );
     }
   }
@@ -269,7 +260,6 @@ class GabiteSummonAnimator {
       .map((entry) => this._createColorGroup(entry))
       .filter(Boolean);
 
-    // Apply start colours immediately for groups requesting it (e.g. Pokéball)
     this._colorGroups.forEach((group) => {
       if (group.applyOn === "start" && !group.startApplied) {
         this._setGroupToStartColor(group);

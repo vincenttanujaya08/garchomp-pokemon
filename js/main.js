@@ -383,11 +383,6 @@ function main() {
 
     const gabiteFrontOffsetNode = new SceneNode();
     gabiteFrontOffsetNode.name = "GABITE_FRONT_OFFSET_NODE";
-    mat4.translate(
-      gabiteFrontOffsetNode.localTransform,
-      gabiteFrontOffsetNode.localTransform,
-      [0, -1.1, 0.8]
-    );
     gabiteFrontOffsetNode.addChild(gabiteScaleNode);
 
     const gabiteLiftNode = new SceneNode();
@@ -464,17 +459,16 @@ function main() {
             },
           ],
           config: {
-            initialScale: 0.2,
+            initialScale: 0,
             finalScale: 1.0,
             initialLift: -1.6,
             finalLift: 0.0,
-            openAngle: Math.PI * 0.45,
+            openAngle: Math.PI * 0.35,
             openDuration: 1.0,
             postOpenDelay: 0.25,
             emergeDuration: 1.5,
-            retreatDuration: 0.6,
             pokeballMotionNode: pokeballPlacementNode,
-            pokeballMotionOffset: [0, 0.9, -1.8],
+            pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
             gabiteOffsetStart: [0, -1.1, 0.8],
             gabiteOffsetTarget: [0, -0.2, -2.2],
