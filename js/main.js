@@ -477,7 +477,7 @@ function main() {
             pokeballMotionNode: garchompPokeballPlacementNode,
             pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
-            gabiteOffsetStart: [0, 0, 0],
+            gabiteOffsetStart: [35, 0, -40],
             gabiteOffsetTarget: [0, 0, 0],
           },
         });
@@ -626,7 +626,7 @@ function main() {
             pokeballMotionNode: megaPokeballPlacementNode,
             pokeballMotionOffset: [0, 0.9, 3.4],
             pokeballTiltAngle: -Math.PI * 0.35,
-            gabiteOffsetStart: [0, 0, 0],
+            gabiteOffsetStart: [5, 0, -80],
             gabiteOffsetTarget: [0, 0, 0],
           },
         });
