@@ -73,7 +73,7 @@ function createCactus(gl) {
   const green = [0.3, 0.6, 0.3, 1.0]; // Warna hijau kaktus
   const cylinderMesh = new Mesh(gl, Primitives.createCylinder(1, 1, 16));
   const ellipsoidMesh = new Mesh(gl, Primitives.createEllipsoid(1, 1, 1, 16, 16));
-
+  
   // Batang utama (tengah) - silinder
   const mainTrunk = new SceneNode(cylinderMesh, green);
   mat4.scale(mainTrunk.localTransform, mainTrunk.localTransform, [0.4, 3.0, 0.4]);
