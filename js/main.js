@@ -174,26 +174,32 @@ function main() {
   };
 
   const caveShaderProgram = initShaderProgram(
-  gl,
-  caveVertexShaderSource, // Variabel baru dari shaders.js
-  caveFragmentShaderSource // Variabel baru dari shaders.js
-);
-const caveProgramInfo = {
+    gl,
+    caveVertexShaderSource, // Variabel baru dari shaders.js
+    caveFragmentShaderSource // Variabel baru dari shaders.js
+  );
+  const caveProgramInfo = {
     program: caveShaderProgram,
     attribLocations: {
-        vertexPosition: gl.getAttribLocation(caveShaderProgram, "a_position"),
-        vertexNormal: gl.getAttribLocation(caveShaderProgram, "a_normal"),
+      vertexPosition: gl.getAttribLocation(caveShaderProgram, "a_position"),
+      vertexNormal: gl.getAttribLocation(caveShaderProgram, "a_normal"),
     },
     uniformLocations: {
-        projectionMatrix: gl.getUniformLocation(caveShaderProgram, "u_projectionMatrix"),
-        viewMatrix: gl.getUniformLocation(caveShaderProgram, "u_viewMatrix"),
-        modelMatrix: gl.getUniformLocation(caveShaderProgram, "u_modelMatrix"),
-        normalMatrix: gl.getUniformLocation(caveShaderProgram, "u_normalMatrix"),
-        color: gl.getUniformLocation(caveShaderProgram, "u_color"),
-        lightDirection: gl.getUniformLocation(caveShaderProgram, "u_lightDirection"), // Cave shader mungkin tidak pakai ini
-        viewPosition: gl.getUniformLocation(caveShaderProgram, "u_viewPosition"),
+      projectionMatrix: gl.getUniformLocation(
+        caveShaderProgram,
+        "u_projectionMatrix"
+      ),
+      viewMatrix: gl.getUniformLocation(caveShaderProgram, "u_viewMatrix"),
+      modelMatrix: gl.getUniformLocation(caveShaderProgram, "u_modelMatrix"),
+      normalMatrix: gl.getUniformLocation(caveShaderProgram, "u_normalMatrix"),
+      color: gl.getUniformLocation(caveShaderProgram, "u_color"),
+      lightDirection: gl.getUniformLocation(
+        caveShaderProgram,
+        "u_lightDirection"
+      ), // Cave shader mungkin tidak pakai ini
+      viewPosition: gl.getUniformLocation(caveShaderProgram, "u_viewPosition"),
     },
-};
+  };
 
   // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
@@ -215,16 +221,16 @@ const caveProgramInfo = {
     islands.push(island);
   });
 
-    // ===== CAVE SETUP =====
+  // ===== CAVE SETUP =====
   console.log("Creating cave...");
   const cave = window.createCave ? window.createCave(gl) : null;
   if (cave) {
-      console.log("✅ Cave created successfully!");
-      // Atur posisi dan skala gua di belakang pulau
-      mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); // Atur X, Y, Z sesuai keinginan
-      mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); // Atur skala
+    console.log("✅ Cave created successfully!");
+    // Atur posisi dan skala gua di belakang pulau
+    mat4.translate(cave.localTransform, cave.localTransform, [-10, -34, -320]); // Atur X, Y, Z sesuai keinginan
+    mat4.scale(cave.localTransform, cave.localTransform, [10, 10, 10]); // Atur skala
   } else {
-      console.error("❌ Cave creation failed!");
+    console.error("❌ Cave creation failed!");
   }
 
   // ===== POKEMONS =====
@@ -323,8 +329,8 @@ const caveProgramInfo = {
     m.name = "MEGA_GARCHOMP";
     const wrap = new SceneNode();
     wrap.name = "MEGA_GARCHOMP_WRAPPER";
-    mat4.scale(wrap.localTransform, wrap.localTransform, [4, 4, 4]);
-    mat4.translate(wrap.localTransform, wrap.localTransform, [-2, 4, 30]);
+    mat4.scale(wrap.localTransform, wrap.localTransform, [7, 7, 7]);
+    mat4.translate(wrap.localTransform, wrap.localTransform, [-2, 7.5, 30]);
     wrap.addChild(m);
 
     const anim = new MegaGarchompAnimator(m, {
@@ -415,17 +421,16 @@ const caveProgramInfo = {
     // 2.5) Draw Cave (menggunakan cave shader)
     const identityMatrix = mat4.create(); // Matriks identitas untuk parent transform awal
     if (cave) {
-        drawScene(
-            gl,
-            caveProgramInfo, // <<< Gunakan shader gua
-            cave,
-            projectionMatrix,
-            viewMatrix,
-            identityMatrix, // Mulai dari world origin
-            cameraPosition
-        );
+      drawScene(
+        gl,
+        caveProgramInfo, // <<< Gunakan shader gua
+        cave,
+        projectionMatrix,
+        viewMatrix,
+        identityMatrix, // Mulai dari world origin
+        cameraPosition
+      );
     }
-
 
     // 3) Draw
     const I = mat4.create();
@@ -454,13 +459,15 @@ const caveProgramInfo = {
         );
     });
     rockFormations.forEach((rock) => {
-      drawScene(gl, 
-        programInfo, 
-        rock, 
-        projectionMatrix, 
-        viewMatrix, 
-        I, 
-        cameraPosition );
+      drawScene(
+        gl,
+        programInfo,
+        rock,
+        projectionMatrix,
+        viewMatrix,
+        I,
+        cameraPosition
+      );
     });
 
     requestAnimationFrame(animate);
