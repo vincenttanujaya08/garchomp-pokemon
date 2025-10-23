@@ -1,7 +1,9 @@
 /**
- * Garchomp Walking Animation - FIXED
+ * Garchomp Walking Animation with POWER UP
  * Start dari belakang, menghadap kamera
  * Extends AnimationController
+ *
+ * NEW: POWER_UP state after TURN_AROUND (Option A)
  */
 
 // Animation states
@@ -9,6 +11,7 @@ const GarchompAnimState = {
   WALK_FORWARD: "WALK_FORWARD",
   IDLE_PAUSE: "IDLE_PAUSE",
   TURN_AROUND: "TURN_AROUND",
+  POWER_UP: "POWER_UP", // ← NEW STATE
 };
 
 class GarchompAnimator extends AnimationController {
@@ -23,6 +26,7 @@ class GarchompAnimator extends AnimationController {
       walkDuration: 3.0,
       pauseDuration: 5.0,
       turnDuration: 1.0,
+      powerUpDuration: 3.0, // ← INCREASED for smoother animation
 
       // Walk cycle
       walkCycleFreq: 2.0,
@@ -36,6 +40,13 @@ class GarchompAnimator extends AnimationController {
       headBobAmount: 0.15,
       torsoLeanAmount: 0.1,
       bodySwayAmount: 0.05,
+
+      // Power up settings (IMPROVED)
+      squatScale: 0.88, // Shrink to 88% (less extreme)
+      roarScale: 1.22, // Grow to 122% (less extreme)
+      squatDuration: 1.0, // Phase 1 (slower)
+      growthDuration: 1.0, // Phase 2 (slower)
+      settleDuration: 1.0, // Phase 3 (same)
     };
 
     super(garchompNode, { ...defaultConfig, ...config });
@@ -46,6 +57,9 @@ class GarchompAnimator extends AnimationController {
     // FIXED: Set initial position
     this.currentPos = [...this.startPos];
     this.currentRotation = this.startRotation;
+
+    // ← NEW: Cycle counter untuk track roar timing
+    this.idleCycleCount = 0;
 
     // Initialize state machine
     this.states = {
@@ -94,6 +108,27 @@ class GarchompAnimator extends AnimationController {
         onUpdate: (dt) => this.updateTurn(dt),
         duration: this.turnDuration,
       },
+
+      // ===== NEW: POWER UP STATE =====
+      [GarchompAnimState.POWER_UP]: {
+        onEnter: () => {
+          console.log("🔥 Garchomp POWER UP!");
+          // Reset scale to normal at start
+          this.currentScale = [1, 1, 1];
+
+          // ← IMPORTANT: Reset base position tracker for Y offset
+          this._powerUpBasePos = null;
+
+          // Store initial torso transform if exists
+          if (this.rig.torso && this.rig.torso.localTransform) {
+            this._initialTorsoTransform = mat4.clone(
+              this.rig.torso.localTransform
+            );
+          }
+        },
+        onUpdate: (dt) => this.updatePowerUp(dt),
+        duration: this.powerUpDuration,
+      },
     };
 
     // Start state
@@ -124,12 +159,31 @@ class GarchompAnimator extends AnimationController {
       case GarchompAnimState.WALK_FORWARD:
         this.transitionTo(GarchompAnimState.IDLE_PAUSE);
         break;
+
       case GarchompAnimState.IDLE_PAUSE:
-        this.transitionTo(GarchompAnimState.TURN_AROUND);
+        // ← FIXED: Increment counter AFTER idle
+        this.idleCycleCount++;
+
+        // Check if this is ODD cycle (1st, 3rd, 5th...)
+        if (this.idleCycleCount % 2 === 1) {
+          // ODD cycle → Do POWER UP roar!
+          console.log(`🔥 Idle #${this.idleCycleCount} → POWER UP!`);
+          this.transitionTo(GarchompAnimState.POWER_UP);
+        } else {
+          // EVEN cycle → Just turn without roar
+          console.log(`⚪ Idle #${this.idleCycleCount} → TURN (no roar)`);
+          this.transitionTo(GarchompAnimState.TURN_AROUND);
+        }
         break;
+
       case GarchompAnimState.TURN_AROUND:
-        // Setelah putar, jalan lagi
+        // After turn (without roar), continue walking
         this.transitionTo(GarchompAnimState.WALK_FORWARD);
+        break;
+
+      case GarchompAnimState.POWER_UP:
+        // After power up roar, turn around
+        this.transitionTo(GarchompAnimState.TURN_AROUND);
         break;
     }
   }
@@ -163,6 +217,112 @@ class GarchompAnimator extends AnimationController {
       this.targetRotation,
       eased
     );
+  }
+
+  // ===== NEW: POWER UP ANIMATION =====
+  updatePowerUp(deltaTime) {
+    const totalTime = this.stateTime;
+    const phase1End = this.squatDuration;
+    const phase2End = phase1End + this.growthDuration;
+    const phase3End = this.powerUpDuration;
+
+    let scale = 1.0;
+    let torsoLean = 0.0;
+    let yOffset = 0.0; // ← NEW: Y translation untuk prevent ground penetration
+
+    // ===== PHASE 1: SQUAT & INHALE (0.0 - 1.0s) =====
+    if (totalTime < phase1End) {
+      const t = totalTime / phase1End;
+      const eased = this.easeInOutCubic(t);
+
+      // Shrink body (smoother, less extreme)
+      scale = this.lerp(1.0, this.squatScale, eased);
+
+      // Lean forward slightly
+      torsoLean = this.lerp(0, 0.22, eased); // ~12.6 degrees forward (reduced)
+
+      // Lower body slightly as squatting
+      yOffset = this.lerp(0, -0.15, eased); // Slight downward
+
+      // ===== PHASE 2: EXPLOSIVE GROWTH (1.0 - 2.0s) =====
+    } else if (totalTime < phase2End) {
+      const t = (totalTime - phase1End) / this.growthDuration;
+
+      // Use gentler easing for smoother growth
+      const eased =
+        t < 0.5
+          ? 2 * t * t // Ease in quad (first half)
+          : 1 - Math.pow(-2 * t + 2, 2) / 2; // Ease out quad (second half)
+
+      // Explode to large size (smoother curve)
+      scale = this.lerp(this.squatScale, this.roarScale, eased);
+
+      // Lean back (chest out, dominant pose)
+      torsoLean = this.lerp(0.22, -0.15, eased); // ~-8.6 degrees back (reduced)
+
+      // ← CRITICAL FIX: Lift body up as it grows!
+      // Calculate how much we're growing
+      const growthAmount = scale - 1.0; // e.g., 1.22 - 1.0 = 0.22 (22% growth)
+
+      // Lift Y by adjusted amount to keep feet grounded
+      // ADJUST THIS NUMBER (1.2) to change lift height:
+      // - 0.75 = default (kaki mungkin masih masuk sedikit)
+      // - 1.0 = lift sedang
+      // - 1.2 = lift lebih tinggi (recommended)
+      // - 1.5 = lift sangat tinggi
+      yOffset = growthAmount * 10; // ← UBAH ANGKA INI!
+
+      // ===== PHASE 3: SETTLE & STABILIZE (2.0 - 3.0s) =====
+    } else {
+      const t = (totalTime - phase2End) / this.settleDuration;
+
+      // Smoother elastic bounce (less bouncy)
+      const eased =
+        t < 0.5
+          ? this.easeOutElastic(t * 2) * 0.5 // First half with dampened bounce
+          : 0.5 + (t - 0.5) * 1.0; // Second half linear settle
+
+      // Return to normal with gentle bounce
+      scale = this.lerp(this.roarScale, 1.0, eased);
+
+      // Return torso to neutral
+      torsoLean = this.lerp(-0.15, 0, eased);
+
+      // Return Y to original position smoothly
+      const growthAmount = scale - 1.0;
+      yOffset = growthAmount * 10; // ← MATCH dengan Phase 2!
+    }
+
+    // ← APPLY Y OFFSET to current position
+    // Store base position if not stored yet
+    if (!this._powerUpBasePos) {
+      this._powerUpBasePos = [...this.currentPos];
+    }
+
+    // Apply offset to Y coordinate only
+    this.currentPos[0] = this._powerUpBasePos[0];
+    this.currentPos[1] = this._powerUpBasePos[1] + yOffset;
+    this.currentPos[2] = this._powerUpBasePos[2];
+
+    // Apply scale to root (affects whole body)
+    this.currentScale = [scale, scale, scale];
+
+    // Apply torso rotation if rig exists
+    if (this.rig.torso && this._initialTorsoTransform) {
+      // Start from initial transform
+      mat4.copy(this.rig.torso.localTransform, this._initialTorsoTransform);
+
+      // Apply lean rotation
+      mat4.rotateX(
+        this.rig.torso.localTransform,
+        this.rig.torso.localTransform,
+        torsoLean
+      );
+    }
+
+    // Legs stay grounded (neutral during power up)
+    this.setHipRotation(this.rig.leftHip, 0);
+    this.setHipRotation(this.rig.rightHip, 0);
   }
 
   // ===== WALK CYCLE =====
@@ -266,6 +426,10 @@ class GarchompAnimator extends AnimationController {
   updateBodyMotion() {
     const isWalking = this.currentState === GarchompAnimState.WALK_FORWARD;
     const isTurning = this.currentState === GarchompAnimState.TURN_AROUND;
+    const isPoweringUp = this.currentState === GarchompAnimState.POWER_UP;
+
+    // Skip body motion during power up (controlled by power up anim)
+    if (isPoweringUp) return;
 
     // Head bob
     if (isWalking) {
@@ -383,6 +547,10 @@ if (typeof module !== "undefined" && module.exports) {
 
 window.GarchompAnimator = GarchompAnimator;
 
+console.log("✅ GarchompAnimator v2.1 - POWER UP with Y-lift + Smooth easing");
 console.log(
-  "✅ GarchompAnimator FIXED - Start dari belakang, menghadap kamera, toggle rotation"
+  "   Flow: WALK → IDLE#1 → 🔥ROAR🔥 → TURN → WALK → IDLE#2 → TURN → WALK → IDLE#3 → 🔥ROAR🔥..."
+);
+console.log(
+  "   Fixes: ✓ Ground penetration fixed ✓ Smoother animation ✓ Roar on odd cycles"
 );

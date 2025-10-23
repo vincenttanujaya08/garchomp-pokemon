@@ -351,7 +351,7 @@ function main() {
     const wrap = new SceneNode();
     wrap.name = "GARCHOMP_WRAPPER";
     mat4.scale(wrap.localTransform, wrap.localTransform, [3, 3, 3]);
-    mat4.translate(wrap.localTransform, wrap.localTransform, [-10, 0.5, -2]);
+    mat4.translate(wrap.localTransform, wrap.localTransform, [-10, 0.75, -2]);
     wrap.addChild(g);
 
     const anim = new GarchompAnimator(g, {
