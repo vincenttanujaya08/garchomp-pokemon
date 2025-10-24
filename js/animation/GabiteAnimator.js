@@ -1,8 +1,3 @@
-/**
- * Gabite Animator — Idle Look + Tail Sway + Hop (Stay Put)
- * FIXED VERSION - Smooth 2x hop tanpa snap/jitter
- */
-
 const GabiteAnimState = {
   LOOK_AROUND: "LOOK_AROUND",
   CENTER_HEAD: "CENTER_HEAD",
@@ -12,20 +7,13 @@ const GabiteAnimState = {
 class GabiteAnimator extends AnimationController {
   constructor(gabiteNode, config = {}) {
     const defaults = {
-      // Look
       lookDuration: 2.0,
       neckTurnAngle: Math.PI / 4,
-
-      // Center
       centerDuration: 0.4,
-
-      // Hop
       hopDuration: 2.0,
       hopCount: 2,
       hopHeight: 1.0,
       squatAmount: 0.15,
-
-      // Tail
       tailSwayFreq: 0.5,
       tailSwayAmount: 0.12,
       tailBaseOffset: [0, -2.8, 1.0],
@@ -47,8 +35,6 @@ class GabiteAnimator extends AnimationController {
           offset: 0,
         },
       ],
-
-      // Body
       bodyBobAmount: 0.06,
       armSwingAngle: Math.PI / 10,
     };
@@ -56,14 +42,10 @@ class GabiteAnimator extends AnimationController {
     Object.assign(this, this.config);
     this.tailBaseOffset = this._normalizeVec3(this.tailBaseOffset, 0);
     this.setTailRotationAxes(this.tailRotationAxes);
-
     this.rig = gabiteNode.animationRig || {};
     this.currentNeckRotation = 0;
-
-    // untuk CENTER_HEAD
     this._centerStart = 0;
     this._centerTarget = 0;
-
     this.captureBindPoses();
 
     this.states = {
@@ -82,7 +64,6 @@ class GabiteAnimator extends AnimationController {
       },
       [GabiteAnimState.HOP_EXCITED]: {
         onEnter: () => {
-          // PENTING: Reset ke bind pose dulu sebelum hop
           this.resetToBind("leftThigh");
           this.resetToBind("rightThigh");
           this.resetToBind("leftArm");
@@ -96,7 +77,6 @@ class GabiteAnimator extends AnimationController {
     this.transitionTo(GabiteAnimState.LOOK_AROUND);
   }
 
-  // ===== Bind poses =====
   captureBindPoses() {
     this.bindPoses = {};
     [
@@ -138,19 +118,15 @@ class GabiteAnimator extends AnimationController {
 
   _normalizeTailRotationAxes(axesConfig) {
     if (axesConfig === false) return [];
-
     const entries = Array.isArray(axesConfig)
       ? axesConfig
       : axesConfig
       ? [axesConfig]
       : [];
-
     const normalized = entries
-      .map((entry) => this._createTailRotationEntry(entry))
+      .map((e) => this._createTailRotationEntry(e))
       .filter(Boolean);
-
     if (normalized.length) return normalized;
-
     return [
       {
         axis: [0, 1, 0],
@@ -175,12 +151,9 @@ class GabiteAnimator extends AnimationController {
 
   _createTailRotationEntry(entry) {
     if (!entry) return null;
-
     if (Array.isArray(entry)) entry = { axis: entry };
-
     const axis = entry.axis;
     if (!axis || axis.length < 3) return null;
-
     const [ax, ay, az] = axis;
     const length = Math.hypot(ax, ay, az);
     if (!isFinite(length) || length === 0) return null;
@@ -201,7 +174,6 @@ class GabiteAnimator extends AnimationController {
     const wave = (entry.wave || "sin").toLowerCase();
     const phase = entry.phase ?? 0;
     const offset = entry.offset ?? 0;
-
     const getAngle =
       typeof entry.getAngle === "function" ? entry.getAngle : null;
 
@@ -218,7 +190,6 @@ class GabiteAnimator extends AnimationController {
 
   _computeTailRotationAngle(def, time) {
     if (def.getAngle) return def.getAngle(time, this) || 0;
-
     const base = time * def.frequency * Math.PI + def.phase;
     const waveValue = def.wave === "cos" ? Math.cos(base) : Math.sin(base);
     return waveValue * def.amplitude + def.offset;
@@ -244,7 +215,6 @@ class GabiteAnimator extends AnimationController {
   _getTailAnchor() {
     this._ensureTailBindTranslation();
     if (!this._tailBindTranslation) return null;
-
     const offset = this.tailBaseOffset || [0, 0, 0];
     const anchor = this._tailAnchor || (this._tailAnchor = [0, 0, 0]);
     anchor[0] = this._tailBindTranslation[0] + offset[0];
@@ -253,16 +223,11 @@ class GabiteAnimator extends AnimationController {
     return anchor;
   }
 
-  // ===== State machine tick =====
   updateStateMachine(dt) {
     const s = this.states[this.currentState];
     if (!s) return;
-
     if (s.onUpdate) s.onUpdate.call(this, dt);
-
-    // Tail sway jalan terus
     this.updateTailSway(this.totalTime);
-
     if (this.stateTime >= s.duration) this.handleStateTransition();
   }
 
@@ -280,11 +245,9 @@ class GabiteAnimator extends AnimationController {
     }
   }
 
-  // ===== LOOK AROUND (neck yaw kiri-kanan) =====
   updateLookAround(dt) {
     const half = this.lookDuration / 2;
     let target = 0;
-
     if (this.stateTime < half) {
       const t = this.stateTime / half;
       target = this.easeInOutCubic(t) * this.neckTurnAngle;
@@ -325,11 +288,9 @@ class GabiteAnimator extends AnimationController {
     this.resetToBind("rightArm");
   }
 
-  // ===== CENTER HEAD =====
   updateCenterHead(dt) {
     const t = Math.min(this.stateTime / Math.max(this.centerDuration, 1e-4), 1);
     const eased = this.easeOutCubic(t);
-
     const neck =
       this._centerStart + (this._centerTarget - this._centerStart) * eased;
     this.currentNeckRotation = neck;
@@ -363,52 +324,32 @@ class GabiteAnimator extends AnimationController {
     this.resetToBind("rightArm");
   }
 
-  // ===== HOP (SIMPLE & SMOOTH - NO GLITCHY LEG) =====
   updateHop(dt) {
     const totalT = this.stateTime / this.hopDuration;
     const hopProgress = (totalT * this.hopCount) % 1.0;
-
-    let bodyY = 0;
-    let legAngle = 0;
-    let armAngle = 0;
+    let bodyY = 0,
+      legAngle = 0,
+      armAngle = 0;
 
     if (hopProgress < 0.25) {
-      // Phase 1: Squat (0% → 25%)
       const t = hopProgress / 0.25;
       const eased = this.easeInOutQuad(t);
       bodyY = -eased * this.squatAmount;
-      legAngle = eased * (Math.PI / 8); // Bengkok sedang (22.5°)
+      legAngle = eased * (Math.PI / 8);
     } else if (hopProgress < 0.75) {
-      // Phase 2: Jump (25% → 75%)
       const t = (hopProgress - 0.25) / 0.5;
-
-      // Body: smooth parabolic jump
       const arc = Math.sin(t * Math.PI);
       bodyY = arc * this.hopHeight;
-
-      // Arms: swing
       armAngle = Math.sin(t * Math.PI) * this.armSwingAngle;
-
-      // Legs: LURUS selama di udara
       legAngle = 0;
     } else {
-      // Phase 3: Landing (75% → 100%)
       const t = (hopProgress - 0.75) / 0.25;
       const eased = this.easeOutQuad(t);
-
-      // Body: turun smooth
-      bodyY = (1 - eased) * this.hopHeight * Math.sin(0) * 0.1; // Minimal bounce
-
-      // Legs: TETAP LURUS! Ga usah bengkok lagi
+      bodyY = (1 - eased) * this.hopHeight * Math.sin(0) * 0.1;
       legAngle = 0;
-
-      // Arms: settle
       armAngle = 0;
     }
 
-    // ===== APPLY TRANSFORMS (SMOOTH) =====
-
-    // Body Y movement
     if (this.rig.body && this.bindPoses.body) {
       mat4.copy(this.rig.body.localTransform, this.bindPoses.body);
       mat4.translate(
@@ -418,7 +359,6 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // Leg rotations (both legs move together symmetrically)
     if (this.rig.leftThigh && this.bindPoses.leftThigh) {
       mat4.copy(this.rig.leftThigh.localTransform, this.bindPoses.leftThigh);
       mat4.rotate(
@@ -439,7 +379,6 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // Arm swing
     if (this.rig.leftArm && this.bindPoses.leftArm) {
       mat4.copy(this.rig.leftArm.localTransform, this.bindPoses.leftArm);
       mat4.rotate(
@@ -460,17 +399,13 @@ class GabiteAnimator extends AnimationController {
       );
     }
 
-    // Neck stays neutral during hop
     this.resetToBind("neck");
   }
 
-  // ===== Tail sway (continuous) =====
   updateTailSway(time) {
     if (!this.rig.tail || !this.bindPoses.tail) return;
-
     const target = this.rig.tail.localTransform;
     mat4.copy(target, this.bindPoses.tail);
-
     const rotations = this._tailRotationAxes || [];
     const anchor = this._getTailAnchor();
 
@@ -501,37 +436,34 @@ class GabiteAnimator extends AnimationController {
     if (anchor) mat4.translate(target, target, neg);
   }
 
-  // Stay put (no root motion)
   applyTransforms() {}
 
-  // ===== Easing Functions =====
   easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
   }
 
   easeOutCubic(t) {
-    return 1 - Math.pow(1 - t, 3);
+    return 1 - (1 - t) ** 3;
   }
 
   easeInCubic(t) {
-    return t * t * t;
+    return t ** 3;
   }
 
   easeInOutQuad(t) {
-    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    return t < 0.5 ? 2 * t ** 2 : 1 - (-2 * t + 2) ** 2 / 2;
   }
 
   easeInQuad(t) {
-    return t * t;
+    return t ** 2;
   }
 
   easeOutQuad(t) {
-    return 1 - (1 - t) * (1 - t);
+    return 1 - (1 - t) ** 2;
   }
 }
 
 if (typeof module !== "undefined" && module.exports)
   module.exports = GabiteAnimator;
 window.GabiteAnimator = GabiteAnimator;
-
-console.log("✅ GabiteAnimator FIXED - Smooth 2x hop without snap/jitter");
+console.log("GabiteAnimator loaded");

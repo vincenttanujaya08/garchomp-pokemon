@@ -1,9 +1,3 @@
-/**
- * GarchompSummonAnimator.js
- * Pokeball opening + Garchomp emergence sequence
- * Adjusted for Garchomp's medium size (scale 3x wrapper)
- */
-
 class GarchompSummonAnimator {
   constructor({
     pokeballTopNode,
@@ -20,24 +14,16 @@ class GarchompSummonAnimator {
       postOpenDelay: 0.2,
       emergeDuration: 1.4,
       openAngle: Math.PI * 0.85,
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       initialScale: 0.05,
       finalScale: 3.0,
       initialLift: -1.4,
       finalLift: 0.0,
-
       colorStartColor: [1, 1, 1, 1],
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       pokeballMotionOffset: [0, 0, 0],
       pokeballTiltAngle: 0,
       pokeballMotionNode: null,
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       garchompOffsetStart: [0, 0, 0],
       garchompOffsetTarget: [0, 0, 0],
-
       ...config,
     };
 
@@ -78,7 +64,6 @@ class GarchompSummonAnimator {
     this._colorGroups = [];
     this._initColorGroups(colorRootNode, colorGroups);
 
-    // Initialize positions
     this._setTopAngle(0);
     this._setGarchompScale(this.config.initialScale);
     this._setGarchompLift(this.config.initialLift);
@@ -92,11 +77,9 @@ class GarchompSummonAnimator {
 
     switch (this.state) {
       case "DELAY":
-        if (this.stateTime >= this.config.startDelay) {
+        if (this.stateTime >= this.config.startDelay)
           this._transition("OPENING");
-        }
         break;
-
       case "OPENING": {
         const t = Math.min(
           this.stateTime / Math.max(this.config.openDuration, 1e-3),
@@ -110,15 +93,12 @@ class GarchompSummonAnimator {
         if (t >= 1) this._transition("POST_OPEN_DELAY");
         break;
       }
-
       case "POST_OPEN_DELAY":
         this._updateBlendGroups("opening", 1);
         this._setPokeballMotion(1);
-        if (this.stateTime >= this.config.postOpenDelay) {
+        if (this.stateTime >= this.config.postOpenDelay)
           this._transition("EMERGING");
-        }
         break;
-
       case "EMERGING": {
         const t = Math.min(
           this.stateTime / Math.max(this.config.emergeDuration, 1e-3),
@@ -126,24 +106,18 @@ class GarchompSummonAnimator {
         );
         const easedScale = this._easeOutBack(t);
         const easedLift = this._easeOutCubic(t);
-
         const s =
           this.config.initialScale +
           (this.config.finalScale - this.config.initialScale) * easedScale;
         const lift =
           this.config.initialLift +
           (this.config.finalLift - this.config.initialLift) * easedLift;
-
         this._setGarchompScale(s);
         this._setGarchompLift(lift);
         this._setGarchompOffset(easedScale);
-
-        if (t >= 1) {
-          this._transition("FINISHED");
-        }
+        if (t >= 1) this._transition("FINISHED");
         break;
       }
-
       case "FINISHED":
       default:
         this._setTopAngle(-this.config.openAngle);
@@ -163,14 +137,8 @@ class GarchompSummonAnimator {
   _transition(nextState) {
     this.state = nextState;
     this.stateTime = 0;
-
-    if (nextState === "EMERGING") {
-      this._applyInstantStartColors();
-    }
-
-    if (nextState === "FINISHED") {
-      this._restoreAllOriginalColors();
-    }
+    if (nextState === "EMERGING") this._applyInstantStartColors();
+    if (nextState === "FINISHED") this._restoreAllOriginalColors();
   }
 
   _setTopAngle(angle) {
@@ -210,7 +178,6 @@ class GarchompSummonAnimator {
     const tx = this._offsetTarget[0] || 0;
     const ty = this._offsetTarget[1] || 0;
     const tz = this._offsetTarget[2] || 0;
-
     mat4.copy(this.garchompOffsetNode.localTransform, this._offsetBaseMatrix);
     mat4.translate(
       this.garchompOffsetNode.localTransform,
@@ -223,7 +190,6 @@ class GarchompSummonAnimator {
     if (!this.pokeballMotionNode || !this._motionBaseMatrix) return;
     const t = Math.min(Math.max(amount, 0), 1);
     mat4.copy(this.pokeballMotionNode.localTransform, this._motionBaseMatrix);
-
     if (this._motionOffset) {
       mat4.translate(
         this.pokeballMotionNode.localTransform,
@@ -235,7 +201,6 @@ class GarchompSummonAnimator {
         ]
       );
     }
-
     if (this._pokeballTiltAngle) {
       mat4.rotateX(
         this.pokeballMotionNode.localTransform,
@@ -247,7 +212,6 @@ class GarchompSummonAnimator {
 
   _initColorGroups(legacyRoot, colorGroupsInput) {
     const groups = [];
-
     if (legacyRoot) {
       groups.push({
         root: legacyRoot,
@@ -256,17 +220,14 @@ class GarchompSummonAnimator {
         applyOn: "emerging",
       });
     }
-
     if (Array.isArray(colorGroupsInput)) {
       colorGroupsInput.forEach((entry) => {
         if (entry && entry.root) groups.push(entry);
       });
     }
-
     this._colorGroups = groups
       .map((entry) => this._createColorGroup(entry))
       .filter(Boolean);
-
     this._colorGroups.forEach((group) => {
       if (group.applyOn === "start" && !group.startApplied) {
         this._setGroupToStartColor(group);
@@ -287,13 +248,11 @@ class GarchompSummonAnimator {
       startColor || this.config.colorStartColor
     );
     if (!bindings || !bindings.length) return null;
-
     const normalizedMode = mode === "lerp" ? "lerp" : "instant";
     const normalizedApplyOn =
       applyOn || (normalizedMode === "lerp" ? "start" : "emerging");
     const normalizedBlendPhase =
       normalizedMode === "lerp" ? blendPhase || "opening" : null;
-
     return {
       bindings,
       mode: normalizedMode,
@@ -375,9 +334,7 @@ class GarchompSummonAnimator {
           ],
         });
       }
-      if (node.children && node.children.length) {
-        stack.push(...node.children);
-      }
+      if (node.children && node.children.length) stack.push(...node.children);
     }
     return bindings;
   }
@@ -396,4 +353,3 @@ class GarchompSummonAnimator {
 }
 
 window.GarchompSummonAnimator = GarchompSummonAnimator;
-console.log("✅ GarchompSummonAnimator loaded");

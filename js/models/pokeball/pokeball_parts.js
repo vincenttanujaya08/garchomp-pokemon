@@ -21,15 +21,15 @@
 
     const latStart = isTop ? 0 : latitudeBands / 2;
     const latEnd = isTop ? latitudeBands / 2 : latitudeBands;
-    const rows = latEnd - latStart + 1; // inclusive
+    const rows = latEnd - latStart + 1;
 
     for (let lat = latStart; lat <= latEnd; lat++) {
-      const theta = (lat * Math.PI) / latitudeBands; // 0..PI
+      const theta = (lat * Math.PI) / latitudeBands;
       const sinTheta = Math.sin(theta);
       const cosTheta = Math.cos(theta);
 
       for (let lon = 0; lon <= longitudeBands; lon++) {
-        const phi = (lon * 2 * Math.PI) / longitudeBands; // 0..2PI
+        const phi = (lon * 2 * Math.PI) / longitudeBands;
         const sinPhi = Math.sin(phi);
         const cosPhi = Math.cos(phi);
 
@@ -76,7 +76,10 @@
 
     const bandRadius = radius * 1.005;
     const bandHeight = radius * 0.12;
-    const bandMesh = new Mesh(gl, Primitives.createCylinder(bandRadius, bandHeight, 64));
+    const bandMesh = new Mesh(
+      gl,
+      Primitives.createCylinder(bandRadius, bandHeight, 64)
+    );
     const bandNode = new SceneNode(bandMesh, COLORS.black);
     upperRoot.addChild(bandNode);
 
@@ -86,24 +89,48 @@
       0,
       radius + bandHeight * 0.25,
     ]);
-    mat4.rotate(buttonGroup.localTransform, buttonGroup.localTransform, Math.PI / 2, [1, 0, 0]);
+    mat4.rotate(
+      buttonGroup.localTransform,
+      buttonGroup.localTransform,
+      Math.PI / 2,
+      [1, 0, 0]
+    );
 
-    const outerMesh = new Mesh(gl, Primitives.createCylinder(radius * 0.28, bandHeight * 0.9, 48));
+    const outerMesh = new Mesh(
+      gl,
+      Primitives.createCylinder(radius * 0.28, bandHeight * 0.9, 48)
+    );
     const outerNode = new SceneNode(outerMesh, COLORS.black);
     buttonGroup.addChild(outerNode);
 
-    
     const innerMesh = new Mesh(
       gl,
-      Primitives.createEllipsoid(radius * 0.27, bandHeight * 0.32, radius * 0.27, 32, 48)
+      Primitives.createEllipsoid(
+        radius * 0.27,
+        bandHeight * 0.32,
+        radius * 0.27,
+        32,
+        48
+      )
     );
     const innerNode = new SceneNode(innerMesh, COLORS.white);
-    mat4.translate(innerNode.localTransform, innerNode.localTransform, [0, 0, bandHeight * 0.13]);
+    mat4.translate(innerNode.localTransform, innerNode.localTransform, [
+      0,
+      0,
+      bandHeight * 0.13,
+    ]);
     buttonGroup.addChild(innerNode);
 
-    const centerMesh = new Mesh(gl, Primitives.createCylinder(radius * 0.12, bandHeight * 0.55, 48));
+    const centerMesh = new Mesh(
+      gl,
+      Primitives.createCylinder(radius * 0.12, bandHeight * 0.55, 48)
+    );
     const centerNode = new SceneNode(centerMesh, COLORS.gray);
-    mat4.translate(centerNode.localTransform, centerNode.localTransform, [0, 0, bandHeight * 0.28]);
+    mat4.translate(centerNode.localTransform, centerNode.localTransform, [
+      0,
+      0,
+      bandHeight * 0.28,
+    ]);
     buttonGroup.addChild(centerNode);
 
     upperRoot.addChild(buttonGroup);
@@ -117,7 +144,11 @@
       createEllipsoidHemisphere(radius, radius, radius, false, 48, 64)
     );
     const bottomNode = new SceneNode(bottomMesh, COLORS.white);
-    mat4.translate(bottomNode.localTransform, bottomNode.localTransform, [0, -0.0005, 0]);
+    mat4.translate(
+      bottomNode.localTransform,
+      bottomNode.localTransform,
+      [0, -0.0005, 0]
+    );
     return { bottomNode };
   }
 

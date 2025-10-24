@@ -1,7 +1,3 @@
-// ============================================================
-// js/config/garchomp_anatomy.js
-// ============================================================
-
 const GarchompAnatomy = {
   colors: {
     darkBlue: [0.18, 0.22, 0.38, 1.0],
@@ -40,7 +36,6 @@ const GarchompAnatomy = {
   },
 };
 
-// Export to window
 window.GarchompAnatomy = GarchompAnatomy;
 
-console.log("✅ GarchompAnatomy loaded");
+console.log("GarchompAnatomy loaded");

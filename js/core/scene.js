@@ -3,7 +3,6 @@ class Mesh {
     this.gl = gl;
     this.indicesCount = geometryData.indices.length;
 
-    // Hanya buat dan isi buffer, jangan di-setup di sini
     this.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, geometryData.vertices, gl.STATIC_DRAW);
@@ -28,7 +27,6 @@ class SceneNode {
     this.color = color;
     this.localTransform = mat4.create();
     this.children = [];
-    // ❌ JANGAN taruh window.SceneNode di sini!
   }
 
   addChild(node) {
@@ -40,4 +38,4 @@ class SceneNode {
 window.SceneNode = SceneNode;
 window.Mesh = Mesh;
 
-console.log("✅ scene.js fixed - SceneNode properly exported");
+console.log("✅scene.js loaded");

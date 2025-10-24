@@ -33,7 +33,6 @@ function createIsland(gl) {
   const earthNode = new SceneNode(dirtMesh, [0.6, 0.4, 0.2, 1.0]);
   const baseRockNode = new SceneNode(rockMesh, [0.5, 0.5, 0.5, 1.0]);
 
-  // offset vertikal untuk layer tanah & batu
   mat4.translate(earthNode.localTransform, earthNode.localTransform, [
     0,
     -grassThickness,
@@ -50,7 +49,6 @@ function createIsland(gl) {
   islandRoot.addChild(earthNode);
   islandRoot.addChild(baseRockNode);
 
-  // --- Dekorasi Kaktus ---
   const cactus1 = createCactus(gl);
   mat4.translate(cactus1.localTransform, cactus1.localTransform, [
     0.5,
@@ -79,7 +77,6 @@ function createIsland(gl) {
   );
   islandRoot.addChild(cactus2);
 
-  // --- Dekorasi Batu Angular / Simple ---
   const rock1 = createAngularRock(gl, 0.3);
   mat4.translate(rock1.localTransform, rock1.localTransform, [0.5, 0, -0.3]);
   mat4.rotate(
@@ -168,33 +165,20 @@ function createIsland(gl) {
   mat4.scale(rock8.localTransform, rock8.localTransform, [0.09, 0.09, 0.09]);
   islandRoot.addChild(rock8);
 
-  // =========================
-  //  Awan Prosedural Multi-Ring (worldSpace)
-  // =========================
-
-  // Helper random
   const randRange = (a, b) => a + Math.random() * (b - a);
-  const GOLDEN_ANGLE = 2.399963229728653; // ~137.5°
+  const GOLDEN_ANGLE = 2.399963229728653;
   const evenAngle = (i, jitter = 0) =>
     i * GOLDEN_ANGLE + randRange(-jitter, jitter);
 
-  /**
-   * Buat satu ring awan yang merata
-   * @param {number} count
-   * @param {object} cfg { orbitRadius, orbitHeight, speedRange:[min,max], sizeRange:[min,max], tilt, angleJitter }
-   * @returns {CloudOrbitAnimator[]}
-   */
   function spawnCloudRing(count, cfg) {
     const anims = [];
     for (let i = 0; i < count; i++) {
       const cloudNode = (Math.random() < 0.5 ? createCloud1 : createCloud2)(gl);
-      cloudNode.worldSpace = true; // Opsi A: animator tulis world-matrix
+      cloudNode.worldSpace = true;
 
-      // Skala awal (acak dalam rentang)
       const s = randRange(cfg.sizeRange[0], cfg.sizeRange[1]);
       mat4.scale(cloudNode.localTransform, cloudNode.localTransform, [s, s, s]);
 
-      // Variasi rotasi awal
       mat4.rotateY(
         cloudNode.localTransform,
         cloudNode.localTransform,
@@ -232,9 +216,7 @@ function createIsland(gl) {
     return anims;
   }
 
-  // Ring konfigurasi (silakan tweak jumlah & parameter agar lebih padat/lega)
   const RINGS = [
-    // count, orbitRadius, orbitHeight, speedRange, sizeRange, tilt, angleJitter
     {
       count: 12,
       orbitRadius: 34,
@@ -270,12 +252,8 @@ function createIsland(gl) {
     cloudAnimators.push(...anims);
   });
 
-  // simpan supaya bisa di-pick up di main.js
   islandRoot.cloudAnimators = cloudAnimators;
 
-  // =========================
-  // Transform pulau keseluruhan
-  // =========================
   mat4.scale(
     islandRoot.localTransform,
     islandRoot.localTransform,
@@ -287,7 +265,6 @@ function createIsland(gl) {
     [0, -0.4, -0.4]
   );
 
-  // export
   window.createIsland = createIsland;
   return islandRoot;
 }

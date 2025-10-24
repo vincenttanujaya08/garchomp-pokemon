@@ -189,7 +189,7 @@ function createGabiteBody(gl) {
   );
   tailNode.addChild(bottomBodyNode2);
 
-  // --- KAKI LENGKAP ---
+  // kakiiii
   const leftLeg = createGabiteLeg(gl, "Left");
   mat4.translate(
     leftLeg.localTransform,
@@ -218,13 +218,12 @@ function createGabiteBody(gl) {
   );
   bodyRoot.addChild(rightLeg);
 
-  // --- TANGAN ---
+  //tangan
   const armRoot = createGabiteArm(gl);
   bodyRoot.addChild(armRoot);
 
-  // Store references for animation rig (will be picked up by parent)
   bodyRoot._rigRefs = {
-    leftThigh: leftLeg.children[0], // First child is thigh
+    leftThigh: leftLeg.children[0],
     rightThigh: rightLeg.children[0],
     leftShin: leftLeg.children[0]?.children?.find((c) =>
       c.name?.includes("Shin")
@@ -247,12 +246,6 @@ function createGabiteBody(gl) {
   return bodyRoot;
 }
 
-/**
- * Membuat satu unit kaki Gabite.
- * @param {WebGLRenderingContext} gl - Konteks WebGL.
- * @param {string} side - "Left" atau "Right"
- * @returns {SceneNode} Node root untuk satu kaki.
- */
 function createGabiteLeg(gl, side = "Left") {
   const cfg = GabiteAnatomy;
   const legRoot = new SceneNode();
@@ -370,9 +363,6 @@ function createGabiteLeg(gl, side = "Left") {
   return legRoot;
 }
 
-/**
- * Membuat kedua tangan Gabite
- */
 function createGabiteArm(gl) {
   const cfg = GabiteAnatomy;
   const armRoot = new SceneNode();
@@ -387,7 +377,7 @@ function createGabiteArm(gl) {
   const forearmYawIn = Math.PI / 18;
   const wristRoll = Math.PI / 20;
 
-  // ====== RIGHT ARM ======
+  // tangan kanan right arm
   const rightUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
   rightUpper.name = "RightUpperArm";
   mat4.translate(
@@ -442,7 +432,7 @@ function createGabiteArm(gl) {
   );
   rightUpper.addChild(rightFore);
 
-  // ====== LEFT ARM ======
+  // tangan kiri left arm
   const leftUpper = new SceneNode(upperArmMesh, cfg.colors.darkBlue);
   leftUpper.name = "LeftUpperArm";
   mat4.translate(
@@ -497,7 +487,6 @@ function createGabiteArm(gl) {
   );
   leftUpper.addChild(leftFore);
 
-  // ====== HAND FINS ======
   const finW = 0.6,
     finH = 0.7,
     topBulge = 0.12,
@@ -555,7 +544,6 @@ function createGabiteArm(gl) {
   );
   rightFore.addChild(rightFin);
 
-  // ====== ARM SAILS ======
   const sailGeom = CC1.createSail(2, 3, 0.4, 64);
   const sailMesh = new Mesh(gl, sailGeom);
 
@@ -617,15 +605,11 @@ function createGabiteArm(gl) {
   return armRoot;
 }
 
-/**
- * Membuat kepala Gabite
- */
 function createGabiteHead(gl) {
   const cfg = GabiteAnatomy;
   const headRoot = new SceneNode();
   headRoot.name = "HeadRoot";
 
-  // Main head shape
   const headMesh = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32));
   const headNode = new SceneNode(headMesh, cfg.colors.darkBlue);
   headNode.name = "HeadMain";
@@ -640,15 +624,9 @@ function createGabiteHead(gl) {
     headNode.localTransform,
     [0, 0.4, 0.1]
   );
-  // mat4.rotate(
-  //   headNode.localTransform,
-  //   headNode.localTransform,
-  //   -Math.PI / 15,
-  //   [1, 0, 0]
-  // );
+
   headRoot.addChild(headNode);
 
-  // Jet fins (side fins)
   const finMesh = new Mesh(gl, PP1.createEllipsoid(0.5, 0.5, 1.2, 24, 24));
 
   const leftFinNode = new SceneNode(finMesh, cfg.colors.darkBlue);
@@ -710,7 +688,6 @@ function createGabiteHead(gl) {
   );
   rightFinNode.addChild(rightStripeNode);
 
-  // Red overlay
   const headMesh2 = new Mesh(gl, PP1.createEllipsoid(1.0, 1.0, 1.5, 32, 32));
   const headNode2 = new SceneNode(headMesh2, cfg.colors.red);
   headNode2.name = "HeadOverlay";
@@ -732,7 +709,6 @@ function createGabiteHead(gl) {
   );
   headRoot.addChild(headNode2);
 
-  // Teeth
   const toothMesh = new Mesh(gl, PP1.createCone(0.1, 0.3, 8));
 
   const teeth = [
@@ -868,9 +844,6 @@ function createGabiteHead(gl) {
   return headRoot;
 }
 
-/**
- * Membuat leher Gabite
- */
 function createGabiteNeck(gl) {
   const cfg = GabiteAnatomy;
 
@@ -924,9 +897,6 @@ function createGabiteNeck(gl) {
   return neckNode;
 }
 
-/**
- * Membuat sirip punggung Gabite
- */
 function createGabiteFin(gl) {
   const cfg = GabiteAnatomy;
 
@@ -973,7 +943,6 @@ function createGabiteFin(gl) {
   return finNode;
 }
 
-// Export to window
 window.createGabiteBody = createGabiteBody;
 window.createGabiteLeg = createGabiteLeg;
 window.createGabiteArm = createGabiteArm;

@@ -1,8 +1,3 @@
-/**
- * Main Application Entry Point
- * Multi-Island Setup with FREE CAMERA, Animated Pokemon & ANIMATED CLOUDS
- */
-
 function main() {
   const canvas = document.querySelector("#glCanvas");
   const gl = canvas.getContext("webgl", { antialias: true });
@@ -11,7 +6,6 @@ function main() {
     return;
   }
 
-  // ===== ISLAND CONFIGURATION =====
   const ISLAND_CONFIG = [
     {
       name: "ISLAND_A",
@@ -33,7 +27,6 @@ function main() {
     },
   ];
 
-  // ===== CAMERA STATE =====
   const cameraState = {
     target: [-3, 0, 0],
     distance: 80,
@@ -43,7 +36,6 @@ function main() {
     maxElevation: Math.PI / 2.5,
   };
 
-  // ===== INPUT =====
   const keys = {};
   window.addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
   window.addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
@@ -51,7 +43,6 @@ function main() {
     for (const k in keys) keys[k] = false;
   });
 
-  // ===== MOUSE / SKYBOX =====
   let isDragging = false,
     lastMouseX = -1,
     lastMouseY = -1;
@@ -86,7 +77,6 @@ function main() {
     cameraState.distance = Math.max(20, Math.min(150, cameraState.distance));
   });
 
-  // ===== CAMERA HELPERS =====
   function updateCameraMovement(dt) {
     const speed = (keys["shift"] ? 125 : 50) * dt;
     const vSpeed = 50 * dt;
@@ -147,7 +137,6 @@ function main() {
     return cameraPosition;
   }
 
-  // ===== SHADER =====
   const shaderProgram = initShaderProgram(
     gl,
     vertexShaderSource,
@@ -201,13 +190,11 @@ function main() {
     },
   };
 
-  // ===== SCENE SETUP =====
   const drawSkybox = window.setupSkybox(gl);
 
-  // ===== ISLANDS WITH CLOUD ANIMATORS =====
   const islands = [];
   const waterBodies = [];
-  const allCloudAnimators = []; // ← NEW: Array untuk cloud animators
+  const allCloudAnimators = [];
 
   ISLAND_CONFIG.forEach((cfg) => {
     const island = window.createIsland ? window.createIsland(gl) : null;
@@ -226,23 +213,18 @@ function main() {
     mat4.multiply(island.localTransform, S, island.localTransform);
     islands.push(island);
 
-    // ===== COLLECT CLOUD ANIMATORS FROM ISLAND =====
     if (island.cloudAnimators && Array.isArray(island.cloudAnimators)) {
-      // Calculate island world center AFTER transforms applied
       const islandWorldCenter = [
         island.localTransform[12],
         island.localTransform[13],
         island.localTransform[14],
       ];
 
-      const CLOUD_Y_OFFSET = 150; // <<— atur sesuka kamu
+      const CLOUD_Y_OFFSET = 150;
       islandWorldCenter[1] += CLOUD_Y_OFFSET;
 
       island.cloudAnimators.forEach((animator) => {
-        // Set island center for orbital reference
         animator.setIslandCenter(islandWorldCenter);
-
-        // Add to global list
         allCloudAnimators.push(animator);
       });
 
@@ -297,7 +279,6 @@ function main() {
     );
   }
 
-  // ===== SNOW GLOBE ENCLOSURE =====
   let snowGlobeNode = null;
   if (window.Primitives?.createEllipsoid) {
     console.log("🔮 Creating snow globe enclosure...");
@@ -336,7 +317,6 @@ function main() {
     console.warn("Primitives.createEllipsoid not found. Skipping globe.");
   }
 
-  // ===== CAVE SETUP =====
   console.log("Creating cave...");
   const cave = window.createCave ? window.createCave(gl) : null;
   if (cave) {
@@ -347,10 +327,8 @@ function main() {
     console.error("❌ Cave creation failed!");
   }
 
-  // ===== POKEMONS =====
   const pokemons = [];
 
-  // === GARCHOMP ===
   if (window.createGarchomp) {
     const garchompNode = window.createGarchomp(gl);
     garchompNode.name = "GARCHOMP";
@@ -493,7 +471,6 @@ function main() {
     });
   }
 
-  // === MEGA GARCHOMP ===
   if (window.createMegaGarchomp) {
     const megaNode = window.createMegaGarchomp(gl);
     megaNode.name = "MEGA_GARCHOMP";
@@ -635,7 +612,6 @@ function main() {
     });
   }
 
-  // === GABITE WITH POKEBALL SUMMON ===
   if (window.createGabite) {
     const gabiteNode = window.createGabite(gl);
     gabiteNode.name = "GABITE";
@@ -779,7 +755,6 @@ function main() {
     });
   }
 
-  // ===== GIANT ROCK FORMATIONS =====
   const rockFormations = [];
 
   const rockFormation1 = createLayeredMesa(gl, 6, 12, 10, 15, 0.2);
@@ -818,11 +793,9 @@ function main() {
   );
   rockFormations.push(rockFormation2);
 
-  // ===== PROJECTION / VIEW =====
   const projectionMatrix = mat4.create();
   const viewMatrix = mat4.create();
 
-  // ===== RENDER LOOP =====
   let lastTime = 0;
   function animate(nowMs) {
     const t = nowMs * 0.001;
@@ -851,22 +824,18 @@ function main() {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    // ===== 1) UPDATE POKEMON ANIMATORS =====
     pokemons.forEach((p) => {
       if (p.animator) p.animator.update(dt);
     });
 
-    // ===== 2) UPDATE CLOUD ANIMATORS ===== ← CRITICAL: This makes clouds move!
     allCloudAnimators.forEach((animator) => {
       animator.update(dt);
     });
 
-    // ===== 3) SKYBOX =====
     gl.depthMask(false);
     drawSkybox(projectionMatrix, viewMatrix, skyboxRotationMatrix);
     gl.depthMask(true);
 
-    // ===== 4) CAVE =====
     const identityMatrix = mat4.create();
     if (cave) {
       drawScene(
@@ -880,7 +849,6 @@ function main() {
       );
     }
 
-    // ===== 5) DRAW ISLANDS (with animated clouds) =====
     const I = mat4.create();
     islands.forEach((island) => {
       if (island)
@@ -895,7 +863,6 @@ function main() {
         );
     });
 
-    // ===== 6) DRAW POKEMONS =====
     pokemons.forEach((p) => {
       if (p.node)
         drawScene(
@@ -909,7 +876,6 @@ function main() {
         );
     });
 
-    // ===== 7) DRAW ROCK FORMATIONS =====
     rockFormations.forEach((rock) => {
       drawScene(
         gl,
@@ -922,7 +888,6 @@ function main() {
       );
     });
 
-    // ===== 8) DRAW WATER (transparent) =====
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -945,7 +910,6 @@ function main() {
   requestAnimationFrame(animate);
 }
 
-// ===== DRAW SCENE / HELPERS =====
 function drawScene(
   gl,
   programInfo,
@@ -1121,5 +1085,4 @@ function loadShader(gl, type, source) {
   return sh;
 }
 
-// ===== START APP =====
 window.addEventListener("DOMContentLoaded", main);

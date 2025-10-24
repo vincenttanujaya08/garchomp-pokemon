@@ -1,9 +1,3 @@
-/**
- * MegaGarchompSummonAnimator.js
- * Pokeball opening + Mega Garchomp emergence sequence
- * Adjusted for Mega Garchomp's LARGE size (scale 7x wrapper)
- */
-
 class MegaGarchompSummonAnimator {
   constructor({
     pokeballTopNode,
@@ -20,24 +14,16 @@ class MegaGarchompSummonAnimator {
       postOpenDelay: 0.3,
       emergeDuration: 2.0,
       openAngle: Math.PI * 0.85,
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       initialScale: 0.05,
       finalScale: 3.0,
       initialLift: -1.4,
       finalLift: 0.0,
-
       colorStartColor: [1, 1, 1, 1],
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       pokeballMotionOffset: [0, 0, 0],
       pokeballTiltAngle: 0,
       pokeballMotionNode: null,
-
-      // ✅ SAME AS GABITE - will be overridden by main.js config
       megaGarchompOffsetStart: [0, 0, 0],
       megaGarchompOffsetTarget: [0, 0, 0],
-
       ...config,
     };
 
@@ -80,7 +66,6 @@ class MegaGarchompSummonAnimator {
     this._colorGroups = [];
     this._initColorGroups(colorRootNode, colorGroups);
 
-    // Initialize positions
     this._setTopAngle(0);
     this._setMegaGarchompScale(this.config.initialScale);
     this._setMegaGarchompLift(this.config.initialLift);
@@ -94,9 +79,8 @@ class MegaGarchompSummonAnimator {
 
     switch (this.state) {
       case "DELAY":
-        if (this.stateTime >= this.config.startDelay) {
+        if (this.stateTime >= this.config.startDelay)
           this._transition("OPENING");
-        }
         break;
 
       case "OPENING": {
@@ -116,9 +100,8 @@ class MegaGarchompSummonAnimator {
       case "POST_OPEN_DELAY":
         this._updateBlendGroups("opening", 1);
         this._setPokeballMotion(1);
-        if (this.stateTime >= this.config.postOpenDelay) {
+        if (this.stateTime >= this.config.postOpenDelay)
           this._transition("EMERGING");
-        }
         break;
 
       case "EMERGING": {
@@ -128,7 +111,6 @@ class MegaGarchompSummonAnimator {
         );
         const easedScale = this._easeOutBack(t);
         const easedLift = this._easeOutCubic(t);
-
         const s =
           this.config.initialScale +
           (this.config.finalScale - this.config.initialScale) * easedScale;
@@ -140,9 +122,7 @@ class MegaGarchompSummonAnimator {
         this._setMegaGarchompLift(lift);
         this._setMegaGarchompOffset(easedScale);
 
-        if (t >= 1) {
-          this._transition("FINISHED");
-        }
+        if (t >= 1) this._transition("FINISHED");
         break;
       }
 
@@ -165,14 +145,8 @@ class MegaGarchompSummonAnimator {
   _transition(nextState) {
     this.state = nextState;
     this.stateTime = 0;
-
-    if (nextState === "EMERGING") {
-      this._applyInstantStartColors();
-    }
-
-    if (nextState === "FINISHED") {
-      this._restoreAllOriginalColors();
-    }
+    if (nextState === "EMERGING") this._applyInstantStartColors();
+    if (nextState === "FINISHED") this._restoreAllOriginalColors();
   }
 
   _setTopAngle(angle) {
@@ -380,9 +354,7 @@ class MegaGarchompSummonAnimator {
           ],
         });
       }
-      if (node.children && node.children.length) {
-        stack.push(...node.children);
-      }
+      if (node.children && node.children.length) stack.push(...node.children);
     }
     return bindings;
   }
@@ -401,4 +373,3 @@ class MegaGarchompSummonAnimator {
 }
 
 window.MegaGarchompSummonAnimator = MegaGarchompSummonAnimator;
-console.log("✅ MegaGarchompSummonAnimator loaded");

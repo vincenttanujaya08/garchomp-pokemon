@@ -1,28 +1,18 @@
-/**
- * Base Animation Controller
- * Template untuk semua Pokemon animations
- * Teman bisa extend class ini untuk Pokemon mereka
- */
-
 class AnimationController {
   constructor(entityNode, config = {}) {
     this.entity = entityNode;
     this.rig = entityNode.animationRig || {};
 
-    // Timing
     this.totalTime = 0;
     this.stateTime = 0;
 
-    // State machine
     this.currentState = null;
-    this.states = {}; // Override di subclass
+    this.states = {};
 
-    // Transform
     this.currentPos = config.startPos ? [...config.startPos] : [0, 0, 0];
     this.currentRotation = config.startRotation || 0;
-    this.currentScale = [1, 1, 1]; // ← NEW: Scale support
+    this.currentScale = [1, 1, 1];
 
-    // Config (bisa di-override)
     this.config = {
       startPos: [0, 0, 0],
       endPos: [0, 0, -10],
@@ -30,31 +20,18 @@ class AnimationController {
     };
   }
 
-  /**
-   * Main update loop - dipanggil tiap frame
-   * @param {number} deltaTime - Time since last frame (seconds)
-   */
   update(deltaTime) {
     this.totalTime += deltaTime;
     this.stateTime += deltaTime;
 
-    // Override di subclass untuk implement state machine
     this.updateStateMachine(deltaTime);
-
-    // Apply final transforms
     this.applyTransforms();
   }
 
-  /**
-   * State machine logic - OVERRIDE di subclass
-   */
   updateStateMachine(deltaTime) {
     console.warn("AnimationController.updateStateMachine() not implemented");
   }
 
-  /**
-   * Transition ke state baru
-   */
   transitionTo(newState) {
     if (this.currentState) {
       console.log(`${this.entity.name}: ${this.currentState} -> ${newState}`);
@@ -62,43 +39,31 @@ class AnimationController {
     this.currentState = newState;
     this.stateTime = 0;
 
-    // Call state enter callback jika ada
     const stateHandler = this.states[newState];
-    if (stateHandler && stateHandler.onEnter) {
-      stateHandler.onEnter.call(this);
-    }
+    if (stateHandler?.onEnter) stateHandler.onEnter.call(this);
   }
 
-  /**
-   * Apply transform ke entity root node
-   */
   applyTransforms() {
     mat4.identity(this.entity.localTransform);
 
-    // Position
     mat4.translate(
       this.entity.localTransform,
       this.entity.localTransform,
       this.currentPos
     );
-
-    // Rotation (Y-axis)
     mat4.rotateY(
       this.entity.localTransform,
       this.entity.localTransform,
       this.currentRotation
     );
-
-    // Scale (NEW: Apply currentScale)
     mat4.scale(
       this.entity.localTransform,
       this.entity.localTransform,
       this.currentScale
     );
 
-    // Additional config scale (if exists)
     const cfg = window.entityConfig?.[this.entity.name];
-    if (cfg && cfg.scale) {
+    if (cfg?.scale) {
       mat4.scale(
         this.entity.localTransform,
         this.entity.localTransform,
@@ -107,23 +72,14 @@ class AnimationController {
     }
   }
 
-  /**
-   * Helper: Linear interpolation
-   */
   lerp(a, b, t) {
     return a + (b - a) * t;
   }
 
-  /**
-   * Helper: Cubic ease in-out
-   */
   easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
   }
 
-  /**
-   * Helper: Vector3 lerp
-   */
   lerpVec3(a, b, t) {
     return [
       this.lerp(a[0], b[0], t),
@@ -132,34 +88,26 @@ class AnimationController {
     ];
   }
 
-  /**
-   * Helper: Ease Out Back (overshoot effect)
-   */
   easeOutBack(t) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
   }
 
-  /**
-   * Helper: Ease Out Elastic (bounce effect)
-   */
   easeOutElastic(t) {
     const c4 = (2 * Math.PI) / 3;
     return t === 0
       ? 0
       : t === 1
       ? 1
-      : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+      : 2 ** (-10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
   }
 }
 
-// Export untuk module system (jika pakai)
 if (typeof module !== "undefined" && module.exports) {
   module.exports = AnimationController;
 }
 
-// Global untuk browser
 window.AnimationController = AnimationController;
 
-console.log("✅ AnimationController v2.0 - Scale support added");
+console.log("AnimationController v2.0 loaded");

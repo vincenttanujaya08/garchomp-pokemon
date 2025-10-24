@@ -1,9 +1,3 @@
-/**
- * Garchomp Walking + Overlay Eye Blink (NO ROAR)
- * Blink berjalan sebagai OVERLAY (independen dari state mesin utama).
- * Visual blink: scaleY -> 0, sambil squash X agar proses terlihat jelas.
- */
-
 const GarchompAnimState = {
   WALK_FORWARD: "WALK_FORWARD",
   IDLE_PAUSE: "IDLE_PAUSE",
@@ -16,62 +10,40 @@ class GarchompAnimator extends AnimationController {
       startPos: [0, 1.5, -20],
       endPos: [0, 1.5, -10],
       startRotation: 0,
-
-      // Durations
       walkDuration: 3.0,
       pauseDuration: 5.0,
       turnDuration: 1.0,
-
-      // Walk cycle
       walkCycleFreq: 2.0,
       hipSwingAngle: Math.PI / 6,
-
-      // Tail
       tailSwayFreq: 1.5,
       tailSwayAmount: 0.3,
-
-      // Body motion
       headBobAmount: 0.15,
       torsoLeanAmount: 0.1,
       bodySwayAmount: 0.05,
-
-      // === BLINK CONFIG (overlay) ===
-      // Durasi yang lebih pelan supaya “proses” scaling terlihat
-      blinkClose: 0.35, // tutup
-      blinkHold: 0.12, // tahan
-      blinkOpen: 0.35, // buka
-      // Saat scaleY mengecil, X akan melebar (squash) supaya jelas
-      blinkSquashX: 0.35, // 0..1 (0 = tak melebar; 0.35 = melebar 35% saat Y=0)
-      blinkAffectsPupil: true, // pupil ikut “hilang” saat iris 0
-
-      // Jadwal kedip acak (biar bisa kedip sambil jalan/idle/turn)
+      blinkClose: 0.35,
+      blinkHold: 0.12,
+      blinkOpen: 0.35,
+      blinkSquashX: 0.35,
+      blinkAffectsPupil: true,
       blinkMinInterval: 1.2,
       blinkMaxInterval: 3.0,
-      blinkDoubleChance: 0.22, // peluang “double blink”
-      blinkDoubleGap: 0.12, // jeda antar blink pada double
-
-      // Opsional slow motion multiplier khusus blink
-      blinkSpeedScale: 1.0, // 1.0 = normal, >1.0 = lebih cepat, <1.0 = lebih lambat
+      blinkDoubleChance: 0.22,
+      blinkDoubleGap: 0.12,
+      blinkSpeedScale: 1.0,
     };
 
     super(garchompNode, { ...defaultConfig, ...config });
     Object.assign(this, this.config);
 
-    // Pos & rot awal
     this.currentPos = [...this.startPos];
     this.currentRotation = this.startRotation;
-
-    // Cari & cache eye nodes
     this._findEyeNodes(garchompNode);
-    this._cacheOriginalEyeTransforms(true); // sekali di awal
-
-    // ====== BLINK OVERLAY RUNTIME ======
+    this._cacheOriginalEyeTransforms(true);
     this._blinkActive = false;
     this._blinkTime = 0;
-    this._blinkQueue = 0; // untuk double blink (sisa blink yang harus dimainkan)
+    this._blinkQueue = 0;
     this._blinkNextSchedule = this._nowPlusRandom();
 
-    // State machine utama
     this.states = {
       [GarchompAnimState.WALK_FORWARD]: {
         onEnter: () => {
@@ -89,13 +61,11 @@ class GarchompAnimator extends AnimationController {
         onUpdate: (dt) => this.updateWalkForward(dt),
         duration: this.walkDuration,
       },
-
       [GarchompAnimState.IDLE_PAUSE]: {
         onEnter: () => {},
         onUpdate: (dt) => this.updateIdle(dt),
         duration: this.pauseDuration,
       },
-
       [GarchompAnimState.TURN_AROUND]: {
         onEnter: () => {
           this.turnStartRot = this.currentRotation;
@@ -110,20 +80,13 @@ class GarchompAnimator extends AnimationController {
     this.transitionTo(GarchompAnimState.WALK_FORWARD);
   }
 
-  // ================== STATE MACHINE LOOP ==================
   updateStateMachine(dt) {
     const state = this.states[this.currentState];
     if (state?.onUpdate) state.onUpdate.call(this, dt);
-
-    if (this.stateTime >= (state?.duration ?? Infinity)) {
+    if (this.stateTime >= (state?.duration ?? Infinity))
       this.handleStateTransition();
-    }
-
-    // Animasi kontinu
     this.updateTailSway(this.totalTime);
     this.updateBodyMotion();
-
-    // === BLINK OVERLAY (jalan kapan saja) ===
     this._updateBlinkOverlay(dt);
   }
 
@@ -141,7 +104,6 @@ class GarchompAnimator extends AnimationController {
     }
   }
 
-  // ================== MAIN ANIMS ==================
   updateWalkForward(dt) {
     const t = this.stateTime / this.walkDuration;
     this.currentPos = this.lerpVec3(this._walkFrom, this._walkTo, t);
@@ -168,92 +130,64 @@ class GarchompAnimator extends AnimationController {
     );
   }
 
-  // ================== BLINK OVERLAY ==================
   _updateBlinkOverlay(dt) {
-    // Jadwalkan mulai blink jika waktunya
-    if (!this._blinkActive && this.totalTime >= this._blinkNextSchedule) {
+    if (!this._blinkActive && this.totalTime >= this._blinkNextSchedule)
       this._startBlink();
-    }
-
     if (!this._blinkActive) return;
-
     const speed = Math.max(0.0001, this.blinkSpeedScale);
     this._blinkTime += dt / speed;
-
-    const dClose = this.blinkClose;
-    const dHold = this.blinkHold;
-    const dOpen = this.blinkOpen;
-    const total = dClose + dHold + dOpen;
-
+    const dClose = this.blinkClose,
+      dHold = this.blinkHold,
+      dOpen = this.blinkOpen,
+      total = dClose + dHold + dOpen;
     let scaleY = 1.0;
-
     if (this._blinkTime < dClose) {
-      // CLOSE: 1 → 0 (ease-in)
       const k = this._blinkTime / dClose;
       scaleY = 1.0 - this.easeInCubic(k);
     } else if (this._blinkTime < dClose + dHold) {
-      // HOLD
       scaleY = 0.0;
     } else if (this._blinkTime < total) {
-      // OPEN: 0 → 1 (ease-out)
       const k = (this._blinkTime - dClose - dHold) / dOpen;
       scaleY = this.easeOutCubic(k);
     } else {
-      // Selesai satu blink
       this._finishOneBlink();
       return;
     }
-
-    // Squash X supaya proses kedip “jelas”
-    const squashAmount = (1.0 - scaleY) * this.blinkSquashX; // 0..blinkSquashX
+    const squashAmount = (1.0 - scaleY) * this.blinkSquashX;
     const scaleX = 1.0 + squashAmount;
     const scaleZ = 1.0;
-
     this._applyEyeScaleXZ(scaleX, scaleY, scaleZ);
-
-    if (this.blinkAffectsPupil) {
-      // pupil mengikuti (bisa juga atur berbeda jika ingin)
-      this._applyPupilScaleXZ(scaleX, scaleY, scaleZ);
-    }
+    if (this.blinkAffectsPupil) this._applyPupilScaleXZ(scaleX, scaleY, scaleZ);
   }
 
   _startBlink() {
     if (!this.irisL && !this.irisR) {
-      // Tidak ada node iris; jadwalkan ulang saja
       this._blinkNextSchedule = this._nowPlusRandom();
       return;
     }
     this._blinkActive = true;
     this._blinkTime = 0;
-
-    // Double blink?
     this._blinkQueue = Math.random() < this.blinkDoubleChance ? 1 : 0;
   }
 
   _finishOneBlink() {
-    // Kembalikan ke transform asli (clean)
     this._restoreEyeTransforms();
-
     if (this._blinkQueue > 0) {
-      // Jadwalkan blink kedua dengan jeda kecil
       this._blinkQueue -= 1;
       this._blinkActive = false;
       this._blinkNextSchedule = this.totalTime + this.blinkDoubleGap;
     } else {
-      // Selesai, jadwalkan blink berikutnya secara acak
       this._blinkActive = false;
       this._blinkNextSchedule = this._nowPlusRandom();
     }
   }
 
   _nowPlusRandom() {
-    const a = this.blinkMinInterval;
-    const b = this.blinkMaxInterval;
-    const r = a + Math.random() * Math.max(0, b - a);
-    return this.totalTime + r;
+    const a = this.blinkMinInterval,
+      b = this.blinkMaxInterval;
+    return this.totalTime + a + Math.random() * Math.max(0, b - a);
   }
 
-  // ================== EYE NODES OPS ==================
   _applyEyeScaleXZ(sx, sy, sz) {
     if (this.irisL) this._scaleNodeFromOriginal(this.irisL, sx, sy, sz);
     if (this.irisR) this._scaleNodeFromOriginal(this.irisR, sx, sy, sz);
@@ -285,7 +219,6 @@ class GarchompAnimator extends AnimationController {
   }
 
   _findEyeNodes(root) {
-    // Prefer root.eyes bila ada
     if (root && root.eyes) {
       this.irisL = root.eyes.irisL;
       this.irisR = root.eyes.irisR;
@@ -293,7 +226,6 @@ class GarchompAnimator extends AnimationController {
       this.pupilR = root.eyes.pupilR;
       return;
     }
-    // DFS
     const nodes = [];
     (function dfs(n) {
       if (!n) return;
@@ -301,12 +233,10 @@ class GarchompAnimator extends AnimationController {
       (n.children || []).forEach(dfs);
     })(root);
     const byName = (name) => nodes.find((n) => n.name === name);
-
     this.irisL = byName("EyeIrisLeft") || null;
     this.irisR = byName("EyeIrisRight") || null;
     this.pupilL = byName("EyePupilLeft") || null;
     this.pupilR = byName("EyePupilRight") || null;
-
     if (!this.irisL || !this.irisR) {
       const yellow = nodes.filter(
         (n) => n.materialColor === GarchompAnatomy.colors?.yellow
@@ -320,7 +250,6 @@ class GarchompAnimator extends AnimationController {
     }
   }
 
-  // ================== WALK / TAIL / BODY ==================
   updateWalkCycle(time) {
     const cycle = Math.sin(time * this.walkCycleFreq * Math.PI * 2);
     const L = cycle * this.hipSwingAngle;
@@ -358,7 +287,6 @@ class GarchompAnimator extends AnimationController {
       const idx = j?._segmentIndex ?? i;
       const phase = (i / joints.length) * Math.PI * 0.5;
       const t = i / joints.length;
-
       const swayY =
         Math.sin(time * this.tailSwayFreq * Math.PI * 2 + phase) *
         this.tailSwayAmount *
@@ -370,7 +298,6 @@ class GarchompAnimator extends AnimationController {
         t;
       const twist =
         Math.sin(time * this.tailSwayFreq * Math.PI + phase) * 0.5 * t;
-
       mat4.identity(j.localTransform);
       if (idx > 0)
         mat4.translate(j.localTransform, j.localTransform, [0, 0, -L]);
@@ -383,7 +310,6 @@ class GarchompAnimator extends AnimationController {
   updateBodyMotion() {
     const isWalking = this.currentState === GarchompAnimState.WALK_FORWARD;
     const isTurning = this.currentState === GarchompAnimState.TURN_AROUND;
-
     if (isWalking) {
       this.applyHeadBob();
       this.applyBodySway();
@@ -391,7 +317,6 @@ class GarchompAnimator extends AnimationController {
       this.resetNeck();
       this.resetTorso();
     }
-
     if (isTurning) this.applyTorsoLean();
   }
 
@@ -482,7 +407,6 @@ class GarchompAnimator extends AnimationController {
     );
   }
 
-  // ================== EASING ==================
   easeInCubic(x) {
     return x * x * x;
   }
@@ -494,12 +418,6 @@ class GarchompAnimator extends AnimationController {
   }
 }
 
-// Export
 if (typeof module !== "undefined" && module.exports)
   module.exports = GarchompAnimator;
 window.GarchompAnimator = GarchompAnimator;
-
-console.log("✅ GarchompAnimator (Overlay Blink, No Roar)");
-console.log(
-  "Blink: scaleY→0 + squashX (jelas), random timer, bisa saat jalan/idle/turn."
-);

@@ -1,5 +1,3 @@
-// File: js/models/gabite/gabite_anatomy.js
-
 const GabiteAnatomy = {
   colors: {
     darkBlue: [0.18, 0.22, 0.38, 1.0],
@@ -11,7 +9,6 @@ const GabiteAnatomy = {
     black: [0.0, 0.0, 0.0, 1.0],
   },
 
-  // Kita bisa tambahkan proporsi tubuh Gabite di sini nanti
   torso: {
     height: 2.8,
     dadaRadius: 1.0,

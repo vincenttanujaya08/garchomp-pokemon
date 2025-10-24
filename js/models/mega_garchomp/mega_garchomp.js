@@ -1,53 +1,31 @@
-/**
- * ---
- * MEGA GARCHOMP MODEL SETUP
- * ---
- * You can start by developing the torso in createMegaGarchompTorso().
- * The old head is safely stored in createMegaGarchompHead() for future use.
- */
-// ---------------------------------------------------------
-//  Build Neck
-// ---------------------------------------------------------
 function createMegaGarchompNeck(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const reds = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
 
-  // --- MESH ---
-  // Menggunakan Hyperboloid of 1 Sheet untuk bentuk leher yang organik
   const neckMesh = new Mesh(
     gl,
     Prm.createHyperboloidOneSheet(
-      0.6, // radiusX di bagian terlebar
-      0.6, // radiusZ di bagian terlebar
-      0.4, // pinchY (seberapa "ramping" di tengah)
-      1.0, // height (panjang leher)
-      16, // latitudeBands (segmen vertikal)
-      16 // longitudeBands (segmen horizontal)
+      0.6, // radiusX
+      0.6, // radiusZ
+      0.4, // pinchY
+      1.0, // height
+      16, // latitudeBands
+      16 // longitudeBands
     )
   );
 
   const neckMesh2 = new Mesh(
     gl,
-    Prm.createHyperboloidOneSheet(
-      0.6, // radiusX di bagian terlebar
-      0.6, // radiusZ di bagian terlebar
-      0.4, // pinchY (seberapa "ramping" di tengah)
-      1.0, // height (panjang leher)
-      16, // latitudeBands (segmen vertikal)
-      16 // longitudeBands (segmen horizontal)
-    )
+    Prm.createHyperboloidOneSheet(0.6, 0.6, 0.4, 1.0, 16, 16)
   );
 
-  // --- NODE ---
   const neckNode = new SceneNode(neckMesh, darkBlue);
   const neckNode2 = new SceneNode(neckMesh2, redOrange);
 
   neckNode.addChild(neckNode2);
 
-  // --- TRANSFORMASI ---
-  // Sedikit memiringkan leher ke depan
   mat4.rotate(
     neckNode.localTransform,
     neckNode.localTransform,
@@ -80,23 +58,18 @@ function createMegaGarchompNeck(gl) {
 
   return neckNode;
 }
-// ---------------------------------------------------------
-//  Build Lower Jaw (gajadi)
-// ---------------------------------------------------------
+
 function createMegaGarchompJaw(gl) {
   const redOrange = [0.8, 0.15, 0.1, 1.0];
   const white = [1.0, 1.0, 1.0, 1.0];
-  const black = [0.1, 0.1, 0.1, 1.0]; // Warna untuk bagian dalam mulut
+  const black = [0.1, 0.1, 0.1, 1.0];
 
-  // --- MESH ---
   const jawBaseMesh = new Mesh(gl, Prm.createCuboid(1, 1, 1));
   const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
 
-  // BARU: Mesh untuk penutup dagu dan bagian dalam mulut
   const chinCoverMesh = new Mesh(gl, Prm.createTriangularPrism(1, 1, 1));
   const innerMouthMesh = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
 
-  // --- NODE ---
   const jawRoot = new SceneNode(null);
   const jawCenter = new SceneNode(jawBaseMesh, redOrange);
   const leftJawBlock = new SceneNode(jawBaseMesh, redOrange);
@@ -105,7 +78,6 @@ function createMegaGarchompJaw(gl) {
   const leftJawCover = new SceneNode(jawBaseMesh, redOrange);
   const rightJawCover = new SceneNode(jawBaseMesh, redOrange);
 
-  // BARU: Node untuk penutup dagu dan bagian dalam mulut
   const chinCoverNode = new SceneNode(chinCoverMesh, redOrange);
   const innerMouthNode = new SceneNode(innerMouthMesh, black);
 
@@ -123,7 +95,6 @@ function createMegaGarchompJaw(gl) {
   jawRoot.addChild(leftJawCover);
   jawRoot.addChild(rightJawCover);
 
-  // BARU: Tambahkan node baru ke root rahang
   jawRoot.addChild(chinCoverNode);
   jawRoot.addChild(innerMouthNode);
 
@@ -134,7 +105,6 @@ function createMegaGarchompJaw(gl) {
   jawRoot.addChild(lowerToothR2);
   jawRoot.addChild(lowerToothR3);
 
-  // --- TRANSFORMASI ---
   mat4.translate(
     jawRoot.localTransform,
     jawRoot.localTransform,
@@ -214,7 +184,6 @@ function createMegaGarchompJaw(gl) {
     [0.2, 0.5, 0.3]
   );
 
-  // BARU: Transformasi untuk elipsoid dalam mulut
   mat4.translate(
     innerMouthNode.localTransform,
     innerMouthNode.localTransform,
@@ -226,7 +195,6 @@ function createMegaGarchompJaw(gl) {
     [0.7, 0.2, 1]
   );
 
-  // BARU: Transformasi untuk prisma segitiga di bawah dagu
   mat4.translate(
     chinCoverNode.localTransform,
     chinCoverNode.localTransform,
@@ -237,12 +205,12 @@ function createMegaGarchompJaw(gl) {
     chinCoverNode.localTransform,
     Math.PI / 2,
     [1, 0, 0]
-  ); // Posisikan tidur
+  );
   mat4.scale(
     chinCoverNode.localTransform,
     chinCoverNode.localTransform,
     [1.4, 1.4, 0.05]
-  ); // Geprek sangat tipis
+  );
 
   mat4.translate(
     lowerToothL1.localTransform,
@@ -312,9 +280,6 @@ function createMegaGarchompJaw(gl) {
 
   return jawRoot;
 }
-// ---------------------------------------------------------
-//  Build Upper Head (gajadi)
-// ---------------------------------------------------------
 
 function createMegaGarchompUpperHead(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
@@ -322,8 +287,6 @@ function createMegaGarchompUpperHead(gl) {
   const yellow = [1.0, 0.84, 0.0, 1.0];
   const black = [0.1, 0.1, 0.1, 1.0];
   const white = [1.0, 1.0, 1.0, 1.0];
-
-  // --- MESHES ---
 
   const rugbyProfile = [];
   const smoothness = 10;
@@ -368,10 +331,8 @@ function createMegaGarchompUpperHead(gl) {
 
   const toothMesh = new Mesh(gl, Prm.createCone(0.1, 0.3, 8));
 
-  // BARU: Mesh untuk tanduk depan
   const hornMesh = new Mesh(gl, Prm.createCone(0.6, 1, 4));
 
-  // --- NODES & HIERARCHY ---
   const upperHeadRoot = new SceneNode(null);
   upperHeadRoot.name = "UpperHead";
 
@@ -403,10 +364,8 @@ function createMegaGarchompUpperHead(gl) {
   const toothR2 = new SceneNode(toothMesh, white);
   const toothR3 = new SceneNode(toothMesh, white);
 
-  // BARU: Node untuk tanduk depan
   const centerHornNode = new SceneNode(hornMesh, yellow);
 
-  // Gabungkan semua
   upperHeadRoot.addChild(centerRugbyNode);
   upperHeadRoot.addChild(leftRugbyNode);
   upperHeadRoot.addChild(rightRugbyNode);
@@ -420,7 +379,6 @@ function createMegaGarchompUpperHead(gl) {
   centerRugbyNode.addChild(leftEyeNode);
   centerRugbyNode.addChild(rightEyeNode);
 
-  // BARU: Tambahkan tanduk depan ke rugby tengah
   centerRugbyNode.addChild(centerHornNode);
 
   leftEyeNode.addChild(leftPupilNode);
@@ -436,7 +394,6 @@ function createMegaGarchompUpperHead(gl) {
   underJawNode.addChild(toothR2);
   underJawNode.addChild(toothR3);
 
-  // --- TRANSFORMATIONS ---
   mat4.translate(
     upperHeadRoot.localTransform,
     upperHeadRoot.localTransform,
@@ -699,8 +656,6 @@ function createMegaGarchompUpperHead(gl) {
     [0.9, 0.2, 0.1]
   );
 
-  // Transformasi untuk setiap gigi secara manual
-  // Gigi Kiri
   mat4.translate(
     toothL1.localTransform,
     toothL1.localTransform,
@@ -725,7 +680,6 @@ function createMegaGarchompUpperHead(gl) {
   mat4.rotate(toothL3.localTransform, toothL3.localTransform, 1.1, [1, 0, 0]);
   mat4.scale(toothL3.localTransform, toothL3.localTransform, [1.6, 1.6, 1.6]);
 
-  // Gigi Kanan
   mat4.translate(
     toothR1.localTransform,
     toothR1.localTransform,
@@ -750,12 +704,11 @@ function createMegaGarchompUpperHead(gl) {
   mat4.rotate(toothR3.localTransform, toothR3.localTransform, 1.1, [1, 0, 0]);
   mat4.scale(toothR3.localTransform, toothR3.localTransform, [1.6, 1.6, 1.6]);
 
-  // BARU: Transformasi untuk tanduk depan
   mat4.translate(
     centerHornNode.localTransform,
     centerHornNode.localTransform,
     [0, 1.6, 0]
-  ); // Posisikan di ujung rugby
+  );
   mat4.scale(
     centerHornNode.localTransform,
     centerHornNode.localTransform,
@@ -771,13 +724,10 @@ function createMegaGarchompUpperHead(gl) {
 
   return upperHeadRoot;
 }
-// ---------------------------------------------------------
-//  Build Head
-// ---------------------------------------------------------
+
 function createMegaGarchompHead(gl) {
   const headRoot = new SceneNode(null);
   headRoot.name = "HeadRoot";
-  // --- UPPER HEAD ---
   const upperHead = (function createMegaGarchompUpperHead(gl) {
     const lightBlue = [0.6, 0.6, 1.0, 1.0];
     const yellow = [1.0, 0.84, 0.0, 1.0];
@@ -1175,7 +1125,6 @@ function createMegaGarchompHead(gl) {
     return upperHeadRoot;
   })(gl);
 
-  // --- LOWER JAW ---
   const lowerJaw = (function createMegaGarchompJaw(gl) {
     const redOrange = [0.8, 0.15, 0.1, 1.0];
     const white = [1.0, 1.0, 1.0, 1.0];
@@ -1396,19 +1345,15 @@ function createMegaGarchompHead(gl) {
 
   return headRoot;
 }
-// ---------------------------------------------------------
-//  Build Torso
-// ---------------------------------------------------------
+
 function createMegaGarchompTorso(gl) {
-  // --- COLORS ---
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
   const redOrange = [0.8, 0.15, 0.1, 1.0];
   const yellow = [1.0, 0.84, 0.0, 1.0];
-  const white = [0.9, 0.9, 0.9, 1.0]; // Warna putih untuk duri
+  const white = [0.9, 0.9, 0.9, 1.0];
 
-  // --- MESHES ---
   const upperBodyMesh = new Mesh(
     gl,
     Prm.createEllipsoid(0.8, 1.2, 0.7, 32, 32)
@@ -1437,7 +1382,6 @@ function createMegaGarchompTorso(gl) {
   const stomachPlateMesh2 = new Mesh(gl, Prm.createEllipsoid(1, 1, 1, 32, 32));
   const spikeMesh = new Mesh(gl, Prm.createTriangularPrism(0.4, 0.6, 0.1));
 
-  // --- SCENE NODES ---
   const torsoRoot = new SceneNode(null);
   const upperBodyNode = new SceneNode(upperBodyMesh, darkBlue);
   const lowerBodyNode = new SceneNode(lowerBodyMesh, darkBlue);
@@ -1459,7 +1403,6 @@ function createMegaGarchompTorso(gl) {
   const ChestSpikeNode9 = new SceneNode(spikeMesh, white);
   const ChestSpikeNode10 = new SceneNode(spikeMesh, white);
 
-  // --- HIERARCHY ---
   torsoRoot.addChild(upperBodyNode);
   torsoRoot.addChild(lowerBodyNode);
   torsoRoot.addChild(leftShoulderNode);
@@ -1480,7 +1423,6 @@ function createMegaGarchompTorso(gl) {
   torsoRoot.addChild(ChestSpikeNode9);
   torsoRoot.addChild(ChestSpikeNode10);
 
-  // --- TRANSFORMATIONS ---
   mat4.translate(
     upperBodyNode.localTransform,
     upperBodyNode.localTransform,
@@ -1758,35 +1700,28 @@ function createMegaGarchompTorso(gl) {
   const tailData = createMegaGarchompAnimatedTail(gl);
   torsoRoot.addChild(tailData.root);
 
-  // Position tail
   mat4.translate(
     tailData.root.localTransform,
     tailData.root.localTransform,
     [0, -1.5, 0.5]
   );
 
-  // ✅ EXPORT tail data
   torsoRoot.tailJoints = tailData.joints;
   torsoRoot.tailSegmentLength = tailData.segmentLength;
 
   return torsoRoot;
 }
-// ---------------------------------------------------------
-//  Build Tail
-// ---------------------------------------------------------
-// ---------------------------------------------------------
-//  Build ANIMATED Tail (SEGMENTED seperti Garchomp)
-// ---------------------------------------------------------
+
 function createMegaGarchompAnimatedTail(gl) {
   const cfg = GarchompAnatomy;
   const tailRoot = new SceneNode(null);
   tailRoot.name = "MegaTailRoot";
 
-  const numSegments = 12; // ✅ Lebih banyak untuk smoothness
-  const segmentLength = 0.6; // ✅ Lebih pendek untuk smoothness
+  const numSegments = 12;
+  const segmentLength = 0.6;
 
   const tailProfile = [
-    [0.0, 0.9], // ✅ Lebih besar untuk Mega Garchomp
+    [0.0, 0.9],
     [0.6, 0.6],
     [0.9, 0.0],
     [0.6, -0.6],
@@ -1799,11 +1734,10 @@ function createMegaGarchompAnimatedTail(gl) {
   const joints = [];
   let previousJoint = tailRoot;
 
-  // ===== CREATE SEGMENTS (LOGIKA ASLI) =====
   for (let i = 0; i < numSegments; i++) {
     const t = i / numSegments;
-    const scaleStart = 1.0 - t; // ✅ BACK TO ORIGINAL
-    const scaleEnd = 1.0 - (i + 1) / numSegments; // ✅ BACK TO ORIGINAL
+    const scaleStart = 1.0 - t;
+    const scaleEnd = 1.0 - (i + 1) / numSegments;
 
     const segPath = [
       [0, 0, 0],
@@ -1819,19 +1753,15 @@ function createMegaGarchompAnimatedTail(gl) {
     );
     const segmentMesh = new Mesh(gl, segmentGeom);
 
-    // Joint node (pivot point)
     const jointNode = new SceneNode(null);
     jointNode.name = `MegaTailJoint${i}`;
 
-    // ✅ CRITICAL: Store metadata
     jointNode._segmentLength = segmentLength;
     jointNode._segmentIndex = i;
 
-    // Mesh as child
     const segmentNode = new SceneNode(segmentMesh, cfg.colors.darkBlue);
     jointNode.addChild(segmentNode);
 
-    // Position (only if not first)
     if (i > 0) {
       mat4.translate(jointNode.localTransform, jointNode.localTransform, [
         0,
@@ -1845,7 +1775,6 @@ function createMegaGarchompAnimatedTail(gl) {
     previousJoint = jointNode;
   }
 
-  // ===== SIDE FINS =====
   const finProfile = [
     [0, 0.45],
     [0.2, 0],
@@ -1853,7 +1782,6 @@ function createMegaGarchompAnimatedTail(gl) {
     [-0.15, 0],
   ];
 
-  // ===== LEFT FIN =====
   const leftFin_p0 = [0, 0, 0];
   const leftFin_p1 = [0.7, 0.15, -0.7];
   const leftFin_p2 = [1.3, 0.0, -1.3];
@@ -1880,7 +1808,6 @@ function createMegaGarchompAnimatedTail(gl) {
   );
   const leftFinNode = new SceneNode(leftFinMesh, cfg.colors.darkBlue);
 
-  // ===== RIGHT FIN =====
   const rightFin_p0 = [0, 0, 0];
   const rightFin_p1 = [-0.7, 0.15, -0.7];
   const rightFin_p2 = [-1.3, 0.0, -1.3];
@@ -1913,7 +1840,6 @@ function createMegaGarchompAnimatedTail(gl) {
   );
   const rightFinNode = new SceneNode(rightFinMesh, cfg.colors.darkBlue);
 
-  // ===== ATTACH FINS ke segment tengah (segment 6) =====
   if (joints.length > 6) {
     const midJoint = joints[6];
 
@@ -1958,9 +1884,7 @@ function createMegaGarchompAnimatedTail(gl) {
 
   return { root: tailRoot, joints: joints, segmentLength: segmentLength };
 }
-// ---------------------------------------------------------
-//  Build Left Leg
-// ---------------------------------------------------------
+
 function createMegaGarchompLeftLeg(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
@@ -1978,17 +1902,17 @@ function createMegaGarchompLeftLeg(gl) {
   const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16));
 
   const legRoot = new SceneNode(null);
-  legRoot.name = "LeftLegRoot"; // ✅ ADD NAME
+  legRoot.name = "LeftLegRoot";
 
   const thighNode = new SceneNode(thighMesh, darkBlue);
-  thighNode.name = "LeftThigh"; // ✅ ADD NAME
+  thighNode.name = "LeftThigh";
 
   const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
   const shinNode = new SceneNode(shinMesh, darkBlue);
-  shinNode.name = "LeftShin"; // ✅ ADD NAME
+  shinNode.name = "LeftShin";
 
   const footNode = new SceneNode(footMesh, darkBlue);
-  footNode.name = "LeftFoot"; // ✅ ADD NAME
+  footNode.name = "LeftFoot";
 
   const thighSpikeNode = new SceneNode(spikeMesh, white);
   const thighSpikeNode2 = new SceneNode(spikeMesh, white);
@@ -1997,7 +1921,6 @@ function createMegaGarchompLeftLeg(gl) {
   const footSpikeNode2 = new SceneNode(spikeMesh, white);
   const footSpikeNode3 = new SceneNode(spikeMesh, white);
 
-  // ✅ FIX HIERARCHY
   legRoot.addChild(thighNode);
   thighNode.addChild(shinConnectorNode);
   thighNode.addChild(thighSpikeNode);
@@ -2005,14 +1928,12 @@ function createMegaGarchompLeftLeg(gl) {
   thighNode.addChild(thighSpikeNode3);
   shinConnectorNode.addChild(shinNode);
 
-  // ✅ CRITICAL FIX: Foot must be child of shin, not legRoot!
-  shinNode.addChild(footNode); // ← CHANGED FROM legRoot.addChild(footNode)
+  shinNode.addChild(footNode);
 
   footNode.addChild(footSpikeNode);
   footNode.addChild(footSpikeNode2);
   footNode.addChild(footSpikeNode3);
 
-  // Transformations (keep existing)
   mat4.scale(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -2054,12 +1975,11 @@ function createMegaGarchompLeftLeg(gl) {
   );
   mat4.scale(shinNode.localTransform, shinNode.localTransform, [0.8, 0.4, 1.2]);
 
-  // ✅ FIX: Foot position now relative to shin, not legRoot
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
     [0, -0.5, -0.2]
-  ); // ADJUSTED
+  );
   mat4.scale(footNode.localTransform, footNode.localTransform, [1, 1, 1]);
   mat4.rotate(footNode.localTransform, footNode.localTransform, 5, [1, 0, 0]);
   mat4.rotate(
@@ -2073,9 +1993,7 @@ function createMegaGarchompLeftLeg(gl) {
     footNode.localTransform,
     [0, -0.4, 1]
   );
-  // ADJUSTED
 
-  // Spike transforms (keep existing)
   mat4.translate(
     thighSpikeNode.localTransform,
     thighSpikeNode.localTransform,
@@ -2178,7 +2096,6 @@ function createMegaGarchompLeftLeg(gl) {
     [0.8, 1, 0.8]
   );
 
-  // ✅ EXPORT joints for animator
   legRoot.joints = {
     thigh: thighNode,
     shin: shinNode,
@@ -2188,9 +2105,6 @@ function createMegaGarchompLeftLeg(gl) {
   return legRoot;
 }
 
-// ---------------------------------------------------------
-//  Build Right Leg
-// ---------------------------------------------------------
 function createMegaGarchompRightLeg(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
@@ -2206,17 +2120,17 @@ function createMegaGarchompRightLeg(gl) {
   const spikeMesh = new Mesh(gl, Prm.createCone(0.2, 0.8, 16));
 
   const legRoot = new SceneNode(null);
-  legRoot.name = "RightLegRoot"; // ✅ ADD NAME
+  legRoot.name = "RightLegRoot";
 
   const thighNode = new SceneNode(thighMesh, darkBlue);
-  thighNode.name = "RightThigh"; // ✅ ADD NAME
+  thighNode.name = "RightThigh";
 
   const shinConnectorNode = new SceneNode(shinConnectorMesh, darkBlue);
   const shinNode = new SceneNode(shinMesh, darkBlue);
-  shinNode.name = "RightShin"; // ✅ ADD NAME
+  shinNode.name = "RightShin";
 
   const footNode = new SceneNode(footMesh, darkBlue);
-  footNode.name = "RightFoot"; // ✅ ADD NAME
+  footNode.name = "RightFoot";
 
   const thighSpikeNode = new SceneNode(spikeMesh, white);
   const thighSpikeNode2 = new SceneNode(spikeMesh, white);
@@ -2225,7 +2139,6 @@ function createMegaGarchompRightLeg(gl) {
   const footSpikeNode2 = new SceneNode(spikeMesh, white);
   const footSpikeNode3 = new SceneNode(spikeMesh, white);
 
-  // ✅ FIX HIERARCHY
   legRoot.addChild(thighNode);
   thighNode.addChild(shinConnectorNode);
   thighNode.addChild(thighSpikeNode);
@@ -2233,15 +2146,12 @@ function createMegaGarchompRightLeg(gl) {
   thighNode.addChild(thighSpikeNode3);
   shinConnectorNode.addChild(shinNode);
 
-  // ✅ CRITICAL FIX
-  shinNode.addChild(footNode); // ← CHANGED FROM legRoot.addChild(footNode)
+  shinNode.addChild(footNode);
 
   footNode.addChild(footSpikeNode);
   footNode.addChild(footSpikeNode2);
   footNode.addChild(footSpikeNode3);
 
-  // Transformations (mirrored from left leg)
-  // RIGHT (FIXED mirror dari kiri)
   mat4.scale(
     thighNode.localTransform,
     thighNode.localTransform,
@@ -2251,13 +2161,13 @@ function createMegaGarchompRightLeg(gl) {
     thighNode.localTransform,
     thighNode.localTransform,
     [-1.1, 0, 0]
-  ); // mirror X, tanpa offset Y
+  );
   mat4.rotate(
     thighNode.localTransform,
     thighNode.localTransform,
     Math.PI / 5,
     [-1, 0, -1]
-  ); // axis sudah benar untuk mirror
+  );
 
   mat4.translate(
     shinConnectorNode.localTransform,
@@ -2283,7 +2193,6 @@ function createMegaGarchompRightLeg(gl) {
   );
   mat4.scale(shinNode.localTransform, shinNode.localTransform, [0.8, 0.4, 1.2]);
 
-  // ✅ FIX: Foot position now relative to shin
   mat4.translate(
     footNode.localTransform,
     footNode.localTransform,
@@ -2303,7 +2212,6 @@ function createMegaGarchompRightLeg(gl) {
     [0, -0.4, 1]
   );
 
-  // Spike transforms (mirrored)
   mat4.translate(
     thighSpikeNode.localTransform,
     thighSpikeNode.localTransform,
@@ -2406,7 +2314,6 @@ function createMegaGarchompRightLeg(gl) {
     [0.8, 1, 0.8]
   );
 
-  // ✅ EXPORT joints
   legRoot.joints = {
     thigh: thighNode,
     shin: shinNode,
@@ -2415,17 +2322,12 @@ function createMegaGarchompRightLeg(gl) {
 
   return legRoot;
 }
-// ---------------------------------------------------------
-//  Build Dorsal Fin
-// ---------------------------------------------------------
+
 function createDorsalFin(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const lightBlue = [0.6, 0.6, 1.0, 1.0];
 
-  // -- Gabungkan semua titik menjadi SATU array --
-  // Urutan titik diatur untuk menjiplak seluruh outline sirip, TANPA B dan C
   const finShapePoints = [
-    // Garis atas sirip
     [0.06, 0, 2.87], // A
     [1.6, 0, 2.97], // D
     [3.32, 0, 3.17], // E
@@ -2433,7 +2335,7 @@ function createDorsalFin(gl) {
     [5.38, 0, 2.91], // G
     [6.5, 0, 2.57], // H
     [7.56, 0, 2.19], // I
-    // Lekukan-lekukan di bagian bawah
+
     [6.08, 0, 1.65], // J
     [5.14, 0, 1.93], // K
     [4.24, 0, 2.03], // L
@@ -2446,13 +2348,10 @@ function createDorsalFin(gl) {
     [0.02, 0, 0.71], // S
   ];
 
-  // Buat satu mesh dari satu outline utuh
   const finMesh = new Mesh(gl, Prm.createExtrudedShape(finShapePoints, 0.2));
 
   const dorsalFinRoot = new SceneNode(finMesh, darkBlue);
 
-  // -- TRANSFORMASI KESELURUHAN --
-  // Rotasi agar berdiri tegak
   mat4.rotate(
     dorsalFinRoot.localTransform,
     dorsalFinRoot.localTransform,
@@ -2465,7 +2364,7 @@ function createDorsalFin(gl) {
     Math.PI / 2,
     [0, 0, 1]
   );
-  // Sesuaikan skala agar proporsional
+
   mat4.scale(
     dorsalFinRoot.localTransform,
     dorsalFinRoot.localTransform,
@@ -2479,15 +2378,11 @@ function createDorsalFin(gl) {
 
   return dorsalFinRoot;
 }
-// ---------------------------------------------------------
-//  Build Right Arm
-// ---------------------------------------------------------
+
 function createMegaGarchompRightArm(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
 
-  // --- MESHES ---
-  // Lengan atas melengkung (di-mirror dari lengan kiri)
   const armProfile = [];
   const armRadius = 0.3;
   const armSides = 16;
@@ -2496,11 +2391,10 @@ function createMegaGarchompRightArm(gl) {
     armProfile.push([Math.cos(angle) * armRadius, Math.sin(angle) * armRadius]);
   }
 
-  // Path di-mirror pada sumbu X
   const arm_p0 = [0, 0, 0];
-  const arm_p1 = [-0.1, -0.4, 0]; // X dinegatifkan
-  const arm_p2 = [-0.1, -1.0, 0]; // X dinegatifkan
-  const arm_p3 = [-0.2, -1.5, 0]; // X dinegatifkan
+  const arm_p1 = [-0.1, -0.4, 0];
+  const arm_p2 = [-0.1, -1.0, 0];
+  const arm_p3 = [-0.2, -1.5, 0];
   const armPath = [];
   const armSegments = 10;
   for (let i = 0; i <= armSegments; i++) {
@@ -2521,7 +2415,6 @@ function createMegaGarchompRightArm(gl) {
     Prm.createEllipsoid(0.26, 0.1, 0.3, 16, 16)
   );
 
-  // Geometri sirip sama dengan tangan kiri
   const finW = 0.6,
     finH = 0.7,
     topBulge = 0.12,
@@ -2558,25 +2451,23 @@ function createMegaGarchompRightArm(gl) {
   wristJointNode.addChild(rightFin);
   wristJointNode.addChild(finInnerNode);
 
-  // --- TRANSFORMATIONS (MIRRORED) ---
-  // Lengan atas di-mirror
   mat4.translate(
     upperArmNode.localTransform,
     upperArmNode.localTransform,
     [1, 1, 0]
-  ); // X positif
+  );
   mat4.rotate(
     upperArmNode.localTransform,
     upperArmNode.localTransform,
     Math.PI / 3.6,
     [0, 0, 1]
-  ); // Rotasi Z dibalik
+  );
   mat4.rotate(
     upperArmNode.localTransform,
     upperArmNode.localTransform,
     Math.PI / 8,
     [0, 1, 0]
-  ); // Rotasi Y dibalik
+  );
   mat4.scale(
     upperArmNode.localTransform,
     upperArmNode.localTransform,
@@ -2584,7 +2475,6 @@ function createMegaGarchompRightArm(gl) {
   );
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
-  // Lengan bawah di-mirror
   mat4.translate(
     rightFore.localTransform,
     rightFore.localTransform,
@@ -2595,7 +2485,7 @@ function createMegaGarchompRightArm(gl) {
     rightFore.localTransform,
     -Math.PI / 6,
     [0, 0, 1]
-  ); // Rotasi Z dibalik
+  );
   mat4.rotate(
     rightFore.localTransform,
     rightFore.localTransform,
@@ -2604,20 +2494,17 @@ function createMegaGarchompRightArm(gl) {
   );
   mat4.scale(rightFore.localTransform, rightFore.localTransform, [0.8, 2.5, 1]);
 
-  // Sendi pergelangan tangan (posisi sama secara lokal)
   mat4.translate(
     wristJointNode.localTransform,
     wristJointNode.localTransform,
     [0, -0.25, 0]
   );
 
-  // Sirip luar di-mirror
   mat4.translate(rightFin.localTransform, rightFin.localTransform, [0, 0, 0]);
-  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -4, [0, 1, 0]); // Rotasi Y dibalik
-  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -2, [0, 0, -1]); // Rotasi Z dibalik
-  mat4.scale(rightFin.localTransform, rightFin.localTransform, [-2.5, 2, 0.9]); // Skala X dinegatifkan untuk mirror sempurna
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -4, [0, 1, 0]);
+  mat4.rotate(rightFin.localTransform, rightFin.localTransform, -2, [0, 0, -1]);
+  mat4.scale(rightFin.localTransform, rightFin.localTransform, [-2.5, 2, 0.9]);
 
-  // Sirip dalam (merah) di-mirror
   mat4.translate(
     finInnerNode.localTransform,
     finInnerNode.localTransform,
@@ -2628,31 +2515,27 @@ function createMegaGarchompRightArm(gl) {
     finInnerNode.localTransform,
     -4,
     [0, 1, 0]
-  ); // Rotasi Y dibalik
+  );
   mat4.rotate(
     finInnerNode.localTransform,
     finInnerNode.localTransform,
     -2,
     [0, 0, -1]
-  ); // Rotasi Z dibalik
+  );
   mat4.scale(
     finInnerNode.localTransform,
     finInnerNode.localTransform,
     [-3.2, 3.2, 0.1]
-  ); // Skala X dinegatifkan
+  );
 
   return armRoot;
 }
-// ---------------------------------------------------------
-//  Build Left Arm
-// ---------------------------------------------------------
+
 function createMegaGarchompLeftArm(gl) {
   const darkBlue = [0.18, 0.22, 0.38, 1.0];
   const white = [0.9, 0.9, 0.9, 1.0];
   const red = [0.8, 0.15, 0.1, 1.0];
 
-  // --- MESHES ---
-  // Lengan atas melengkung (dipertahankan dari kode lama)
   const armProfile = [];
   const armRadius = 0.3;
   const armSides = 16;
@@ -2681,13 +2564,11 @@ function createMegaGarchompLeftArm(gl) {
     Prm.createHyperboloidOneSheet(0.2, 0.2, 0.3, 0.5, 16, 16)
   );
 
-  // BARU: Mesh untuk sendi pergelangan tangan
   const wristJointMesh = new Mesh(
     gl,
     Prm.createEllipsoid(0.26, 0.1, 0.3, 16, 16)
   );
 
-  // --- Geometri Sirip/Tangan Baru dari Snippet Anda ---
   const finW = 0.6,
     finH = 0.7,
     topBulge = 0.12,
@@ -2708,13 +2589,11 @@ function createMegaGarchompLeftArm(gl) {
   );
   const finMesh = new Mesh(gl, finGeom);
 
-  // --- NODES & HIERARCHY ---
   const armRoot = new SceneNode(null);
   const upperArmNode = new SceneNode(upperArmMesh, darkBlue);
   const elbowNode = new SceneNode(elbowMesh, darkBlue);
   const leftFore = new SceneNode(forearmMesh, darkBlue);
 
-  // BARU: Node untuk sendi
   const wristJointNode = new SceneNode(wristJointMesh, darkBlue);
 
   const leftFin = new SceneNode(finMesh, darkBlue);
@@ -2724,13 +2603,10 @@ function createMegaGarchompLeftArm(gl) {
   upperArmNode.addChild(elbowNode);
   elbowNode.addChild(leftFore);
 
-  // BARU: Hirarki diperbarui untuk menyertakan sendi
   leftFore.addChild(wristJointNode);
   wristJointNode.addChild(leftFin);
   wristJointNode.addChild(finInnerNode);
 
-  // --- TRANSFORMATIONS ---
-  // Transformasi Lengan Atas & Siku (dipertahankan dari kode lama)
   mat4.translate(
     upperArmNode.localTransform,
     upperArmNode.localTransform,
@@ -2755,7 +2631,6 @@ function createMegaGarchompLeftArm(gl) {
   );
   mat4.translate(elbowNode.localTransform, elbowNode.localTransform, arm_p3);
 
-  // Transformasi Lengan Bawah (dipertahankan dari kode lama)
   mat4.translate(leftFore.localTransform, leftFore.localTransform, [0, 0, 0.8]);
   mat4.rotate(
     leftFore.localTransform,
@@ -2771,17 +2646,12 @@ function createMegaGarchompLeftArm(gl) {
   );
   mat4.scale(leftFore.localTransform, leftFore.localTransform, [0.8, 2.5, 1]);
 
-  // BARU: Transformasi untuk sendi pergelangan tangan (ellipsoid)
-  // Posisikan di ujung lengan bawah (hyperboloid).
-  // Tinggi hyperboloid adalah 0.5, jadi ujung bawahnya di y = -0.25 dalam koordinat lokalnya.
   mat4.translate(
     wristJointNode.localTransform,
     wristJointNode.localTransform,
     [0, -0.25, 0]
   );
 
-  // --- Transformasi untuk Fin/Tangan, sekarang relatif terhadap sendi ---
-  // Translasi diatur agar sabit muncul sedikit ke depan dari pusat sendi.
   mat4.translate(leftFin.localTransform, leftFin.localTransform, [0, 0, 0]);
   mat4.rotate(leftFin.localTransform, leftFin.localTransform, 4, [0, 1, 0]);
   mat4.rotate(leftFin.localTransform, leftFin.localTransform, 2, [0, 0, -1]);
@@ -2812,12 +2682,9 @@ function createMegaGarchompLeftArm(gl) {
   return armRoot;
 }
 
-// ---------------------------------------------------------
-//  Main Builder
-// ---------------------------------------------------------
 function createMegaGarchomp(gl) {
   const torso = createMegaGarchompTorso(gl);
-  // const tail = createMegaGarchompTail(gl);
+
   const leftLeg = createMegaGarchompLeftLeg(gl);
   const rightLeg = createMegaGarchompRightLeg(gl);
   const DorsalFin = createDorsalFin(gl);
@@ -2826,19 +2693,14 @@ function createMegaGarchomp(gl) {
   const neck = createMegaGarchompNeck(gl);
   const head = createMegaGarchompHead(gl);
 
-  // Build hierarchy
   neck.addChild(head);
   torso.addChild(DorsalFin);
-  // torso.addChild(tail);
+
   torso.addChild(rightArm);
   torso.addChild(leftArm);
   torso.addChild(neck);
   torso.addChild(leftLeg);
   torso.addChild(rightLeg);
-
-  // // Transformations
-  // mat4.translate(tail.localTransform, tail.localTransform, [0, -1.5, 0.5]);
-  // mat4.scale(tail.localTransform, tail.localTransform, [1, 1.3, 1]);
 
   mat4.translate(
     leftLeg.localTransform,
@@ -2857,7 +2719,6 @@ function createMegaGarchomp(gl) {
     [1, 0, 0]
   );
 
-  // ✅ FIXED: Complete Animation Rig Export
   torso.name = "MEGA_GARCHOMP";
   torso.animationRig = {
     torso: torso,
@@ -2874,7 +2735,6 @@ function createMegaGarchomp(gl) {
     rightShin: rightLeg.joints ? rightLeg.joints.shin : null,
     rightFoot: rightLeg.joints ? rightLeg.joints.foot : null,
 
-    // ✅ TAIL DATA (CRITICAL!)
     tailJoints: torso.tailJoints || [],
     tailSegmentLength: torso.tailSegmentLength || 0.7,
 

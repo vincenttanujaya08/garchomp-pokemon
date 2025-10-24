@@ -1,9 +1,4 @@
 class GabiteSummonAnimator {
-  /**
-   * Controls the Pokéball opening + Gabite emergence sequence.
-   * Supports optional colour groups so elements can flash white
-   * and blend back to their palettes during the opening.
-   */
   constructor({
     pokeballTopNode,
     gabiteScaleNode,
@@ -81,9 +76,8 @@ class GabiteSummonAnimator {
 
     switch (this.state) {
       case "DELAY":
-        if (this.stateTime >= this.config.startDelay) {
+        if (this.stateTime >= this.config.startDelay)
           this._transition("OPENING");
-        }
         break;
 
       case "OPENING": {
@@ -103,9 +97,8 @@ class GabiteSummonAnimator {
       case "POST_OPEN_DELAY":
         this._updateBlendGroups("opening", 1);
         this._setPokeballMotion(1);
-        if (this.stateTime >= this.config.postOpenDelay) {
+        if (this.stateTime >= this.config.postOpenDelay)
           this._transition("EMERGING");
-        }
         break;
 
       case "EMERGING": {
@@ -115,21 +108,16 @@ class GabiteSummonAnimator {
         );
         const easedScale = this._easeOutBack(t);
         const easedLift = this._easeOutCubic(t);
-
         const s =
           this.config.initialScale +
           (this.config.finalScale - this.config.initialScale) * easedScale;
         const lift =
           this.config.initialLift +
           (this.config.finalLift - this.config.initialLift) * easedLift;
-
         this._setGabiteScale(s);
         this._setGabiteLift(lift);
         this._setGabiteOffset(easedScale);
-
-        if (t >= 1) {
-          this._transition("FINISHED");
-        }
+        if (t >= 1) this._transition("FINISHED");
         break;
       }
 
@@ -152,14 +140,8 @@ class GabiteSummonAnimator {
   _transition(nextState) {
     this.state = nextState;
     this.stateTime = 0;
-
-    if (nextState === "EMERGING") {
-      this._applyInstantStartColors();
-    }
-
-    if (nextState === "FINISHED") {
-      this._restoreAllOriginalColors();
-    }
+    if (nextState === "EMERGING") this._applyInstantStartColors();
+    if (nextState === "FINISHED") this._restoreAllOriginalColors();
   }
 
   _setTopAngle(angle) {
@@ -174,41 +156,32 @@ class GabiteSummonAnimator {
 
   _setGabiteScale(scale) {
     mat4.copy(this.gabiteScaleNode.localTransform, this._scaleBaseMatrix);
-    mat4.scale(this.gabiteScaleNode.localTransform, this.gabiteScaleNode.localTransform, [
-      scale,
-      scale,
-      scale,
-    ]);
+    mat4.scale(
+      this.gabiteScaleNode.localTransform,
+      this.gabiteScaleNode.localTransform,
+      [scale, scale, scale]
+    );
   }
 
   _setGabiteLift(lift) {
     mat4.copy(this.gabiteLiftNode.localTransform, this._liftBaseMatrix);
-    mat4.translate(this.gabiteLiftNode.localTransform, this.gabiteLiftNode.localTransform, [
-      0,
-      lift,
-      0,
-    ]);
+    mat4.translate(
+      this.gabiteLiftNode.localTransform,
+      this.gabiteLiftNode.localTransform,
+      [0, lift, 0]
+    );
   }
 
   _setGabiteOffset(amount) {
     if (!this.gabiteOffsetNode || !this._offsetBaseMatrix) return;
     const t = Math.min(Math.max(amount, 0), 1);
-    const sx = this._offsetStart[0] || 0;
-    const sy = this._offsetStart[1] || 0;
-    const sz = this._offsetStart[2] || 0;
-    const tx = this._offsetTarget[0] || 0;
-    const ty = this._offsetTarget[1] || 0;
-    const tz = this._offsetTarget[2] || 0;
-
+    const [sx, sy, sz] = this._offsetStart;
+    const [tx, ty, tz] = this._offsetTarget;
     mat4.copy(this.gabiteOffsetNode.localTransform, this._offsetBaseMatrix);
     mat4.translate(
       this.gabiteOffsetNode.localTransform,
       this.gabiteOffsetNode.localTransform,
-      [
-        sx + (tx - sx) * t,
-        sy + (ty - sy) * t,
-        sz + (tz - sz) * t,
-      ]
+      [sx + (tx - sx) * t, sy + (ty - sy) * t, sz + (tz - sz) * t]
     );
   }
 
@@ -216,7 +189,6 @@ class GabiteSummonAnimator {
     if (!this.pokeballMotionNode || !this._motionBaseMatrix) return;
     const t = Math.min(Math.max(amount, 0), 1);
     mat4.copy(this.pokeballMotionNode.localTransform, this._motionBaseMatrix);
-
     if (this._motionOffset) {
       mat4.translate(
         this.pokeballMotionNode.localTransform,
@@ -228,7 +200,6 @@ class GabiteSummonAnimator {
         ]
       );
     }
-
     if (this._pokeballTiltAngle) {
       mat4.rotateX(
         this.pokeballMotionNode.localTransform,
@@ -240,7 +211,6 @@ class GabiteSummonAnimator {
 
   _initColorGroups(legacyRoot, colorGroupsInput) {
     const groups = [];
-
     if (legacyRoot) {
       groups.push({
         root: legacyRoot,
@@ -249,17 +219,14 @@ class GabiteSummonAnimator {
         applyOn: "emerging",
       });
     }
-
     if (Array.isArray(colorGroupsInput)) {
       colorGroupsInput.forEach((entry) => {
         if (entry && entry.root) groups.push(entry);
       });
     }
-
     this._colorGroups = groups
       .map((entry) => this._createColorGroup(entry))
       .filter(Boolean);
-
     this._colorGroups.forEach((group) => {
       if (group.applyOn === "start" && !group.startApplied) {
         this._setGroupToStartColor(group);
@@ -280,13 +247,11 @@ class GabiteSummonAnimator {
       startColor || this.config.colorStartColor
     );
     if (!bindings || !bindings.length) return null;
-
     const normalizedMode = mode === "lerp" ? "lerp" : "instant";
     const normalizedApplyOn =
       applyOn || (normalizedMode === "lerp" ? "start" : "emerging");
     const normalizedBlendPhase =
       normalizedMode === "lerp" ? blendPhase || "opening" : null;
-
     return {
       bindings,
       mode: normalizedMode,
@@ -299,9 +264,9 @@ class GabiteSummonAnimator {
   }
 
   _setGroupToStartColor(group) {
-    group.bindings.forEach(({ node, startColor }) => {
-      node.color = startColor.slice();
-    });
+    group.bindings.forEach(
+      ({ node, startColor }) => (node.color = startColor.slice())
+    );
   }
 
   _applyInstantStartColors() {
@@ -368,9 +333,7 @@ class GabiteSummonAnimator {
           ],
         });
       }
-      if (node.children && node.children.length) {
-        stack.push(...node.children);
-      }
+      if (node.children && node.children.length) stack.push(...node.children);
     }
     return bindings;
   }

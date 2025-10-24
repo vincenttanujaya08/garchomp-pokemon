@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -59,76 +60,144 @@
     </div>
     <canvas id="glCanvas"></canvas>
 
-    <!-- ============================================================ -->
-    <!-- 1) LIBRARY: gl-matrix -->
-    <!-- ============================================================ -->
+    <!-- Dependencies -->
+
     <script src="js/lib/gl-matrix.js"></script>
 
+    <!-- Core engine -->
+
+    <script src="js/core/scene.js" onerror="console.error('Failed to load: js/core/scene.js')"></script>
+
+    <script src="js/geometry/primitives.js"
+        onerror="console.error('Failed to load: js/geometry/primitives.js')"></script>
+
+    <script src="js/geometry/primitivesMega.js"
+        onerror="console.error('Failed to load: js/geometry/primitivesMega.js')"></script>
+
+    <script src="js/geometry/curves.js" onerror="console.error('Failed to load: js/geometry/curves.js')"></script>
+
+    <script src="js/geometry/curvesMega.js"
+        onerror="console.error('Failed to load: js/geometry/curvesMega.js')"></script>
+
+    <script src="js/geometry/primitivesGabite.js"
+        onerror="console.error('Failed to load: js/geometry/primitivesGabite.js')"></script>
+
+    <script src="js/geometry/curvesGabite.js"
+        onerror="console.error('Failed to load: js/geometry/curvesGabite.js')"></script>
+
+    <script src="js/geometry/cave.js" onerror="console.error('Failed to load: js/geometry/cave.js')"></script>
+
+    <script src="js/shaders.js" onerror="console.error('Failed to load: js/shaders.js')"></script>
+
+    <!-- Environment -->
 
     <script src="js/environment/skybox.js" onerror="console.error('Failed to load: js/environment/skybox.js')"></script>
+
     <script src="js/environment/scenery.js"
         onerror="console.error('Failed to load: js/environment/scenery.js')"></script>
+
     <script src="js/environment/island.js" onerror="console.error('Failed to load: js/environment/island.js')"></script>
+
     <script src="js/environment/water.js" onerror="console.error('Failed to load: js/environment/water.js')"></script>
-    <script src="js/geometry/cave.js" onerror="console.error('Failed to load: js/geometry/cave.js')"></script>
+
     <script src="js/environment/cave.js" onerror="console.error('Failed to load: js/environment/cave.js')"></script>
 
+    <!-- Config -->
 
-    <script src="js/main.js" onerror="console.error('Failed to load: js/main.js')"></script>
+    <script src="js/config/gabite_anatomy.js"
+        onerror="console.error('Failed to load: js/config/gabite_anatomy.js')"></script>
 
-    <!-- ============================================================ -->
-    <!-- 2) POLYFILLS: Extend gl-matrix API -->
-    <!-- ============================================================ -->
+    <script src="js/config/garchomp_anatomy.js"
+        onerror="console.error('Failed to load: js/config/garchomp_anatomy.js')"></script>
+
+
+    <!-- Models -->
+
+    <script src="js/models/gabite/gabite_parts.js"
+        onerror="console.error('Failed to load: js/models/gabite/gabite_parts.js')"></script>
+
+    <script src="js/models/gabite/gabite.js"
+        onerror="console.error('Failed to load: js/models/gabite/gabite.js')"></script>
+
+    <script src="js/models/garchomp/garchomp_parts.js"
+        onerror="console.error('Failed to load: js/models/garchomp/garchomp_parts.js')"></script>
+
+    <script src="js/models/garchomp/garchomp.js"
+        onerror="console.error('Failed to load: js/models/garchomp/garchomp.js')"></script>
+
+    <script src="js/models/pokeball/pokeball_parts.js"
+        onerror="console.error('Failed to load: js/models/pokeball/pokeball_parts.js')"></script>
+
+    <script src="js/models/pokeball/pokeball.js"
+        onerror="console.error('Failed to load: js/models/pokeball/pokeball.js')"></script>
+
+    <script src="js/models/mega_garchomp/mega_garchomp.js"
+        onerror="console.error('Failed to load: js/models/mega_garchomp/mega_garchomp.js')"></script>
+
+    <!-- Animation -->
+
+    <script src="js/animation/AnimationController.js"
+        onerror="console.error('Failed to load: js/animation/AnimationController.js')"></script>
+
+    <script src="js/animation/GarchompAnimator.js"
+        onerror="console.error('Failed to load: js/animation/GarchompAnimator.js')"></script>
+
+    <script src="js/animation/GabiteAnimator.js"
+        onerror="console.error('Failed to load: js/animation/GabiteAnimator.js')"></script>
+
+    <script src="js/animation/GabiteSummonAnimator.js"
+        onerror="console.error('Failed to load: js/animation/GabiteSummonAnimator.js')"></script>
+
+    <script src="js/animation/GarchompSummonAnimator.js"
+        onerror="console.error('Failed to load: js/animation/GarchompSummonAnimator.js')"></script>
+
+    <script src="js/animation/MegaGarchompSummonAnimator.js"
+        onerror="console.error('Failed to load: js/animation/MegaGarchompSummonAnimator.js')"></script>
+
+    <script src="js/animation/MegaGarchompAnimator.js"
+        onerror="console.error('Failed to load: js/animation/MegaGarchompAnimator.js')"></script>
+
+    <script src="js/animation/CloudOrbitAnimator.js"
+        onerror="console.error('Failed to load: js/animation/CloudOrbitAnimator.js')"></script>
+
+
     <script>
-        // Global error handler
-        window.addEventListener('error', function (e) {
+
+        window.addEventListener('error', (e) => {
             const errorDiv = document.getElementById('error');
             const errorMsg = document.getElementById('error-message');
             errorDiv.style.display = 'block';
-            errorMsg.textContent = e.error.stack || e.error.message || e.message;
-            console.error('Global error:', e.error);
+            errorMsg.textContent = e.error?.stack || e.error?.message || e.message;
+            console.error('Global error:', e.error || e.message);
         });
 
-        // Check gl-matrix loaded
         if (typeof glMatrix === 'undefined') {
-            throw new Error('gl-matrix.js not loaded! Check file path.');
+            throw new Error('gl-matrix.js not loaded. Check file path.');
         }
 
-        // Expose mat4 & vec3
+
         const mat4 = glMatrix.mat4;
         const vec3 = glMatrix.vec3;
 
-        // Polyfill missing functions
+
         if (!mat4.copy) {
-            mat4.copy = function (out, a) {
-                for (let i = 0; i < 16; i++) out[i] = a[i];
-                return out;
-            };
+            /** @param {Float32Array} out @param {Readonly<Float32Array>} a */
+            mat4.copy = function (out, a) { for (let i = 0; i < 16; i++) out[i] = a[i]; return out; };
         }
-
         if (!mat4.clone) {
-            mat4.clone = function (a) {
-                const out = mat4.create();
-                for (let i = 0; i < 16; i++) out[i] = a[i];
-                return out;
-            };
+            /** @param {Readonly<Float32Array>} a */
+            mat4.clone = function (a) { const out = mat4.create(); for (let i = 0; i < 16; i++) out[i] = a[i]; return out; };
         }
-
         if (!mat4.fromTranslation) {
-            mat4.fromTranslation = function (out, v) {
-                mat4.identity(out);
-                return mat4.translate(out, out, v);
-            };
+            /** @param {Float32Array} out @param {ReadonlyArray<number>} v */
+            mat4.fromTranslation = function (out, v) { mat4.identity(out); return mat4.translate(out, out, v); };
         }
-
         if (!mat4.fromScaling) {
-            mat4.fromScaling = function (out, v) {
-                mat4.identity(out);
-                return mat4.scale(out, out, v);
-            };
+            /** @param {Float32Array} out @param {ReadonlyArray<number>} v */
+            mat4.fromScaling = function (out, v) { mat4.identity(out); return mat4.scale(out, out, v); };
         }
-
         if (!mat4.fromQuat) {
+            /** @param {Float32Array} out @param {ReadonlyArray<number>} q */
             mat4.fromQuat = function (out, q) {
                 const x = q[0], y = q[1], z = q[2], w = q[3];
                 const x2 = x + x, y2 = y + y, z2 = z + z;
@@ -142,129 +211,40 @@
                 return out;
             };
         }
-
         if (!mat4.rotateX) {
-            mat4.rotateX = function (out, a, rad) {
-                return mat4.rotate(out, a, rad, [1, 0, 0]);
-            };
+            /** @param {Float32Array} out @param {Readonly<Float32Array>} a @param {number} rad */
+            mat4.rotateX = function (out, a, rad) { return mat4.rotate(out, a, rad, [1, 0, 0]); };
         }
-
         if (!mat4.rotateY) {
-            mat4.rotateY = function (out, a, rad) {
-                return mat4.rotate(out, a, rad, [0, 1, 0]);
-            };
+            /** @param {Float32Array} out @param {Readonly<Float32Array>} a @param {number} rad */
+            mat4.rotateY = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 1, 0]); };
         }
-
         if (!mat4.rotateZ) {
-            mat4.rotateZ = function (out, a, rad) {
-                return mat4.rotate(out, a, rad, [0, 0, 1]);
-            };
+            /** @param {Float32Array} out @param {Readonly<Float32Array>} a @param {number} rad */
+            mat4.rotateZ = function (out, a, rad) { return mat4.rotate(out, a, rad, [0, 0, 1]); };
         }
 
-        // Expose globally
+
         window.mat4 = mat4;
         window.vec3 = vec3;
 
-        console.log('✅ gl-matrix loaded & polyfilled');
+        console.log('gl-matrix loaded & polyfilled');
     </script>
 
-    <!-- ============================================================ -->
-    <!-- 3) CORE ENGINE -->
-    <!-- ============================================================ -->
-    <script src="js/core/scene.js" onerror="console.error('Failed to load: js/core/scene.js')"></script>
-    <script src="js/geometry/primitives.js"
-        onerror="console.error('Failed to load: js/geometry/primitives.js')"></script>
-    <script src="js/geometry/primitivesMega.js"></script>
-    <script src="js/geometry/curves.js" onerror="console.error('Failed to load: js/geometry/curves.js')"></script>
-    <script src="js/geometry/curvesMega.js"></script>
-    <script src="js/shaders.js" onerror="console.error('Failed to load: js/shaders.js')"></script>
+    <!-- Main application -->
 
-    <script src="js/geometry/primitivesGabite.js"></script>
-    <script src="js/geometry/curvesGabite.js" onerror="console.error('Failed to load: js/geometry/curves.js')"></script>
-
-    <!-- ============================================================ -->
-    <!-- 4) ENVIRONMENT -->
-    <!-- ============================================================ -->
-    <script src="js/environment/skybox.js" onerror="console.error('Failed to load: js/environment/skybox.js')"></script>
-    <script src="js/environment/scenery.js"
-        onerror="console.error('Failed to load: js/environment/scenery.js')"></script>
-    <script src="js/environment/island.js" onerror="console.error('Failed to load: js/environment/island.js')"></script>
-
-    <!-- ============================================================ -->
-    <!-- 5) CONFIG -->
-    <!-- ============================================================ -->
-    <script src="js/config/gabite_anatomy.js"
-        onerror="console.error('Failed to load: js/config/garchomp_anatomy.js')"></script>
-    <script src="js/config/garchomp_anatomy.js"
-        onerror="console.error('Failed to load: js/config/garchomp_anatomy.js')"></script>
-    <script src="js/config/config.js" onerror="console.error('Failed to load: js/config/config.js')"></script>
-
-    <!-- ============================================================ -->
-    <!-- 6) MODEL PARTS -->
-    <!-- ============================================================ -->
-
-    <script src="js/models/gabite/gabite_parts.js"
-        onerror="console.error('Failed to load: js/models/garchomp/garchomp_parts.js')"></script>
-    <script src="js/models/gabite/gabite.js"
-        onerror="console.error('Failed to load: js/models/garchomp/garchomp.js')"></script>
-
-    <script src="js/models/garchomp/garchomp_parts.js"
-        onerror="console.error('Failed to load: js/models/garchomp/garchomp_parts.js')"></script>
-    <script src="js/models/garchomp/garchomp.js"
-        onerror="console.error('Failed to load: js/models/garchomp/garchomp.js')"></script>
-
-    <script src="js/models/pokeball/pokeball_parts.js"
-        onerror="console.error('Failed to load: js/models/pokeball/pokeball_parts.js')"></script>
-    <script src="js/models/pokeball/pokeball.js"
-        onerror="console.error('Failed to load: js/models/pokeball/pokeball.js')"></script>
-
-
-    <script src="js/models/mega_garchomp/mega_garchomp.js"
-        onerror="console.error('Failed to load: js/models/garchomp/garchomp.js')"></script>
-
-    <!-- ============================================================ -->
-    <!-- 7) ANIMATION SYSTEM (MODULAR!) -->
-    <!-- ============================================================ -->
-    <script src="js/animation/AnimationController.js"
-        onerror="console.error('Failed to load: js/animation/AnimationController.js')"></script>
-
-    <script src="js/animation/GarchompAnimator.js"
-        onerror="console.error('Failed to load: js/animation/GarchompAnimator.js')"></script>
-    <script src="js/animation/GabiteAnimator.js"></script>
-    <script src="js/animation/GabiteSummonAnimator.js"></script>
-
-
-    <script src="js/animation/GarchompSummonAnimator.js"></script>
-    <script src="js/animation/MegaGarchompSummonAnimator.js"></script>
-
-    <script src="js/animation/MegaGarchompAnimator.js"
-        onerror="console.error('Failed to load: js/animation/GarchompAnimator.js')"></script>
-
-    <script src="js/animation/CloudOrbitAnimator.js"
-        onerror="console.error('Failed to load: js/animation/GarchompAnimator.js')"></script>
-
-
-
-    <!-- Future Pokemon animations (uncomment when ready):
-    <script src="js/animation/PikachuAnimator.js"></script>
-    <script src="js/animation/CharizardAnimator.js"></script>
-    -->
-
-    <!-- ============================================================ -->
-    <!-- 8) MAIN APPLICATION -->
-    <!-- ============================================================ -->
     <script src="js/main.js" onerror="console.error('Failed to load: js/main.js')"></script>
 
-    <!-- ============================================================ -->
-    <!-- 9) STARTUP CHECK -->
-    <!-- ============================================================ -->
+    <!-- Startup checks -->
+
     <script>
-        // Check all critical functions loaded
-        window.addEventListener('DOMContentLoaded', function () {
+        /**
+         * Verify critical globals are present and surface issues early.
+         */
+        window.addEventListener('DOMContentLoaded', () => {
             const loading = document.getElementById('loading');
 
             try {
-                // Check critical functions
                 const checks = [
                     { name: 'mat4', obj: window.mat4 },
                     { name: 'vec3', obj: window.vec3 },
@@ -281,16 +261,16 @@
                 ];
 
                 const missing = checks.filter(c => !c.obj);
-
-                if (missing.length > 0) {
-                    throw new Error('Missing critical functions:\n' +
+                if (missing.length) {
+                    throw new Error(
+                        'Missing critical functions:\n' +
                         missing.map(m => `- ${m.name}`).join('\n') +
-                        '\n\nCheck console for load errors.');
+                        '\n\nCheck console for load errors.'
+                    );
                 }
 
-                console.log('✅ All files loaded successfully');
+                console.log('All files loaded successfully');
                 loading.style.display = 'none';
-
             } catch (e) {
                 loading.textContent = 'Error loading files - Check console';
                 loading.style.color = '#ff6666';
@@ -303,11 +283,13 @@
             }
         });
 
-        // Log when main() starts
+        /**
+         * Wrap main() to surface runtime errors in the UI.
+         */
         const originalMain = window.main;
         if (typeof originalMain === 'function') {
             window.main = function () {
-                console.log('🚀 Starting main application...');
+                console.log('Starting main application...');
                 try {
                     return originalMain();
                 } catch (e) {
