@@ -1774,6 +1774,8 @@ function createMegaGarchompAnimatedTail(gl) {
     joints.push(jointNode);
     previousJoint = jointNode;
   }
+  
+  mat4.translate(tailRoot.localTransform, tailRoot.localTransform, [0, 0, -0.3]);
 
   const finProfile = [
     [0, 0.45],
