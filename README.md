@@ -2,10 +2,13 @@
 
 This project showcases Gabite, Garchomp, and Mega Garchomp, all rendered using pure WebGL with fully built environments. Our team of three members each modeled one Pokémon using quadratic objects and configured the rest of the scene with the glMatrix library.
 
-The team members are :
-Bryan Chandra Gunawan  C14230146 - Gabite
-Vincentius Tanujaya    C14230159 - Garchomp
-Daryanto Tanawi        C14230174 - Mega Garchomp
+# The team :
+Bryan Chandra Gunawan  C14230146 - Gabite 
+
+Vincentius Tanujaya    C14230159 - Garchomp 
+
+Daryanto Tanawi        C14230174 - Mega Garchomp 
+
 ---
 
 ## Badges
